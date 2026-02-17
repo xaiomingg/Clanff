@@ -1,0 +1,2838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>安镜之锋 - Free Fire Clan</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🛡️%3C/text%3E%3C/svg%3E">
+    
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <!-- Supabase JS (CDN) - use UMD build for browser globals -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+    <!-- Driver.js for Website Tour -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
+
+    <!-- Custom CSS -->
+    <style>
+        /* Custom animations and overrides */
+        .policy-item:hover {
+            transform: scale(1.01);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.5);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(249, 115, 22, 0.5);
+            border-radius: 5px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(249, 115, 22, 0.8);
+        }
+        
+        /* Loading animation */
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .transform-z-0 {
+            transform: translateZ(0);
+            will-change: transform, opacity;
+        }
+
+        /* Intro Video Overlay */
+        #intro-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            z-index: 10000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #intro-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            pointer-events: none;
+        }
+
+        /* Enter Site Button with Running Light */
+        #enter-site-btn {
+            position: absolute;
+            display: none; /* ซ่อนไว้ก่อน จะแสดงเมื่อวิดีโอจบ */
+            padding: 25px 30px;
+            color: #ea580c; /* สีส้มตามธีมเว็บ */
+            font-size: 24px;
+            text-decoration: none;
+            text-transform: uppercase;
+            overflow: hidden;
+            transition: 0.5s;
+            letter-spacing: 4px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            z-index: 10001;
+            font-weight: bold;
+        }
+
+        #enter-site-btn:hover {
+            background: #ea580c;
+            color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 5px #ea580c,
+                        0 0 25px #ea580c,
+                        0 0 50px #ea580c,
+                        0 0 100px #ea580c;
+        }
+
+        /* สร้างเส้นไฟวิ่ง 4 ด้าน */
+        #enter-site-btn span {
+            position: absolute;
+            display: block;
+        }
+
+        #enter-site-btn span:nth-child(1) {
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #ea580c);
+            animation: btn-anim1 1s linear infinite;
+        }
+
+        @keyframes btn-anim1 {
+            0% { left: -100%; }
+            50%, 100% { left: 100%; }
+        }
+
+        #enter-site-btn span:nth-child(2) {
+            top: -100%;
+            right: 0;
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(180deg, transparent, #ea580c);
+            animation: btn-anim2 1s linear infinite;
+            animation-delay: 0.25s;
+        }
+
+        @keyframes btn-anim2 {
+            0% { top: -100%; }
+            50%, 100% { top: 100%; }
+        }
+
+        #enter-site-btn span:nth-child(3) {
+            bottom: 0;
+            right: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(270deg, transparent, #ea580c);
+            animation: btn-anim3 1s linear infinite;
+            animation-delay: 0.5s;
+        }
+
+        @keyframes btn-anim3 {
+            0% { right: -100%; }
+            50%, 100% { right: 100%; }
+        }
+
+        #enter-site-btn span:nth-child(4) {
+            bottom: -100%;
+            left: 0;
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(360deg, transparent, #ea580c);
+            animation: btn-anim4 1s linear infinite;
+            animation-delay: 0.75s;
+        }
+
+        @keyframes btn-anim4 {
+            0% { bottom: -100%; }
+            50%, 100% { bottom: 100%; }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <!-- Intro Video -->
+    <div id="intro-overlay">
+        <video id="intro-video" autoplay playsinline muted preload="auto">
+            <source src="Vdeo/intror.mp4" type="video/mp4">
+        </video>
+        <!-- ปุ่มกดเข้าเว็บ -->
+        <button id="enter-site-btn">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            ENTER SITE
+        </button>
+    </div>
+
+    <!-- Header Section -->
+    <div class="bg-gradient-to-r from-orange-600 to-red-600 shadow-2xl">
+        <div class="max-w-5xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <!-- Language Selector -->
+                <div class="flex justify-end mb-6">
+                    <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg p-1 border border-white/20">
+                        <i data-lucide="languages" class="w-4 h-4 text-white ml-2"></i>
+                        <button onclick="setLanguage('th')" id="lang-th" class="px-4 py-2 rounded-md transition-all bg-white text-orange-600 shadow-lg">
+                            ไทย
+                        </button>
+                        <button onclick="setLanguage('zh')" id="lang-zh" class="px-4 py-2 rounded-md transition-all text-white hover:bg-white/10">
+                            中文
+                        </button>
+                        <button onclick="setLanguage('en')" id="lang-en" class="px-4 py-2 rounded-md transition-all text-white hover:bg-white/10">
+                            EN
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-center gap-3 mb-4">
+                    <i data-lucide="shield" class="w-12 h-12 text-white"></i>
+                    <h1 id="clan-name" class="text-5xl text-white tracking-wider">安镜之锋</h1>
+                </div>
+                <p id="clan-subtitle" class="text-xl text-orange-100 mt-2">Free Fire Clan</p>
+                <div class="mt-6 inline-block bg-white/10 backdrop-blur-sm px-6 py-3 rounded-lg border border-white/20">
+                    <p id="current-page-title" class="text-white">Official Clan Policy</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-wrap justify-center gap-2 pb-4">
+                <button onclick="setCurrentPage('home')" id="nav-home" class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all bg-white/10 text-white hover:bg-white/20">
+                    <i data-lucide="home" class="w-4 h-4"></i>
+                    <span id="nav-home-text">Home</span>
+                </button>
+                <button onclick="setCurrentPage('announcements')" id="nav-announcements" class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all bg-white text-orange-600 shadow-lg">
+                    <i data-lucide="megaphone" class="w-4 h-4"></i>
+                    <span id="nav-announcements-text">Announcements</span>
+                </button>
+                <button onclick="setCurrentPage('about')" id="nav-about" class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all bg-white/10 text-white hover:bg-white/20">
+                    <i data-lucide="info" class="w-4 h-4"></i>
+                    <span id="nav-about-text">About</span>
+                </button>
+                <button onclick="setCurrentPage('members')" id="nav-members" class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all bg-white/10 text-white hover:bg-white/20">
+                    <i data-lucide="users-round" class="w-4 h-4"></i>
+                    <span id="nav-members-text">Members</span>
+                </button>
+                <button onclick="setCurrentPage('events')" id="nav-events" class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all bg-white/10 text-white hover:bg-white/20">
+                    <i data-lucide="party-popper" class="w-4 h-4"></i>
+                    <span id="nav-events-text">Events</span>
+                </button>
+                <button onclick="setCurrentPage('contact')" id="nav-contact" class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all bg-white/10 text-white hover:bg-white/20">
+                    <i data-lucide="message-square" class="w-4 h-4"></i>
+                    <span id="nav-contact-text">Contact</span>
+                </button>
+                <button onclick="showLoginDialog()" id="nav-login" class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all bg-white/10 text-white hover:bg-white/20">
+                    <i data-lucide="lock" class="w-4 h-4"></i>
+                    <span>Login</span>
+                </button>
+                <button onclick="logout()" id="nav-logout" class="hidden items-center gap-2 px-4 py-2 rounded-lg transition-all bg-white/10 text-white hover:bg-white/20">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                    <span>Logout</span>
+                </button>
+                <button onclick="setCurrentPage('admin')" id="nav-admin" class="hidden items-center gap-2 px-4 py-2 rounded-lg transition-all bg-white/10 text-white hover:bg-white/20">
+                    <i data-lucide="settings" class="w-4 h-4"></i>
+                    <span>Admin</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="content-container" class="max-w-5xl mx-auto px-4 py-12 sm:px-6 lg:px-8 fade-in">
+        <!-- Content will be dynamically loaded here -->
+        <div id="loading" class="text-center">
+            <div class="inline-block">
+                <i data-lucide="shield" class="w-16 h-16 text-orange-500 mx-auto mb-4 spinner"></i>
+                <p class="text-white text-xl">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Site Footer -->
+    <footer id="site-footer" class="max-w-5xl mx-auto px-4 py-12 sm:px-6 lg:px-8 mt-12">
+        <div class="bg-slate-800/30 rounded-xl p-8 border border-slate-700/50 text-center">
+            <div class="flex flex-col items-center gap-4">
+                <i data-lucide="shield" class="w-12 h-12 text-orange-500"></i>
+                <p id="footer-main-text" class="text-white text-lg font-semibold max-w-2xl"></p>
+                <p id="footer-sub-text" class="text-gray-400 max-w-2xl"></p>
+                <hr class="w-full border-slate-700 my-6" />
+                <p id="footer-clan-name" class="text-orange-400 text-2xl font-semibold"></p>
+                <p id="footer-official" class="text-gray-500 text-sm mt-2"></p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Login Dialog -->
+    <div id="login-dialog" class="hidden fixed inset-0 bg-black/70 items-center justify-center z-50">
+        <div class="bg-slate-800 p-8 rounded-xl shadow-2xl max-w-md w-full mx-4">
+            <h2 class="text-3xl text-center mb-6 text-white">Admin Login</h2>
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="mb-4">
+                    <label class="block text-gray-300 text-sm font-bold mb-2" for="username">
+                        Email
+                    </label>
+                    <input
+                        class="w-full px-4 py-3 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-orange-500 focus:outline-none"
+                        id="username"
+                        type="email"
+                        placeholder="zeegodstudio04@gmail.com"
+                    />
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-300 text-sm font-bold mb-2" for="password">
+                        Password
+                    </label>
+                    <input
+                        class="w-full px-4 py-3 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-orange-500 focus:outline-none"
+                        id="password"
+                        type="password"
+                    />
+                </div>
+                <div id="login-error" class="hidden mb-4 p-3 bg-red-500/20 border border-red-500 rounded-lg">
+                    <p id="login-error-text" class="text-red-300 text-sm"></p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button
+                        class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+                        type="submit"
+                    >
+                        Login
+                    </button>
+                    <button
+                        class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+                        type="button"
+                        onclick="hideLoginDialog()"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Edit Dialog -->
+    <div id="edit-dialog" class="hidden fixed inset-0 bg-black/70 items-center justify-center z-50 p-4 overflow-y-auto">
+        <div class="bg-slate-800 rounded-xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <!-- Content will be dynamically loaded here -->
+        </div>
+    </div>
+
+    <script>
+        // Application State
+        const state = {
+            language: 'th',
+            currentPage: 'announcements',
+            isLoggedIn: false,
+            loading: false,
+            editingSection: null,
+            tempEditData: null
+        };
+
+        // Translations
+        const translations = {
+            th: {
+                clanName: '安镜之锋',
+                subtitle: 'Free Fire Clan',
+                officialPolicy: 'นโยบายแคลนอย่างเป็นทางการ',
+                effectiveDate: 'มีผลบังคับใช้',
+                importantRule: 'ข้อบังคับสำคัญ - กรุณาปฏิบัติตามอย่างเคร่งครัด',
+                footerText1: 'นโยบายนี้ถูกสร้างขึ้นเพื่อความเป็นระเบียบและความเป็นธรรมภายในแคลน',
+                footerText2: 'สมาชิกทุกคนมีหน้าที่ปฏิบัติตามนโยบายเหล่านี้อย่างเคร่งครัดเพื่อความสนุกของทุกคน',
+                officialClan: 'Free Fire Official Clan',
+                navHome: 'หน้าแรก',
+                navAnnouncements: 'ประกาศ',
+                navAbout: 'เกี่ยวกับ',
+                navMembers: 'สมาชิก',
+                navEvents: 'กิจกรรม',
+                navContact: 'ติดต่อ',
+                announcementsTitle: 'ประกาศและข่าวสาร',
+                announcementsSubtitle: 'อัพเดทล่าสุดเกี่ยวกับกิจกรรมและข่าวสารของแคลน',
+                aboutTitle: 'เกี่ยวกับแคลน 安镜之锋',
+                aboutSubtitle: 'ประวัติและวิสัยทัศน์ของเรา',
+                aboutHistory: 'ประวัติความเป็นมา',
+                aboutVision: 'วิสัยทัศน์',
+                aboutValues: 'ค่านิยมของเรา',
+                aboutValue1: 'การทำงานเป็นทีม - เราชนะด้วยกัน',
+                aboutValue2: 'การเคารพ - เคารพทุกความแตกต่าง',
+                aboutValue3: 'วินัย - ปฏิบัติตามกฎระเบียบอย่างเคร่งครัด',
+                aboutValue4: 'ความเป็นเลิศ - มุ่งมั่นสู่ความเป็นเลิศ',
+                membersTitle: 'สมาชิกแคลน',
+                membersSubtitle: 'ทีมงานและสมาชิกของเรา',
+                membersCurrent: 'สมาชิกปัจจุบัน',
+                membersTarget: 'เป้าหมาย 40 คน',
+                leaderTitle: 'หัวหน้าแคลน',
+                managementTitle: 'ทีมบริหาร',
+                supportersTitle: 'ผู้สนับสนุน',
+                membersTitle2: 'สมาชิกทั่วไป',
+                eventsTitle: 'กิจกรรมและตารางการแข่งขัน',
+                eventsSubtitle: 'กิจกรรมที่กำลังจะมาถึงและการแข่งขัน',
+                upcomingEvents: 'กิจกรรมที่กำลังจะมาถึง',
+                weeklyTraining: 'การฝึกซ้อมประจำสัปดาห์',
+                weeklyTrainingDesc: 'ฝึกซ้อมร่วมกันทุกวันพุธและเสาร์ เวลา 20:00-22:00 น.',
+                tournamentPrep: 'เตรียมการแข่งขันใหญ่',
+                tournamentPrepDesc: 'เตรียมความพร้อมสำหรับการแข่งขันแคลนวอร์รอบชิงชนะเลิศประจำเดือน',
+                meetupPlanning: 'วางแผนงานพบปะออฟไลน์',
+                meetupPlanningDesc: 'เมื่อสมาชิกครบ 40 คน เราจะจัดกิจกรรมพบปะกัน (ภายในประเทศหรือต่างประเทศ)',
+                contactTitle: 'ติดต่อเรา',
+                contactSubtitle: 'ช่องทางการติดต่อแคลน',
+                contactInfo: 'ข้อมูลติดต่อ',
+                contactLeader: 'ติดต่อหัวหน้าแคลน',
+                contactNote: 'หมายเหตุ: โปรดอ่านนโยบายทั้งหมดก่อนติดต่อสมัครเข้าแคลน',
+                contactSocial: 'ช่องทางโซเชียล',
+                contactDiscord: 'ไม่ใช้',
+                contactWeChat: 'WeChat'
+            },
+            zh: {
+                clanName: '安镜之锋',
+                subtitle: '自由火战队',
+                officialPolicy: '战队官方政策',
+                effectiveDate: '生效日期',
+                importantRule: '重要规定 - 请严格遵守',
+                footerText1: '本政策旨在维护战队内部的秩序和公平',
+                footerText2: '所有成员有责任严格遵守这些政策，以确保大家的乐趣',
+                officialClan: '自由火官方战队',
+                navHome: '首页',
+                navAnnouncements: '公告',
+                navAbout: '关于',
+                navMembers: '成员',
+                navEvents: '活动',
+                navContact: '联系',
+                announcementsTitle: '公告与新闻',
+                announcementsSubtitle: '战队活动和新闻的最新更新',
+                aboutTitle: '关于战队 安镜之锋',
+                aboutSubtitle: '我们的历史与愿景',
+                aboutHistory: '历史',
+                aboutVision: '愿景',
+                aboutValues: '我们的价值观',
+                aboutValue1: '团队合作 - 我们一起获胜',
+                aboutValue2: '尊重 - 尊重所有差异',
+                aboutValue3: '纪律 - 严格遵守规则',
+                aboutValue4: '卓越 - 追求卓越',
+                membersTitle: '战队成员',
+                membersSubtitle: '我们的团队和成员',
+                membersCurrent: '当前成员',
+                membersTarget: '目标 40 人',
+                leaderTitle: '战队队长',
+                managementTitle: '管理团队',
+                supportersTitle: '赞助者',
+                membersTitle2: '普通成员',
+                eventsTitle: '活动与赛程',
+                eventsSubtitle: '即将举行的活动和比赛',
+                upcomingEvents: '即将举行的活动',
+                weeklyTraining: '每周训练',
+                weeklyTrainingDesc: '每周三和周六一起训练，时间 20:00-22:00',
+                tournamentPrep: '准备大型比赛',
+                tournamentPrepDesc: '为每月战队战决赛做准备',
+                meetupPlanning: '计划线下见面会',
+                meetupPlanningDesc: '当成员达到40人时，我们将组织见面会（国内或国外）',
+                contactTitle: '联系我们',
+                contactSubtitle: '战队联系方式',
+                contactInfo: '联系信息',
+                contactLeader: '联系战队队长',
+                contactNote: '注意：申请加入战队前请阅读所有政策',
+                contactSocial: '社交渠道',
+                contactWeChat: '微信'
+            },
+            en: {
+                clanName: '安镜之锋',
+                subtitle: 'Free Fire Clan',
+                officialPolicy: 'Official Clan Policy',
+                effectiveDate: 'Effective Date',
+                importantRule: 'Important Rule - Please Comply Strictly',
+                footerText1: 'This policy is created to maintain order and fairness within the clan',
+                footerText2: 'All members are responsible for strictly following these policies for everyone\'s enjoyment',
+                officialClan: 'Free Fire Official Clan',
+                navHome: 'Home',
+                navAnnouncements: 'Announcements',
+                navAbout: 'About',
+                navMembers: 'Members',
+                navEvents: 'Events',
+                navContact: 'Contact',
+                announcementsTitle: 'Announcements & News',
+                announcementsSubtitle: 'Latest updates on clan activities and news',
+                aboutTitle: 'About Clan 安镜之锋',
+                aboutSubtitle: 'Our history and vision',
+                aboutHistory: 'History',
+                aboutVision: 'Vision',
+                aboutValues: 'Our Values',
+                aboutValue1: 'Teamwork - We win together',
+                aboutValue2: 'Respect - Respect all differences',
+                aboutValue3: 'Discipline - Strictly follow rules',
+                aboutValue4: 'Excellence - Strive for excellence',
+                membersTitle: 'Clan Members',
+                membersSubtitle: 'Our team and members',
+                membersCurrent: 'Current Members',
+                membersTarget: 'Target 40 Members',
+                leaderTitle: 'Clan Leader',
+                managementTitle: 'Management Team',
+                supportersTitle: 'Supporters',
+                membersTitle2: 'Regular Members',
+                eventsTitle: 'Events & Schedule',
+                eventsSubtitle: 'Upcoming events and competitions',
+                upcomingEvents: 'Upcoming Events',
+                weeklyTraining: 'Weekly Training',
+                weeklyTrainingDesc: 'Train together every Wednesday and Saturday, 20:00-22:00',
+                tournamentPrep: 'Major Tournament Preparation',
+                tournamentPrepDesc: 'Preparing for the monthly clan war finals',
+                meetupPlanning: 'Planning Offline Meetup',
+                meetupPlanningDesc: 'When members reach 40, we will organize a meetup (domestic or international)',
+                contactTitle: 'Contact Us',
+                contactSubtitle: 'Clan contact channels',
+                contactInfo: 'Contact Information',
+                contactLeader: 'Contact Clan Leader',
+                contactNote: 'Note: Please read all policies before contacting to apply',
+                contactSocial: 'Social Channels',
+                contactWeChat: 'WeChat'
+            }
+        };
+
+        // Default Data
+        const defaultPolicies = {
+            th: [
+                {
+                    id: 1,
+                    title: 'การเข้า-ออกแคลน',
+                    content: ['ออกได้สูงสุด 3 ครั้ง ครั้งที่ 4 ต้องได้รับการพิจารณาเป็นพิเศษจากหัวหน้าแคลนหรือทีมงาน']
+                },
+                {
+                    id: 2,
+                    title: 'มารยาทในแคลน',
+                    content: ['เคารพความแตกต่างทางวัฒนธรรมและภาษา ใช้ภาษาที่สุภาพ หลีกเลี่ยงความขัดแย้ง และเน้นการทำงานเป็นทีม']
+                },
+                {
+                    id: 3,
+                    title: 'การรักษาชื่อเสียงแคลน',
+                    content: ['หากกระทำผิดที่ส่งผลต่อชื่อเสียงแคลน หัวหน้าจะเจรจาโดยทันที ลูกแคลนต้องเตรียมหลักฐานประกอบการเจรจา']
+                },
+                {
+                    id: 4,
+                    title: 'การเล่นร่วมกัน',
+                    content: [
+                        'ห้ามจับกลุ่มเล่นกันเอง ต้องผลัดเปลี่ยนกันเล่น',
+                        'บทลงโทษ: งดกิจกรรมระยะยาว 1 กิจกรรม หรือกิจกรรมระยะสั้น 2 กิจกรรม'
+                    ],
+                    penalty: true
+                },
+                {
+                    id: 5,
+                    title: 'ความสัมพันธ์เชิงชู้สาว',
+                    content: [
+                        '5.1 แฟนนอกแคลน: เลิกรากันต้องปกติ ห้ามออกแคลน ฝ่าฝืนโดนลดตำแหน่งและตัดสิทธิ์การออกตามข้อที่ 1 ทันที',
+                        '5.2 แฟนในแคลน: ต้องแจ้งและ "เซ็นสัญญายินยอมอิเล็กทรอนิกส์" หากเลิกกันแล้วออกแคลนจะถูก Blacklist ถาวร และประกาศความผิดต่อสาธารณะ/พันธมิตร'
+                    ],
+                    important: true
+                },
+                {
+                    id: 6,
+                    title: 'การตอบรับคำเชิญ',
+                    content: [
+                        '6.1: ต้องเข้าร่วมทันทีเมื่อผู้มีอำนาจเชิญ',
+                        '6.2: หากติดธุระต้องพิมพ์แจ้งพร้อมเวลาที่จะเข้าได้',
+                        'บทลงโทษ: งดกิจกรรมแคลนทุกประเภท 1 ครั้ง'
+                    ],
+                    penalty: true
+                },
+                {
+                    id: 7,
+                    title: 'กิจกรรมออฟไลน์',
+                    content: ['เมื่อสมาชิกครบ 40 คน จะมีการจัดกิจกรรมพบปะกัน (ในประเทศหรือต่างประเทศ)']
+                },
+                {
+                    id: 8,
+                    title: 'ความเป็นส่วนตัวและสุขภาพหัวหน้าแคลน',
+                    content: [
+                        'ห้ามรบกวนหัวหน้าขณะสนทนาในงานออฟไลน์',
+                        '8.1: ห้ามนำน้ำอัดลม, เครื่องดื่มมึนเมา, บุหรี่ ให้หัวหน้าเด็ดขาด',
+                        'บทลงโทษ: ผู้ฝ่าฝืนถูกไล่ออกทันที และคนในแคลนที่ร่วมกิจกรรมต้องรับผิดชอบร่วมกันทั้งหมด'
+                    ],
+                    important: true,
+                    penalty: true
+                },
+                {
+                    id: 9,
+                    title: 'ค่าใช้จ่ายกิจกรรม',
+                    content: ['กิจกรรมออฟไลน์แคลนรับผิดชอบค่าใช้จ่ายทั้งหมด']
+                },
+                {
+                    id: 10,
+                    title: 'การใช้ชื่อแคลน (Content Creation)',
+                    content: [
+                        '10.1: สมาชิกใช้ชื่อแคลนทำคลิป/สื่อได้ปกติ',
+                        '10.2: พ้นสภาพต้องลบคลิป/สื่อที่มีชื่อแคลนทันที (ชื่อแคลนเป็นทรัพย์สินทางปัญญา IP ที่ประมูลมา)',
+                        'บทลงโทษ: ส่งหนังสือแจ้งเตือนให้ลบทันที หากฝ่าฝืนจะดำเนินคดีตามกฎหมายลิขสิทธิ์และทรัพย์สินทางปัญญา (ทั้งกฎหมายไทยและกฎหมายจีน)'
+                    ],
+                    important: true,
+                    penalty: true
+                }
+            ],
+            zh: [
+                {
+                    id: 1,
+                    title: '加入-退出战队',
+                    content: ['最多可退出3次，第4次需经战队队长或管理团队特别批准']
+                },
+                {
+                    id: 2,
+                    title: '战队礼仪',
+                    content: ['尊重文化和语言差异，使用礼貌用语，避免冲突，强调团队合作']
+                },
+                {
+                    id: 3,
+                    title: '维护战队声誉',
+                    content: ['如有损害战队声誉的行为，队长将立即进行协商，队员须准备证据配合协商']
+                },
+                {
+                    id: 4,
+                    title: '共同游戏',
+                    content: [
+                        '禁止小团体游戏，必须轮流一起玩',
+                        '处罚：暂停参与1次长期活动或2次短期活动'
+                    ],
+                    penalty: true
+                },
+                {
+                    id: 5,
+                    title: '恋爱关系',
+                    content: [
+                        '5.1 战队外恋人：分手后须保持正常关系，禁止退出战队，违者立即降职并取消退出权利（第1条）',
+                        '5.2 战队内恋人：必须通知并"签署电子同意书"，若分手后退出战队将被永久列入黑名单，并向公众/盟友公布违规行为'
+                    ],
+                    important: true
+                },
+                {
+                    id: 6,
+                    title: '响应邀请',
+                    content: [
+                        '6.1：有权限者邀请时必须立即参加',
+                        '6.2：若有事务必须输入通知及可参加的时间',
+                        '处罚：暂停参与所有战队活动1次'
+                    ],
+                    penalty: true
+                },
+                {
+                    id: 7,
+                    title: '线下活动',
+                    content: ['当成员达到40人时，将组织见面会（国内或国外）']
+                },
+                {
+                    id: 8,
+                    title: '队长隐私与健康',
+                    content: [
+                        '禁止在线下活动期间打扰队长的交谈',
+                        '8.1：严禁给队长提供碳酸饮料、酒精饮料、香烟',
+                        '处罚：违规者立即开除，参与活动的所有战队成员共同承担责任'
+                    ],
+                    important: true,
+                    penalty: true
+                },
+                {
+                    id: 9,
+                    title: '活动费用',
+                    content: ['线下活动的所有费用由战队承担']
+                },
+                {
+                    id: 10,
+                    title: '战队名称使用（内容创作）',
+                    content: [
+                        '10.1：成员可正常使用战队名称制作视频/媒体',
+                        '10.2：离队后必须立即删除含有战队名称的视频/媒体（战队名称为竞拍获得的知识产权）',
+                        '处罚：发送书面警告要求立即删除，若违反将根据版权法和知识产权法提起诉讼（泰国法律和中国法律）'
+                    ],
+                    important: true,
+                    penalty: true
+                }
+            ],
+            en: [
+                {
+                    id: 1,
+                    title: 'Joining-Leaving Clan',
+                    content: ['Maximum 3 exits allowed, 4th time requires special consideration from clan leader or management team']
+                },
+                {
+                    id: 2,
+                    title: 'Clan Etiquette',
+                    content: ['Respect cultural and language differences, use polite language, avoid conflicts, and emphasize teamwork']
+                },
+                {
+                    id: 3,
+                    title: 'Maintaining Clan Reputation',
+                    content: ['If actions damage clan reputation, leader will negotiate immediately. Clan member must prepare evidence for negotiation']
+                },
+                {
+                    id: 4,
+                    title: 'Playing Together',
+                    content: [
+                        'Forming exclusive groups is prohibited, must rotate playing together',
+                        'Penalty: Suspend from 1 long-term activity or 2 short-term activities'
+                    ],
+                    penalty: true
+                },
+                {
+                    id: 5,
+                    title: 'Romantic Relationships',
+                    content: [
+                        '5.1 Partner outside clan: Must remain normal after breakup, leaving clan prohibited. Violation results in immediate demotion and loss of exit rights per Article 1',
+                        '5.2 Partner within clan: Must notify and "sign electronic consent agreement". If breakup leads to leaving clan, will be permanently blacklisted and violation publicly announced to public/allies'
+                    ],
+                    important: true
+                },
+                {
+                    id: 6,
+                    title: 'Responding to Invitations',
+                    content: [
+                        '6.1: Must join immediately when invited by authorized person',
+                        '6.2: If busy, must type notification with time available to join',
+                        'Penalty: Suspend from all clan activities once'
+                    ],
+                    penalty: true
+                },
+                {
+                    id: 7,
+                    title: 'Offline Activities',
+                    content: ['When members reach 40, there will be meetup activities (domestic or international)']
+                },
+                {
+                    id: 8,
+                    title: 'Clan Leader Privacy & Health',
+                    content: [
+                        'Do not disturb leader during offline event conversations',
+                        '8.1: Absolutely prohibited to give leader soft drinks, alcoholic beverages, cigarettes',
+                        'Penalty: Violator immediately expelled, and all clan members participating in activity share responsibility'
+                    ],
+                    important: true,
+                    penalty: true
+                },
+                {
+                    id: 9,
+                    title: 'Activity Expenses',
+                    content: ['Offline activities - all expenses covered by clan']
+                },
+                {
+                    id: 10,
+                    title: 'Clan Name Usage (Content Creation)',
+                    content: [
+                        '10.1: Members can normally use clan name for videos/media',
+                        '10.2: Upon leaving, must immediately delete videos/media containing clan name (clan name is auctioned intellectual property)',
+                        'Penalty: Send written notice to delete immediately. If violated, will prosecute under copyright and intellectual property laws (both Thai and Chinese law)'
+                    ],
+                    important: true,
+                    penalty: true
+                }
+            ]
+        };
+
+        const defaultAnnouncements = {
+            th: [
+                {
+                    id: 1,
+                    date: '10 กุมภาพันธ์ 2569',
+                    title: '🎉 เปิดรับสมาชิกใหม่!',
+                    content: 'แคลน 安镜之锋 เปิดรับสมาชิกใหม่อีกครั้ง! หากคุณสนใจและพร้อมปฏิบัติตามนโยบายแคลน สามารถติดต่อได้ทันที โปรดอ่านนโยบาย 10 ข้อให้ละเอียดก่อนสมัคร',
+                    type: 'info'
+                },
+                {
+                    id: 2,
+                    date: '5 กุมภาพันธ์ 2569',
+                    title: '🏆 ชัยชนะในการแข่งขันแคลน',
+                    content: 'ขอแสดงความยินดีกับทีมของเราที่ชนะการแข่งขันแคลนวอร์ครั้งล่าสุด! ทุกคนทำได้ยอดเยี่ยมมาก เราจะมีกิจกรรมฉลองในเร็วๆ นี้',
+                    type: 'success'
+                },
+                {
+                    id: 3,
+                    date: '1 กุมภาพันธ์ 2569',
+                    title: '⚠️ เตือนความจำเกี่ยวกับนโยบายข้อ 4',
+                    content: 'เรียนสมาชิกทุกคน โปรดระลึกถึงนโยบายข้อที่ 4 เรื่องการเล่นร่วมกัน ห้ามจับกลุ่มเล่นกันเองและต้องผลัดเปลี่ยนกันเล่น การฝ่าฝืนจะมีบทลงโทษตามที่ระบุในนโยบาย',
+                    type: 'warning'
+                },
+                {
+                    id: 4,
+                    date: '25 มกราคม 2569',
+                    title: '📅 ตารางการฝึกซ้อมประจำสัปดาห์',
+                    content: 'การฝึกซ้อมแคลน: ทุกวันพุธและเสาร์ เวลา 20:00-22:00 น. สมาชิกทุกคนควรเข้าร่วม หากติดธุระโปรดแจ้งล่วงหน้า',
+                    type: 'info'
+                },
+                {
+                    id: 5,
+                    date: '18 มกราคม 2569',
+                    title: '📜 นโยบายใหม่มีผลบังคับใช้',
+                    content: 'นโยบาย 10 ข้อของแคลนได้มีผลบังคับใช้อย่างเป็นทางการแล้ว สมาชิกทุกคนต้องอ่านและปฏิบัติตามอย่างเคร่งครัด',
+                    type: 'important'
+                }
+            ],
+            zh: [
+                {
+                    id: 1,
+                    date: '2026年2月10日',
+                    title: '🎉 招募新成员！',
+                    content: '战队 安镜之锋 再次开放招募新成员！如果您有兴趣并准备遵守战队政策，欢迎立即联系。请在申请前仔细阅读10条政策',
+                    type: 'info'
+                },
+                {
+                    id: 2,
+                    date: '2026年2月5日',
+                    title: '🏆 战队比赛胜利',
+                    content: '恭喜我们的团队在最近的战队战中获胜！大家都表现得非常出色。我们很快将举办庆祝活动',
+                    type: 'success'
+                },
+                {
+                    id: 3,
+                    date: '2026年2月1日',
+                    title: '⚠️ 关于第4条政策的提醒',
+                    content: '各位成员请注意，请记住第4条政策关于共同游戏的规定。禁止小团体游戏，必须轮流一起玩。违规将受到政策规定的处罚',
+                    type: 'warning'
+                },
+                {
+                    id: 4,
+                    date: '2026年1月25日',
+                    title: '📅 每周训练时间表',
+                    content: '战队训练：每周三和周六 20:00-22:00。所有成员都应参加。如有事务请提前通知',
+                    type: 'info'
+                },
+                {
+                    id: 5,
+                    date: '2026年1月18日',
+                    title: '📜 新政策生效',
+                    content: '战队10条政策已正式生效。所有成员必须阅读并严格遵守',
+                    type: 'important'
+                }
+            ],
+            en: [
+                {
+                    id: 1,
+                    date: 'February 10, 2026',
+                    title: '🎉 Recruiting New Members!',
+                    content: 'Clan 安镜之锋 is opening recruitment again! If you are interested and ready to comply with clan policies, contact us immediately. Please read all 10 policies carefully before applying',
+                    type: 'info'
+                },
+                {
+                    id: 2,
+                    date: 'February 5, 2026',
+                    title: '🏆 Clan Tournament Victory',
+                    content: 'Congratulations to our team for winning the latest clan war! Everyone performed excellently. We will have a celebration event soon',
+                    type: 'success'
+                },
+                {
+                    id: 3,
+                    date: 'February 1, 2026',
+                    title: '⚠️ Reminder About Policy #4',
+                    content: 'Dear all members, please remember Policy #4 about playing together. Forming exclusive groups is prohibited, must rotate playing together. Violations will result in penalties as stated in the policy',
+                    type: 'warning'
+                },
+                {
+                    id: 4,
+                    date: 'January 25, 2026',
+                    title: '📅 Weekly Training Schedule',
+                    content: 'Clan training: Every Wednesday and Saturday 20:00-22:00. All members should participate. Please notify in advance if you have commitments',
+                    type: 'info'
+                },
+                {
+                    id: 5,
+                    date: 'January 18, 2026',
+                    title: '📜 New Policy Effective',
+                    content: 'The clan\'s 10 policies are now officially effective. All members must read and strictly comply',
+                    type: 'important'
+                }
+            ]
+        };
+
+        const defaultClanData = {
+            th: {
+                effectiveDateText: 'ตั้งแต่วันที่ 18 มกราคม 2569 เป็นต้นไป',
+                aboutHistoryText: 'แคลน 安镜之锋 (สายลมแห่งความสงบ) ก่อตั้งขึ้นโดยกลุ่มผู้เล่นที่มีความมุ่งมั่นและมีวินัยใน Free Fire เราเชื่อในพลังของการทำงานเป็นทีม การเคารพซึ่งกันและกัน และการรักษามาตรฐานสูงในทุกสิ่งที่เราทำ ชื่อแคลนของเราถูกประมูลมาอย่างเป็นทางการ ทำให้เป็นทรัพย์สินทางปัญญาที่มีคุณค่า',
+                aboutVisionText: 'เราตั้งเป้าจะเป็นหนึ่งในแคลน Free Fire ที่แข็งแกร่งและมีชื่อเสียงที่สุดในภูมิภาค โดยเน้นความเป็นมืออาชีพ การเคารพ และความสนุกในการเล่นร่วมกัน เป้าหมายของเราคือการสร้างชุมชนที่เข้มแข็ง ซึ่งสมาชิกทุกคนรู้สึกมีคุณค่าและได้รับการสนับสนุน',
+                membersCurrent: 28,
+                contactLeaderId: 'XXXXXXXXX',
+                contactWeChat: '@xxxxxxxx',
+                contactNote: 'หมายเหตุ: โปรดอ่านนโยบายทั้งหมดก่อนติดต่อสมัครเข้าแคลน',
+                activityRegion: 'ไทย - จีน - เอเชียตะวันออกเฉียงใต้'
+            },
+            zh: {
+                effectiveDateText: '自2026年1月18日起生效',
+                aboutHistoryText: '战队 安镜之锋（宁静之风）由一群在自由火中充满决心和纪律的玩家创建。我们相信团队合作的力量、相互尊重，以及在我们所做的一切中保持高标准。我们的战队名称是通过正式竞拍获得的，使其成为有价值的知识产权',
+                aboutVisionText: '我们的目标是成为该地区最强大和最负盛名的自由火战队之一，强调专业精神、尊重和共同游戏的乐趣。我们的目标是建立一个强大的社区，让每个成员都感到有价值和得到支持',
+                membersCurrent: 28,
+                contactLeaderId: 'XXXXXXXXX',
+                contactWeChat: '@xxxxxxxx',
+                contactNote: '注意：申请加入战队前请阅读所有政策',
+                activityRegion: '泰国 - 中国 - 东南亚'
+            },
+            en: {
+                effectiveDateText: 'From January 18, 2026 onwards',
+                aboutHistoryText: 'Clan 安镜之锋 (Wind of Tranquility) was founded by a group of determined and disciplined players in Free Fire. We believe in the power of teamwork, mutual respect, and maintaining high standards in everything we do. Our clan name was officially auctioned, making it a valuable intellectual property',
+                aboutVisionText: 'We aim to be one of the strongest and most prestigious Free Fire clans in the region, emphasizing professionalism, respect, and fun in playing together. Our goal is to build a strong community where every member feels valued and supported',
+                membersCurrent: 28,
+                contactLeaderId: 'XXXXXXXXX',
+                contactWeChat: '@xxxxxxxx',
+                contactNote: 'Note: Please read all policies before contacting to apply',
+                activityRegion: 'Thailand - China - Southeast Asia'
+            }
+        };
+
+        const defaultMembers = {
+            leader: { name: '安镜之锋 Leader', role: { th: 'ผู้ก่อตั้งและผู้บัญชาการ', zh: '创始人兼指挥官', en: 'Founder & Commander' } },
+            management: [],
+            supporters: [],
+            regular: []
+        };
+
+        const defaultEvents = {
+            th: {
+                weekly: { title: 'การฝึกซ้อมประจำสัปดาห์', desc: 'ฝึกซ้อมร่วมกันทุกวันพุธและเสาร์ เวลา 20:00-22:00 น.', time: 'ทุกวันพุธและเสาร์' },
+                tournament: { title: 'เตรียมการแข่งขันใหญ่', desc: 'เตรียมความพร้อมสำหรับการแข่งขันแคลนวอร์รอบชิงชนะเลิศประจำเดือน', date: '15-20 กุมภาพันธ์ 2569' },
+                meetup: { title: 'วางแผนงานพบปะออฟไลน์', desc: 'เมื่อสมาชิกครบ 40 คน เราจะจัดกิจกรรมพบปะกัน (ภายในประเทศหรือต่างประเทศ)' },
+                schedule: [
+                    { day: 'วันจันทร์', time: '20:00', type: 'Practice' },
+                    { day: 'วันพุธ', time: '20:00', type: 'Training' },
+                    { day: 'วันศุกร์', time: '21:00', type: 'Clan War' },
+                    { day: 'วันเสาร์', time: '20:00', type: 'Training' }
+                ]
+            },
+            zh: {
+                weekly: { title: '每周训练', desc: '每周三和周六一起训练，时间 20:00-22:00', time: '每周三和周六' },
+                tournament: { title: '准备大型比赛', desc: '为每月战队战决赛做准备', date: '2026年2月15-20日' },
+                meetup: { title: '计划线下见面会', desc: '当成员达到40人时，我们将组织见面会（国内或国外）' },
+                schedule: [
+                    { day: '星期一', time: '20:00', type: 'Practice' },
+                    { day: '星期三', time: '20:00', type: 'Training' },
+                    { day: '星期五', time: '21:00', type: 'Clan War' },
+                    { day: '星期六', time: '20:00', type: 'Training' }
+                ]
+            },
+            en: {
+                weekly: { title: 'Weekly Training', desc: 'Train together every Wednesday and Saturday, 20:00-22:00', time: 'Every Wednesday & Saturday' },
+                tournament: { title: 'Major Tournament Preparation', desc: 'Preparing for the monthly clan war finals', date: 'February 15-20, 2026' },
+                meetup: { title: 'Planning Offline Meetup', desc: 'When members reach 40, we will organize a meetup (domestic or international)' },
+                schedule: [
+                    { day: 'Monday', time: '20:00', type: 'Practice' },
+                    { day: 'Wednesday', time: '20:00', type: 'Training' },
+                    { day: 'Friday', time: '21:00', type: 'Clan War' },
+                    { day: 'Saturday', time: '20:00', type: 'Training' }
+                ]
+            }
+        };
+
+        // Application data
+        let policies = JSON.parse(JSON.stringify(defaultPolicies));
+        let announcements = JSON.parse(JSON.stringify(defaultAnnouncements));
+        let clanData = JSON.parse(JSON.stringify(defaultClanData));
+        let members = JSON.parse(JSON.stringify(defaultMembers));
+        let events = JSON.parse(JSON.stringify(defaultEvents));
+
+        // Supabase Configuration
+        // ⚠️ สำคัญ: นำ Project URL และ anon Key จาก Supabase > Settings > API มาใส่ตรงนี้แทนของเดิม
+        const supabaseUrl = 'https://fiinjbrtxokjoulhccgi.supabase.co'; // ✅ ผมใส่ URL ให้แล้วครับ
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpaW5qYnJ0eG9ram91bGhjY2dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2OTA2MjIsImV4cCI6MjA4NjI2NjYyMn0.3CfMlkgZXVnCx5sMyLg5FSd7tTDdlmeSXa-R0DklIYk';
+        let supabaseClient = null;
+
+        // Wait for Supabase to load
+        function initSupabase() {
+            if (window.supabase && window.supabase.createClient) {
+                supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+                console.log('Supabase initialized:', supabaseClient);
+                return true;
+            }
+            return false;
+        }
+
+        // Website Tour Function
+        function startTour() {
+            if (!window.driver) return;
+            
+            const driver = window.driver.js.driver;
+            const lang = state.language;
+            
+            const tourConfig = {
+                th: {
+                    next: 'ถัดไป',
+                    prev: 'ย้อนกลับ',
+                    done: 'เริ่มใช้งาน',
+                    steps: [
+                        { element: '#clan-name', popover: { title: 'ยินดีต้อนรับสู่ 安镜之锋', description: 'นี่คือเว็บไซต์อย่างเป็นทางการของแคลนเรา' } },
+                        { element: '#nav-announcements', popover: { title: 'ข่าวสารและประกาศ', description: 'ติดตามอัพเดทกิจกรรมและข่าวสารสำคัญได้ที่หน้านี้' } },
+                        { element: '#nav-home', popover: { title: 'นโยบายแคลน', description: 'ศึกษากฎระเบียบและข้อบังคับต่างๆ เพื่อการอยู่ร่วมกัน' } },
+                        { element: '#nav-members', popover: { title: 'ทำเนียบสมาชิก', description: 'ดูรายชื่อสมาชิก ทีมบริหาร และผู้สนับสนุน' } },
+                        { element: '#nav-events', popover: { title: 'กิจกรรม', description: 'ตารางการฝึกซ้อมและการแข่งขันประจำสัปดาห์' } },
+                        { element: '#nav-contact', popover: { title: 'ติดต่อเรา', description: 'ช่องทางการติดต่อและสมัครเข้าแคลน' } }
+                    ]
+                },
+                zh: {
+                    next: '下一步',
+                    prev: '上一步',
+                    done: '开始使用',
+                    steps: [
+                        { element: '#clan-name', popover: { title: '欢迎来到 安镜之锋', description: '这是我们的官方战队网站' } },
+                        { element: '#nav-announcements', popover: { title: '公告与新闻', description: '在此处关注最新的活动和重要新闻' } },
+                        { element: '#nav-home', popover: { title: '战队政策', description: '了解战队的规则和条例' } },
+                        { element: '#nav-members', popover: { title: '成员列表', description: '查看成员、管理团队和赞助者' } },
+                        { element: '#nav-events', popover: { title: '活动', description: '每周训练和比赛时间表' } },
+                        { element: '#nav-contact', popover: { title: '联系我们', description: '联系方式和申请加入' } }
+                    ]
+                },
+                en: {
+                    next: 'Next',
+                    prev: 'Previous',
+                    done: 'Get Started',
+                    steps: [
+                        { element: '#clan-name', popover: { title: 'Welcome to 安镜之锋', description: 'This is our official clan website' } },
+                        { element: '#nav-announcements', popover: { title: 'Announcements', description: 'Follow updates and important news here' } },
+                        { element: '#nav-home', popover: { title: 'Clan Policy', description: 'Read clan rules and regulations' } },
+                        { element: '#nav-members', popover: { title: 'Members', description: 'View member list, management, and supporters' } },
+                        { element: '#nav-events', popover: { title: 'Events', description: 'Weekly training and tournament schedules' } },
+                        { element: '#nav-contact', popover: { title: 'Contact', description: 'Contact channels and application' } }
+                    ]
+                }
+            };
+
+            const currentConfig = tourConfig[lang] || tourConfig.en;
+
+            const driverObj = driver({
+                showProgress: true,
+                allowClose: true,
+                nextBtnText: currentConfig.next,
+                prevBtnText: currentConfig.prev,
+                doneBtnText: currentConfig.done,
+                steps: currentConfig.steps,
+                onDestroyed: () => {
+                    localStorage.setItem('hasSeenTour', 'true');
+                }
+            });
+
+            driverObj.drive();
+        }
+
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Video Intro Logic
+            const video = document.getElementById('intro-video');
+            const overlay = document.getElementById('intro-overlay');
+            const enterBtn = document.getElementById('enter-site-btn');
+            
+            if (video && overlay) {
+                const closeOverlay = () => {
+                    if (overlay.style.opacity === '0') return;
+                    
+                    overlay.style.transition = 'opacity 0.5s ease';
+                    overlay.style.opacity = '0';
+                    setTimeout(() => {
+                        overlay.style.display = 'none';
+                        video.pause();
+                    }, 500);
+                };
+
+                const showEnterButton = () => {
+                    if (enterBtn) {
+                        enterBtn.style.display = 'block';
+                    } else {
+                        closeOverlay();
+                    }
+                };
+
+                if (enterBtn) {
+                    enterBtn.addEventListener('click', () => {
+                        closeOverlay();
+                        // Start tour if first time visit
+                        if (!localStorage.getItem('hasSeenTour')) {
+                            setTimeout(startTour, 800); // Wait for overlay to fade out
+                        }
+                    });
+                }
+
+                video.onended = showEnterButton;
+                
+                // Robust Error Handling (ระบบป้องกันจอดำ)
+                video.onerror = closeOverlay;
+                const sources = video.getElementsByTagName('source');
+                for (let i = 0; i < sources.length; i++) {
+                    sources[i].onerror = closeOverlay;
+                }
+                
+                // Safety Timeout: ถ้าวิดีโอไม่เริ่มเล่นภายใน 3 วินาที ให้ข้ามเลย
+                setTimeout(() => {
+                    // ถ้าผ่านไป 5 วินาทีแล้ววิดีโอยังไม่เล่น (อาจจะเพราะเน็ตช้าหรือ Autoplay ไม่ติดจริงๆ) ให้ข้าม
+                    if (video.paused && video.currentTime < 0.1) {
+                        closeOverlay();
+                    }
+                }, 5000);
+                
+                // Ensure autoplay works
+                // บังคับปิดเสียงใน JS เพื่อให้ Autoplay ทำงานได้ดีขึ้นในบาง Browser
+                video.muted = true;
+                
+                video.play().catch(e => {
+                    console.log('Autoplay error:', e);
+                    // กรณี Autoplay ถูกบล็อก: อย่าเพิ่งปิดวิดีโอ (ลบ endVideo ออก)
+                    // ให้รอผู้ใช้แตะหน้าจอ 1 ครั้งเพื่อเริ่มเล่นแทน (แก้ปัญหาจอดำ)
+                    const forcePlay = () => {
+                        video.play();
+                        document.removeEventListener('click', forcePlay);
+                        document.removeEventListener('touchstart', forcePlay);
+                    };
+                    document.addEventListener('click', forcePlay);
+                    document.addEventListener('touchstart', forcePlay);
+                });
+            }
+
+            // Initialize Lucide icons
+            lucide.createIcons();
+            
+            // Initialize Supabase
+            if (!initSupabase()) {
+                console.warn('Supabase not available, using default data');
+            }
+            
+            // Check login status via Supabase Auth
+            if (supabaseClient) {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (session) {
+                    state.isLoggedIn = true;
+                    updateLoginUI();
+                }
+            } else {
+                // Fallback (ล้างค่าเก่าทิ้งเพื่อความปลอดภัย)
+                localStorage.removeItem('adminLoggedIn');
+            }
+            
+            // Load data from Supabase
+            await loadData();
+            
+            // Load initial content
+            document.getElementById('loading').style.display = 'none';
+            // Initialize language UI and ensure the correct navigation is active
+            setLanguage(state.language);
+            setCurrentPage(state.currentPage);
+        });
+
+        // Language functions
+        function setLanguage(lang) {
+            state.language = lang;
+            
+            // Update language buttons
+            document.querySelectorAll('[id^="lang-"]').forEach(btn => {
+                btn.classList.remove('bg-white', 'text-orange-600', 'shadow-lg');
+                btn.classList.add('text-white', 'hover:bg-white/10');
+            });
+            
+            document.getElementById(`lang-${lang}`).classList.add('bg-white', 'text-orange-600', 'shadow-lg');
+            document.getElementById(`lang-${lang}`).classList.remove('text-white', 'hover:bg-white/10');
+            
+            // Update UI
+            updateUI();
+            renderContent();
+        }
+
+        // Navigation functions
+        function setCurrentPage(page) {
+            state.currentPage = page;
+            
+            // Update navigation buttons
+            document.querySelectorAll('button[id^="nav-"]').forEach(btn => {
+                if (!btn.id.includes('login') && !btn.id.includes('logout') && !btn.id.includes('admin')) {
+                    btn.classList.remove('bg-white', 'text-orange-600', 'shadow-lg');
+                    btn.classList.add('bg-white/10', 'text-white', 'hover:bg-white/20');
+                }
+            });
+            
+            if (document.getElementById(`nav-${page}`)) {
+                document.getElementById(`nav-${page}`).classList.add('bg-white', 'text-orange-600', 'shadow-lg');
+                document.getElementById(`nav-${page}`).classList.remove('bg-white/10', 'text-white', 'hover:bg-white/20');
+            }
+            
+            // Update page title
+            const t = translations[state.language];
+            const pageTitles = {
+                home: t.officialPolicy,
+                announcements: t.navAnnouncements,
+                about: t.navAbout,
+                members: t.navMembers,
+                events: t.navEvents,
+                contact: t.navContact,
+                admin: 'Admin Dashboard'
+            };
+            
+            document.getElementById('current-page-title').textContent = pageTitles[page] || t.officialPolicy;
+            
+            // Render content
+            renderContent();
+        }
+
+        // Render content based on current page
+        function renderContent() {
+            const container = document.getElementById('content-container');
+            container.classList.remove('fade-in');
+            void container.offsetWidth; // Trigger reflow
+            container.classList.add('fade-in');
+            
+            switch(state.currentPage) {
+                case 'home':
+                    renderPolicyPage();
+                    break;
+                case 'announcements':
+                    renderAnnouncementsPage();
+                    break;
+                case 'about':
+                    renderAboutPage();
+                    break;
+                case 'members':
+                    renderMembersPage();
+                    break;
+                case 'events':
+                    renderEventsPage();
+                    break;
+                case 'contact':
+                    renderContactPage();
+                    break;
+                case 'admin':
+                    renderAdminPage();
+                    break;
+            }
+        }
+
+        // Page rendering functions
+        function renderPolicyPage() {
+            const t = translations[state.language];
+            const policyIcons = ['users', 'shield', 'alert-triangle', 'users', 'heart', 'bell', 'map-pin', 'shield', 'map-pin', 'video'];
+
+            let html = `
+                <div class="mb-8">
+                    <h2 class="text-3xl text-white mb-2">${t.officialPolicy}</h2>
+                    <p class="text-gray-400">${t.effectiveDate}: ${clanData[state.language].effectiveDateText}</p>
+                </div>
+
+                <div class="space-y-6">
+            `;
+
+            policies[state.language].forEach((policy, idx) => {
+                const isImportant = policy.important;
+                const hasPenalty = policy.penalty;
+
+                html += `
+                    <div class="policy-item bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border transition-all hover:shadow-xl ${isImportant ? 'border-red-500/50 shadow-lg shadow-red-500/20' : 'border-slate-700/50'}">
+                        <div class="flex items-start gap-4">
+                            <div class="p-3 rounded-lg flex-shrink-0 ${isImportant ? 'bg-red-500/20' : 'bg-orange-500/20'}">
+                                <i data-lucide="${policyIcons[idx] || 'shield'}" class="w-6 h-6 ${isImportant ? 'text-red-400' : 'text-orange-400'}"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-xl text-white mb-4">
+                                    <span class="text-orange-400">
+                                        ${state.language === 'zh' ? '第' : state.language === 'en' ? 'Article' : 'ข้อที่'} ${policy.id}${state.language === 'zh' ? '条' : ''}:
+                                    </span> ${policy.title}
+                                </h3>
+                                <div class="space-y-3">
+                `;
+                
+                policy.content.forEach((item, index) => {
+                    const isPenalty = item.includes('บทลงโทษ') || item.includes('处罚') || item.includes('Penalty');
+                    html += `
+                        <div class="pl-4 border-l-2 ${isPenalty ? 'border-red-500 text-red-300' : 'border-slate-600 text-gray-300'}">
+                            <p class="leading-relaxed">${item}</p>
+                        </div>
+                    `;
+                });
+                
+                if (isImportant) {
+                    html += `
+                        <div class="mt-4 flex items-center gap-2 text-red-400 text-sm">
+                            <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                            <span>${t.importantRule}</span>
+                        </div>
+                    `;
+                }
+                
+                html += `
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                </div>
+            `;
+
+            document.getElementById('content-container').innerHTML = html;
+            lucide.createIcons();
+        }
+
+        // Helper to extract YouTube ID
+        function getYoutubeId(url) {
+            if (!url) return null;
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
+
+        function renderAnnouncementsPage() {
+            const t = translations[state.language];
+            
+            let html = `
+                <div class="mb-8">
+                    <h2 class="text-3xl text-white mb-2">${t.announcementsTitle}</h2>
+                    <p class="text-gray-400">${t.announcementsSubtitle}</p>
+                </div>
+
+                <div class="space-y-6">
+            `;
+            
+            announcements[state.language].forEach(announcement => {
+                let borderClass = 'border-slate-700/50';
+                let bgClass = 'bg-blue-500/20';
+                let icon = 'megaphone';
+                let iconColor = 'text-blue-400';
+                
+                if (announcement.type === 'important') {
+                    borderClass = 'border-red-500/50 shadow-lg shadow-red-500/20';
+                    bgClass = 'bg-red-500/20';
+                    icon = 'alert-triangle';
+                    iconColor = 'text-red-400';
+                } else if (announcement.type === 'warning') {
+                    borderClass = 'border-yellow-500/50';
+                    bgClass = 'bg-yellow-500/20';
+                    icon = 'bell';
+                    iconColor = 'text-yellow-400';
+                } else if (announcement.type === 'success') {
+                    borderClass = 'border-green-500/50';
+                    bgClass = 'bg-green-500/20';
+                    icon = 'trophy';
+                    iconColor = 'text-green-400';
+                }
+                
+                // Media Content Logic
+                let mediaHtml = '';
+                if (announcement.imageUrl) {
+                    mediaHtml += `<img src="${announcement.imageUrl}" class="w-full rounded-lg mt-4 mb-2 object-cover max-h-[500px]" alt="Announcement Image" loading="lazy">`;
+                }
+                
+                if (announcement.videoUrl) {
+                    const youtubeId = getYoutubeId(announcement.videoUrl);
+                    if (youtubeId) {
+                        mediaHtml += `
+                            <div class="relative w-full pt-[56.25%] mt-4 mb-2 rounded-lg overflow-hidden bg-black">
+                                <iframe 
+                                    src="https://www.youtube.com/embed/${youtubeId}" 
+                                    class="absolute top-0 left-0 w-full h-full" 
+                                    frameborder="0" 
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                    allowfullscreen>
+                                </iframe>
+                            </div>`;
+                    } else {
+                        mediaHtml += `
+                            <video controls class="w-full rounded-lg mt-4 mb-2 bg-black max-h-[500px]">
+                                <source src="${announcement.videoUrl}">
+                                Your browser does not support the video tag.
+                            </video>`;
+                    }
+                }
+
+                html += `
+                    <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border transition-all hover:shadow-xl hover:scale-[1.01] ${borderClass}">
+                        <div class="flex items-start gap-4">
+                            <div class="p-3 rounded-lg flex-shrink-0 ${bgClass}">
+                                <i data-lucide="${icon}" class="w-6 h-6 ${iconColor}"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <i data-lucide="calendar" class="w-4 h-4 text-gray-500"></i>
+                                    <span class="text-sm text-gray-500">${announcement.date}</span>
+                                </div>
+                                <h3 class="text-xl text-white mb-3">${announcement.title}</h3>
+                                <p class="text-gray-300 leading-relaxed">${announcement.content}</p>
+                                ${mediaHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `</div>`;
+            
+            document.getElementById('content-container').innerHTML = html;
+            lucide.createIcons();
+        }
+
+        function renderAboutPage() {
+            const t = translations[state.language];
+            
+            const html = `
+                <div class="mb-8">
+                    <h2 class="text-3xl text-white mb-2">${t.aboutTitle}</h2>
+                    <p class="text-gray-400">${t.aboutSubtitle}</p>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                        <div class="flex items-start gap-4">
+                            <div class="p-3 rounded-lg bg-orange-500/20 flex-shrink-0">
+                                <i data-lucide="info" class="w-6 h-6 text-orange-400"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-2xl text-white mb-4">${t.aboutHistory}</h3>
+                                <p class="text-gray-300 leading-relaxed">${clanData[state.language].aboutHistoryText}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                        <div class="flex items-start gap-4">
+                            <div class="p-3 rounded-lg bg-orange-500/20 flex-shrink-0">
+                                <i data-lucide="target" class="w-6 h-6 text-orange-400"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-2xl text-white mb-4">${t.aboutVision}</h3>
+                                <p class="text-gray-300 leading-relaxed">${clanData[state.language].aboutVisionText}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                        <div class="flex items-start gap-4">
+                            <div class="p-3 rounded-lg bg-orange-500/20 flex-shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-orange-400"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-2xl text-white mb-6">${t.aboutValues}</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    ${[t.aboutValue1, t.aboutValue2, t.aboutValue3, t.aboutValue4].map(value => `
+                                        <div class="flex items-center gap-3 p-4 bg-slate-900/50 rounded-lg">
+                                            <i data-lucide="shield" class="w-5 h-5 text-orange-400 flex-shrink-0"></i>
+                                            <p class="text-gray-300">${value}</p>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('content-container').innerHTML = html;
+            lucide.createIcons();
+        }
+
+        function renderMembersPage() {
+            const t = translations[state.language];
+            
+            const html = `
+                <div class="mb-8">
+                    <h2 class="text-3xl text-white mb-2">${t.membersTitle}</h2>
+                    <p class="text-gray-400">${t.membersSubtitle}</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-gradient-to-br from-orange-500/20 to-red-500/20 backdrop-blur-sm rounded-xl p-6 border border-orange-500/30">
+                        <div class="flex items-center gap-4">
+                            <i data-lucide="users" class="w-12 h-12 text-orange-400"></i>
+                            <div>
+                                <p class="text-gray-400 text-sm">${t.membersCurrent}</p>
+                                <p class="text-4xl text-white font-bold">${members.regular.length}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-sm rounded-xl p-6 border border-blue-500/30">
+                        <div class="flex items-center gap-4">
+                            <i data-lucide="target" class="w-12 h-12 text-blue-400"></i>
+                            <div>
+                                <p class="text-gray-400 text-sm">${t.membersTarget}</p>
+                                <p class="text-4xl text-white font-bold">40</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="bg-gradient-to-r from-red-500/20 to-orange-500/20 backdrop-blur-sm rounded-xl p-6 border border-red-500/50">
+                        <h3 class="text-xl text-white mb-4 flex items-center gap-2">
+                            <i data-lucide="shield" class="w-5 h-5 text-red-400"></i>
+                            ${t.leaderTitle}
+                        </h3>
+                        <div class="flex items-center gap-4 p-4 bg-slate-900/50 rounded-lg">
+                            <div class="w-16 h-16 bg-gradient-to-br from-red-500 to-orange-500 rounded-full flex items-center justify-center">
+                                <i data-lucide="shield" class="w-8 h-8 text-white"></i>
+                            </div>
+                            <div>
+                                <p class="text-white text-lg">${members.leader.name}</p>
+                                <p class="text-gray-400 text-sm">${members.leader.role[state.language]}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                        <h3 class="text-xl text-white mb-4 flex items-center gap-2">
+                            <i data-lucide="users-round" class="w-5 h-5 text-orange-400"></i>
+                            ${t.managementTitle}
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            ${members.management.map((member, index) => `
+                                <div class="flex items-center gap-3 p-4 bg-slate-900/50 rounded-lg">
+                                    <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center">
+                                        <i data-lucide="users" class="w-6 h-6 text-white"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-white">${member.name}</p>
+                                        <p class="text-gray-400 text-sm">${member.role[state.language]}</p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                        <h3 class="text-xl text-white mb-4 flex items-center gap-2">
+                            <i data-lucide="heart" class="w-5 h-5 text-pink-400"></i>
+                            ${t.supportersTitle}
+                        </h3>
+                        <p class="text-gray-400 mb-4">Generous supporters of our clan</p>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            ${members.supporters.map((supporter, index) => `
+                                <div class="flex flex-col items-center gap-2 p-3 bg-slate-900/50 rounded-lg">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-pink-500 to-red-500 rounded-full flex items-center justify-center">
+                                        <i data-lucide="heart" class="w-5 h-5 text-white"></i>
+                                    </div>
+                                    <p class="text-gray-300 text-sm">${supporter.name}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                        <h3 class="text-xl text-white mb-4 flex items-center gap-2">
+                            <i data-lucide="users" class="w-5 h-5 text-blue-400"></i>
+                            ${t.membersTitle2}
+                        </h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            ${members.regular.map((member, index) => `
+                                <div class="flex flex-col items-center gap-2 p-3 bg-slate-900/50 rounded-lg">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                                        <i data-lucide="users" class="w-5 h-5 text-white"></i>
+                                    </div>
+                                    <p class="text-gray-300 text-sm truncate w-full text-center">${member.name}</p>
+                                    ${member.gameId ? `<p class="text-orange-400/80 text-xs font-mono">ID: ${member.gameId}</p>` : ''}
+                                    <div class="flex items-center gap-1 text-xs text-gray-500">
+                                        ${member.hasViolated ? `<i data-lucide="alert-triangle" class="w-3 h-3 text-yellow-500" title="เคยทำผิดกฎ"></i>` : ''}
+                                        ${member.relationship === 'Not Single' ? `<i data-lucide="heart" class="w-3 h-3 text-pink-500" title="ไม่โสด"></i>` : ''}
+                                        ${member.gender === 'Female' ? `<i data-lucide="venus" class="w-3 h-3 text-pink-400" title="หญิง"></i>` : ''}
+                                        ${member.gender === 'Male' ? `<i data-lucide="mars" class="w-3 h-3 text-blue-400" title="ชาย"></i>` : ''}
+                                        ${member.gender === 'Third Gender' ? `<i data-lucide="user" class="w-3 h-3 text-purple-400" title="บุคคลที่สาม"></i>` : ''}
+                                        <span>${member.country}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('content-container').innerHTML = html;
+            lucide.createIcons();
+        }
+
+        function renderEventsPage() {
+            const t = translations[state.language];
+            const e = events[state.language];
+            
+            const html = `
+                <div class="mb-8">
+                    <h2 class="text-3xl text-white mb-2">${t.eventsTitle}</h2>
+                    <p class="text-gray-400">${t.eventsSubtitle}</p>
+                </div>
+
+                <div class="mb-8">
+                    <h3 class="text-2xl text-white mb-4 flex items-center gap-2">
+                        <i data-lucide="party-popper" class="w-6 h-6 text-orange-400"></i>
+                        ${t.upcomingEvents}
+                    </h3>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-blue-500/50">
+                        <div class="flex items-start gap-4">
+                            <div class="p-3 rounded-lg bg-blue-500/20 flex-shrink-0">
+                                <i data-lucide="calendar" class="w-6 h-6 text-blue-400"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="px-3 py-1 bg-blue-500/20 text-blue-400 text-sm rounded-full">Recurring</span>
+                                </div>
+                                <h4 class="text-xl text-white mb-2">${e.weekly.title}</h4>
+                                <p class="text-gray-300 mb-3">${e.weekly.desc}</p>
+                                <div class="flex items-center gap-2 text-sm text-gray-400">
+                                    <i data-lucide="calendar" class="w-4 h-4"></i>
+                                    <span>${e.weekly.time}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-orange-500/50">
+                        <div class="flex items-start gap-4">
+                            <div class="p-3 rounded-lg bg-orange-500/20 flex-shrink-0">
+                                <i data-lucide="trophy" class="w-6 h-6 text-orange-400"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="px-3 py-1 bg-orange-500/20 text-orange-400 text-sm rounded-full">Upcoming</span>
+                                </div>
+                                <h4 class="text-xl text-white mb-2">${e.tournament.title}</h4>
+                                <p class="text-gray-300 mb-3">${e.tournament.desc}</p>
+                                <div class="flex items-center gap-2 text-sm text-gray-400">
+                                    <i data-lucide="calendar" class="w-4 h-4"></i>
+                                    <span>${e.tournament.date}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-xl p-6 border border-purple-500/50">
+                        <div class="flex items-start gap-4">
+                            <div class="p-3 rounded-lg bg-purple-500/20 flex-shrink-0">
+                                <i data-lucide="map-pin" class="w-6 h-6 text-purple-400"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="px-3 py-1 bg-purple-500/20 text-purple-400 text-sm rounded-full">Planning</span>
+                                </div>
+                                <h4 class="text-xl text-white mb-2">${e.meetup.title}</h4>
+                                <p class="text-gray-300 mb-3">${e.meetup.desc}</p>
+                                <div class="flex items-center gap-2 text-sm text-gray-400">
+                                    <i data-lucide="users" class="w-4 h-4"></i>
+                                    <span>${members.regular.length}/40 ${state.language === 'th' ? 'สมาชิก' : state.language === 'zh' ? '成员' : 'Members'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                        <h3 class="text-xl text-white mb-4 flex items-center gap-2">
+                            <i data-lucide="trophy" class="w-5 h-5 text-yellow-400"></i>
+                            ${state.language === 'th' ? 'ตารางแข่งขันแคลนวอร์' : state.language === 'zh' ? '战队战时间表' : 'Clan War Schedule'}
+                        </h3>
+                        <div class="space-y-3">
+                            ${e.schedule.map(event => `
+                                <div class="flex items-center justify-between p-4 bg-slate-900/50 rounded-lg">
+                                    <div class="flex items-center gap-3">
+                                        <i data-lucide="calendar" class="w-5 h-5 text-orange-400"></i>
+                                        <div>
+                                            <p class="text-white">${event.day}</p>
+                                            <p class="text-gray-400 text-sm">${event.type}</p>
+                                        </div>
+                                    </div>
+                                    <span class="text-orange-400 font-semibold">${event.time}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('content-container').innerHTML = html;
+            lucide.createIcons();
+        }
+
+        function renderContactPage() {
+            const t = translations[state.language];
+            
+            const html = `
+                <div class="mb-8">
+                    <h2 class="text-3xl text-white mb-2">${t.contactTitle}</h2>
+                    <p class="text-gray-400">${t.contactSubtitle}</p>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="bg-gradient-to-r from-orange-500/20 to-red-500/20 backdrop-blur-sm rounded-xl p-6 border border-orange-500/50">
+                        <h3 class="text-xl text-white mb-4 flex items-center gap-2">
+                            <i data-lucide="message-square" class="w-5 h-5 text-orange-400"></i>
+                            ${t.contactInfo}
+                        </h3>
+                        <div class="space-y-4">
+                            <div class="flex items-start gap-3 p-4 bg-slate-900/50 rounded-lg">
+                                <i data-lucide="shield" class="w-6 h-6 text-orange-400 mt-1 flex-shrink-0"></i>
+                                <div>
+                                    <p class="text-white mb-1">${t.contactLeader}</p>
+                                    <p class="text-gray-400 text-sm">Free Fire ID: ${clanData[state.language].contactLeaderId}</p>
+                                </div>
+                            </div>
+                            <div class="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                                <div class="flex items-start gap-2">
+                                    <i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0"></i>
+                                    <p class="text-yellow-200 text-sm">${clanData[state.language].contactNote}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                        <h3 class="text-xl text-white mb-4 flex items-center gap-2">
+                            <i data-lucide="sparkles" class="w-5 h-5 text-blue-400"></i>
+                            ${t.contactSocial}
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-1 gap-4">
+                            <div class="flex items-center gap-3 p-4 bg-slate-900/50 rounded-lg hover:bg-slate-900/70 transition-colors cursor-pointer">
+                                <div class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
+                                    <i data-lucide="message-square" class="w-6 h-6 text-green-400"></i>
+                                </div>
+                                <div>
+                                    <p class="text-white">${t.contactWeChat}</p>
+                                    <p class="text-gray-400 text-sm">${clanData[state.language].contactWeChat}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                        <h3 class="text-xl text-white mb-4 flex items-center gap-2">
+                            <i data-lucide="map-pin" class="w-5 h-5 text-red-400"></i>
+                            ${state.language === 'th' ? 'พื้นที่กิจกรรม' : state.language === 'zh' ? '活动区域' : 'Activity Region'}
+                        </h3>
+                        <div class="aspect-video bg-slate-900/50 rounded-lg flex items-center justify-center">
+                            <div class="text-center">
+                                <i data-lucide="map-pin" class="w-16 h-16 text-gray-600 mx-auto mb-4"></i>
+                                <p class="text-gray-500">${clanData[state.language].activityRegion}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('content-container').innerHTML = html;
+            lucide.createIcons();
+        }
+
+        function renderAdminPage() {
+            const t = translations[state.language];
+            
+            const html = `
+                <div class="mb-8">
+                    <h2 class="text-3xl text-white mb-2">Admin Dashboard</h2>
+                    <p class="text-gray-400">จัดการข้อมูลแคลน 安镜之锋</p>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Edit Policies -->
+                    <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xl text-white flex items-center gap-2">
+                                <i data-lucide="shield" class="w-5 h-5 text-orange-400"></i>
+                                นโยบายแคลน (Policies)
+                            </h3>
+                            <button
+                                onclick="startEdit('policies')"
+                                class="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                            >
+                                <i data-lucide="edit" class="w-4 h-4"></i>
+                                แก้ไข
+                            </button>
+                        </div>
+                        <p class="text-gray-400 text-sm mb-4">จำนวนนโยบาย: ${policies[state.language].length} ข้อ</p>
+                    </div>
+
+                    <!-- Edit Announcements -->
+                    <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xl text-white flex items-center gap-2">
+                                <i data-lucide="megaphone" class="w-5 h-5 text-blue-400"></i>
+                                ประกาศและข่าวสาร (Announcements)
+                            </h3>
+                            <button
+                                onclick="startEdit('announcements')"
+                                class="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                            >
+                                <i data-lucide="edit" class="w-4 h-4"></i>
+                                แก้ไข
+                            </button>
+                        </div>
+                        <p class="text-gray-400 text-sm mb-4">จำนวนประกาศ: ${announcements[state.language].length} รายการ</p>
+                    </div>
+
+                    <!-- Edit Members -->
+                    <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xl text-white flex items-center gap-2">
+                                <i data-lucide="users" class="w-5 h-5 text-green-400"></i>
+                                สมาชิกแคลน (Members)
+                            </h3>
+                            <button
+                                onclick="startEdit('members')"
+                                class="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                            >
+                                <i data-lucide="edit" class="w-4 h-4"></i>
+                                แก้ไข
+                            </button>
+                        </div>
+                        <p class="text-gray-400 text-sm mb-1">ทีมบริหาร: ${members.management.length} คน</p>
+                        <p class="text-gray-400 text-sm mb-1">ผู้สนับสนุน: ${members.supporters.length} คน</p>
+                        <p class="text-gray-400 text-sm mb-4">สมาชิกทั่วไป: ${members.regular.length} / 40 คน</p>
+                    </div>
+
+                    <!-- Edit Events -->
+                    <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xl text-white flex items-center gap-2">
+                                <i data-lucide="party-popper" class="w-5 h-5 text-yellow-400"></i>
+                                กิจกรรม (Events)
+                            </h3>
+                            <button onclick="startEdit('events')" class="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors">
+                                <i data-lucide="edit" class="w-4 h-4"></i>
+                                แก้ไข
+                            </button>
+                        </div>
+                        <p class="text-gray-400 text-sm mb-4">จัดการตารางฝึกซ้อมและกิจกรรมต่างๆ</p>
+                    </div>
+
+                    <!-- Edit About -->
+                    <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xl text-white flex items-center gap-2">
+                                <i data-lucide="info" class="w-5 h-5 text-purple-400"></i>
+                                เกี่ยวกับแคลน (About)
+                            </h3>
+                            <button
+                                onclick="startEdit('clanData')"
+                                class="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                            >
+                                <i data-lucide="edit" class="w-4 h-4"></i>
+                                แก้ไข
+                            </button>
+                        </div>
+                        <p class="text-gray-400 text-sm mb-2">ประวัติ, วิสัยทัศน์, จำนวนสมาชิก, ข้อมูลติดต่อ</p>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('content-container').innerHTML = html;
+            lucide.createIcons();
+        }
+
+        // Admin functions
+        function startEdit(section) {
+            state.editingSection = section;
+            state.tempEditData = JSON.parse(JSON.stringify(
+                section === 'policies' ? policies :
+                section === 'announcements' ? announcements :
+                section === 'members' ? members :
+                section === 'events' ? events :
+                clanData
+            ));
+            
+            renderEditDialog();
+        }
+
+        function renderEditDialog() {
+            const dialog = document.getElementById('edit-dialog');
+            const container = dialog.querySelector('div > div');
+            
+            let html = `
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-2xl text-white">
+                        ${state.editingSection === 'policies' && 'แก้ไขนโยบาย'}
+                        ${state.editingSection === 'announcements' && 'แก้ไขประกาศ'}
+                        ${state.editingSection === 'members' && 'แก้ไขสมาชิก'}
+                        ${state.editingSection === 'events' && 'แก้ไขกิจกรรม'}
+                        ${state.editingSection === 'clanData' && 'แก้ไขข้อมูลแคลน'}
+                    </h3>
+                    <button onclick="handleAutoTranslate()" id="auto-translate-btn" class="mr-2 flex items-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm ml-auto">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        AI Translate (From TH)
+                    </button>
+                    <button
+                        onclick="cancelEdit()"
+                        class="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                    >
+                        <i data-lucide="x" class="w-6 h-6 text-gray-400"></i>
+                    </button>
+                </div>
+            `;
+            
+            if (state.editingSection === 'policies') {
+                html += `
+                    <div class="space-y-6">
+                        ${['th', 'zh', 'en'].map(lang => `
+                            <div class="border border-slate-700 rounded-lg p-4">
+                                <h4 class="text-lg text-white mb-4">
+                                    ${lang === 'th' && '🇹🇭 ภาษาไทย'}
+                                    ${lang === 'zh' && '🇨🇳 中文'}
+                                    ${lang === 'en' && '🇬🇧 English'}
+                                </h4>
+                                ${state.tempEditData[lang].map((policy, index) => `
+                                    <div class="mb-4 p-4 bg-slate-900 rounded-lg">
+                                        <div class="mb-2">
+                                            <label class="text-gray-400 text-sm">ชื่อนโยบาย:</label>
+                                            <input
+                                                type="text"
+                                                value="${policy.title}"
+                                                onchange="updatePolicyTitle('${lang}', ${index}, this.value)"
+                                                class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:border-orange-500 focus:outline-none"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label class="text-gray-400 text-sm">เนื้อหา (แยกด้วยบรรทัดใหม่):</label>
+                                            <textarea
+                                                onchange="updatePolicyContent('${lang}', ${index}, this.value)"
+                                                rows="4"
+                                                class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:border-orange-500 focus:outline-none"
+                                            >${policy.content.join('\n')}</textarea>
+                                        </div>
+                                        <div class="flex items-center gap-4 mt-3">
+                                            <label class="flex items-center gap-2 text-gray-400 text-sm cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    ${policy.important ? 'checked' : ''}
+                                                    onchange="updatePolicyFlag('${lang}', ${index}, 'important', this.checked)"
+                                                    class="rounded border-slate-700 bg-slate-800 text-orange-500 focus:ring-orange-500"
+                                                />
+                                                Important Rule
+                                            </label>
+                                            <label class="flex items-center gap-2 text-gray-400 text-sm cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    ${policy.penalty ? 'checked' : ''}
+                                                    onchange="updatePolicyFlag('${lang}', ${index}, 'penalty', this.checked)"
+                                                    class="rounded border-slate-700 bg-slate-800 text-orange-500 focus:ring-orange-500"
+                                                />
+                                                Has Penalty
+                                            </label>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else if (state.editingSection === 'announcements') {
+                html += `
+                    <div class="space-y-6">
+                        ${['th', 'zh', 'en'].map(lang => `
+                            <div class="border border-slate-700 rounded-lg p-4 space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <h4 class="text-lg text-white">
+                                        ${lang === 'th' && '🇹🇭 ภาษาไทย'}
+                                        ${lang === 'zh' && '🇨🇳 中文'}
+                                        ${lang === 'en' && '🇬🇧 English'}
+                                    </h4>
+                                    <button
+                                        onclick="addAnnouncement('${lang}')"
+                                        class="flex items-center gap-2 px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm transition-colors"
+                                    >
+                                        <i data-lucide="plus" class="w-4 h-4"></i>
+                                        เพิ่มประกาศ
+                                    </button>
+                                </div>
+
+                                ${state.tempEditData[lang].map((announcement, index) => `
+                                    <div class="mb-4 p-4 bg-slate-900 rounded-lg">
+                                        <div class="mb-2">
+                                            <label class="text-gray-400 text-sm">วันที่:</label>
+                                            <input
+                                                type="text"
+                                                value="${announcement.date}"
+                                                onchange="updateAnnouncementDate('${lang}', ${index}, this.value)"
+                                                class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:border-orange-500 focus:outline-none"
+                                            />
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="text-gray-400 text-sm">หัวข้อ:</label>
+                                            <input
+                                                type="text"
+                                                value="${announcement.title}"
+                                                onchange="updateAnnouncementTitle('${lang}', ${index}, this.value)"
+                                                class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:border-orange-500 focus:outline-none"
+                                            />
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="text-gray-400 text-sm">ประเภท (Type):</label>
+                                            <select
+                                                onchange="updateAnnouncementType('${lang}', ${index}, this.value)"
+                                                class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:border-orange-500 focus:outline-none"
+                                            >
+                                                <option value="info" ${announcement.type === 'info' ? 'selected' : ''}>Info (Blue)</option>
+                                                <option value="success" ${announcement.type === 'success' ? 'selected' : ''}>Success (Green)</option>
+                                                <option value="warning" ${announcement.type === 'warning' ? 'selected' : ''}>Warning (Yellow)</option>
+                                                <option value="important" ${announcement.type === 'important' ? 'selected' : ''}>Important (Red)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="text-gray-400 text-sm">เนื้อหา:</label>
+                                            <textarea
+                                                onchange="updateAnnouncementContent('${lang}', ${index}, this.value)"
+                                                rows="3"
+                                                class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:border-orange-500 focus:outline-none"
+                                            >${announcement.content}</textarea>
+                                        </div>
+                                        <div class="mt-2">
+                                            <label class="text-gray-400 text-sm">ลิงก์รูปภาพ (Image URL):</label>
+                                            <input
+                                                type="text"
+                                                value="${announcement.imageUrl || ''}"
+                                                onchange="updateAnnouncementImage('${lang}', ${index}, this.value)"
+                                                class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:border-orange-500 focus:outline-none"
+                                                placeholder="https://example.com/image.jpg"
+                                            />
+                                        </div>
+                                        <div class="mt-2">
+                                            <label class="text-gray-400 text-sm">ลิงก์วีดีโอ (Video URL / YouTube):</label>
+                                            <input
+                                                type="text"
+                                                value="${announcement.videoUrl || ''}"
+                                                onchange="updateAnnouncementVideo('${lang}', ${index}, this.value)"
+                                                class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:border-orange-500 focus:outline-none"
+                                                placeholder="YouTube Link or .mp4 URL"
+                                            />
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else if (state.editingSection === 'members') {
+                html += `
+                <div class="space-y-6">
+                    <!-- Leader -->
+                    <div class="border border-slate-700 rounded-lg p-4">
+                        <h4 class="text-lg text-white mb-4">
+                            <i data-lucide="shield" class="w-5 h-5 inline-block mr-2 text-red-400"></i>
+                            หัวหน้าแคลน (Leader)
+                        </h4>
+                        <div class="p-4 bg-slate-900 rounded-lg space-y-4">
+                            <div>
+                                <label class="text-gray-400 text-sm">ชื่อ:</label>
+                                <input type="text" value="${state.tempEditData.leader.name}" onchange="updateLeader('name', this.value)" class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:outline-none focus:border-orange-500" />
+                            </div>
+                            <div>
+                                <label class="text-gray-400 text-sm">ตำแหน่ง (TH):</label>
+                                <input type="text" value="${state.tempEditData.leader.role.th}" onchange="updateLeaderRole('th', this.value)" class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:outline-none focus:border-orange-500" />
+                            </div>
+                            <div>
+                                <label class="text-gray-400 text-sm">ตำแหน่ง (ZH):</label>
+                                <input type="text" value="${state.tempEditData.leader.role.zh}" onchange="updateLeaderRole('zh', this.value)" class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:outline-none focus:border-orange-500" />
+                            </div>
+                            <div>
+                                <label class="text-gray-400 text-sm">ตำแหน่ง (EN):</label>
+                                <input type="text" value="${state.tempEditData.leader.role.en}" onchange="updateLeaderRole('en', this.value)" class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:outline-none focus:border-orange-500" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Management -->
+                    <div class="border border-slate-700 rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="text-lg text-white">
+                                <i data-lucide="users-round" class="w-5 h-5 inline-block mr-2 text-orange-400"></i>
+                                ทีมบริหาร (Management Team)
+                            </h4>
+                            <button onclick="addManagementMember()" class="flex items-center gap-2 px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm transition-colors">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                เพิ่มทีมบริหาร
+                            </button>
+                        </div>
+                        <div class="space-y-4">
+                            ${state.tempEditData.management.map((member, index) => `
+                                <div class="p-4 bg-slate-900 rounded-lg border border-slate-800">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <p class="text-white font-semibold">ทีมบริหาร #${index + 1}</p>
+                                        <button onclick="removeManagementMember(${index})" class="text-red-400 hover:text-red-300 text-sm">
+                                            <i data-lucide="trash-2" class="w-4 h-4 inline-block mr-1"></i>ลบ
+                                        </button>
+                                    </div>
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="text-gray-400 text-sm">ชื่อ:</label>
+                                            <input type="text" value="${member.name}" onchange="updateManagementMember(${index}, 'name', this.value)" class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:outline-none focus:border-orange-500" />
+                                        </div>
+                                        <div>
+                                            <label class="text-gray-400 text-sm">ตำแหน่ง (TH):</label>
+                                            <input type="text" value="${member.role.th}" onchange="updateManagementMemberRole(${index}, 'th', this.value)" class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:outline-none focus:border-orange-500" />
+                                        </div>
+                                        <div>
+                                            <label class="text-gray-400 text-sm">ตำแหน่ง (ZH):</label>
+                                            <input type="text" value="${member.role.zh}" onchange="updateManagementMemberRole(${index}, 'zh', this.value)" class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:outline-none focus:border-orange-500" />
+                                        </div>
+                                        <div>
+                                            <label class="text-gray-400 text-sm">ตำแหน่ง (EN):</label>
+                                            <input type="text" value="${member.role.en}" onchange="updateManagementMemberRole(${index}, 'en', this.value)" class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:outline-none focus:border-orange-500" />
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                            ${state.tempEditData.management.length === 0 ? `<p class="text-gray-500 text-center text-sm">ยังไม่มีทีมบริหาร</p>` : ''}
+                        </div>
+                    </div>
+
+                    <!-- Supporters -->
+                    <div class="border border-slate-700 rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="text-lg text-white">
+                                <i data-lucide="heart" class="w-5 h-5 inline-block mr-2 text-pink-400"></i>
+                                ผู้สนับสนุน (Supporters)
+                            </h4>
+                            <button onclick="addSupporter()" class="flex items-center gap-2 px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm transition-colors">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                เพิ่มผู้สนับสนุน
+                            </button>
+                        </div>
+                        <div class="space-y-4">
+                            ${state.tempEditData.supporters.map((supporter, index) => `
+                                <div class="p-4 bg-slate-900 rounded-lg border border-slate-800">
+                                     <div class="flex justify-between items-center">
+                                        <div>
+                                            <label class="text-gray-400 text-sm">ชื่อผู้สนับสนุน #${index + 1}:</label>
+                                            <input type="text" value="${supporter.name}" onchange="updateSupporter(${index}, this.value)" class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:outline-none focus:border-orange-500" />
+                                        </div>
+                                        <button onclick="removeSupporter(${index})" class="text-red-400 hover:text-red-300 text-sm self-end mb-1">
+                                            <i data-lucide="trash-2" class="w-4 h-4 inline-block mr-1"></i>ลบ
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                            ${state.tempEditData.supporters.length === 0 ? `<p class="text-gray-500 text-center text-sm">ยังไม่มีผู้สนับสนุน</p>` : ''}
+                        </div>
+                    </div>
+
+                    <!-- Regular Members -->
+                    <div class="border border-slate-700 rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="text-lg text-white">
+                                <i data-lucide="users" class="w-5 h-5 inline-block mr-2 text-green-400"></i>
+                                สมาชิกทั่วไป (Regular Members)
+                            </h4>
+                            ${state.tempEditData.regular.length < 40 ? `
+                            <button
+                                onclick="addMember()"
+                                class="flex items-center gap-2 px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm transition-colors"
+                            >
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                เพิ่มสมาชิก
+                            </button>
+                            ` : `
+                            <span class="text-sm text-yellow-400">สมาชิกเต็มแล้ว (40 คน)</span>
+                            `}
+                        </div>
+                        <div class="space-y-4">
+                            ${state.tempEditData.regular.map((member, index) => `
+                                <div class="p-4 bg-slate-900 rounded-lg border border-slate-800">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <p class="text-white font-semibold">สมาชิก #${index + 1}</p>
+                                        <button onclick="removeMember(${index})" class="text-red-400 hover:text-red-300 text-sm">
+                                            <i data-lucide="trash-2" class="w-4 h-4 inline-block mr-1"></i>ลบ
+                                        </button>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="text-gray-400 text-sm">ชื่อผู้เล่น:</label>
+                                            <input type="text" value="${member.name}" onchange="updateMember(${index}, 'name', this.value)" class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:outline-none focus:border-orange-500" />
+                                        </div>
+                                        <div>
+                                            <label class="text-gray-400 text-sm">ไอดีเกม:</label>
+                                            <input type="text" value="${member.gameId}" onchange="updateMember(${index}, 'gameId', this.value)" class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:outline-none focus:border-orange-500" />
+                                        </div>
+                                        <div>
+                                            <label class="text-gray-400 text-sm">เพศ:</label>
+                                            <select onchange="updateMember(${index}, 'gender', this.value)" class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:outline-none focus:border-orange-500">
+                                                <option value="Male" ${member.gender === 'Male' ? 'selected' : ''}>ชาย</option>
+                                                <option value="Female" ${member.gender === 'Female' ? 'selected' : ''}>หญิง</option>
+                                                <option value="Third Gender" ${member.gender === 'Third Gender' ? 'selected' : ''}>บุคคลที่สาม</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="text-gray-400 text-sm">ประเทศ:</label>
+                                            <input type="text" value="${member.country}" onchange="updateMember(${index}, 'country', this.value)" class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:outline-none focus:border-orange-500" />
+                                        </div>
+                                        <div>
+                                            <label class="text-gray-400 text-sm">สถานะความรัก:</label>
+                                            <select onchange="updateMember(${index}, 'relationship', this.value)" class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:outline-none focus:border-orange-500">
+                                                <option value="Single" ${member.relationship === 'Single' ? 'selected' : ''}>โสด</option>
+                                                <option value="Not Single" ${member.relationship === 'Not Single' ? 'selected' : ''}>ไม่โสด</option>
+                                            </select>
+                                        </div>
+                                        <div class="flex items-end">
+                                            <label class="flex items-center gap-2 text-gray-400 text-sm cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    ${member.hasViolated ? 'checked' : ''}
+                                                    onchange="updateMember(${index}, 'hasViolated', this.checked)"
+                                                    class="rounded border-slate-700 bg-slate-800 text-orange-500 focus:ring-orange-500"
+                                                />
+                                                เคยทำผิดกฎ
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                             ${state.tempEditData.regular.length === 0 ? `<p class="text-gray-500 text-center text-sm">ยังไม่มีสมาชิก</p>` : ''}
+                        </div>
+                    </div>
+                </div>
+                `;
+            } else if (state.editingSection === 'events') {
+                html += `
+                    <div class="space-y-6">
+                        ${['th', 'zh', 'en'].map(lang => `
+                            <div class="border border-slate-700 rounded-lg p-4">
+                                <h4 class="text-lg text-white mb-4">
+                                    ${lang === 'th' && '🇹🇭 ภาษาไทย'}
+                                    ${lang === 'zh' && '🇨🇳 中文'}
+                                    ${lang === 'en' && '🇬🇧 English'}
+                                </h4>
+                                <div class="space-y-6">
+                                    <!-- Weekly Training -->
+                                    <div class="p-4 bg-slate-900 rounded-lg">
+                                        <h5 class="text-orange-400 mb-2">Weekly Training</h5>
+                                        <div class="space-y-2">
+                                            <input type="text" value="${state.tempEditData[lang].weekly.title}" onchange="updateEventData('${lang}', 'weekly', 'title', this.value)" class="w-full px-3 py-2 bg-slate-800 text-white rounded border border-slate-700" placeholder="Title">
+                                            <input type="text" value="${state.tempEditData[lang].weekly.desc}" onchange="updateEventData('${lang}', 'weekly', 'desc', this.value)" class="w-full px-3 py-2 bg-slate-800 text-white rounded border border-slate-700" placeholder="Description">
+                                            <input type="text" value="${state.tempEditData[lang].weekly.time}" onchange="updateEventData('${lang}', 'weekly', 'time', this.value)" class="w-full px-3 py-2 bg-slate-800 text-white rounded border border-slate-700" placeholder="Time">
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Tournament -->
+                                    <div class="p-4 bg-slate-900 rounded-lg">
+                                        <h5 class="text-orange-400 mb-2">Tournament</h5>
+                                        <div class="space-y-2">
+                                            <input type="text" value="${state.tempEditData[lang].tournament.title}" onchange="updateEventData('${lang}', 'tournament', 'title', this.value)" class="w-full px-3 py-2 bg-slate-800 text-white rounded border border-slate-700" placeholder="Title">
+                                            <input type="text" value="${state.tempEditData[lang].tournament.desc}" onchange="updateEventData('${lang}', 'tournament', 'desc', this.value)" class="w-full px-3 py-2 bg-slate-800 text-white rounded border border-slate-700" placeholder="Description">
+                                            <input type="text" value="${state.tempEditData[lang].tournament.date}" onchange="updateEventData('${lang}', 'tournament', 'date', this.value)" class="w-full px-3 py-2 bg-slate-800 text-white rounded border border-slate-700" placeholder="Date">
+                                        </div>
+                                    </div>
+
+                                    <!-- Meetup -->
+                                    <div class="p-4 bg-slate-900 rounded-lg">
+                                        <h5 class="text-orange-400 mb-2">Meetup</h5>
+                                        <div class="space-y-2">
+                                            <input type="text" value="${state.tempEditData[lang].meetup.title}" onchange="updateEventData('${lang}', 'meetup', 'title', this.value)" class="w-full px-3 py-2 bg-slate-800 text-white rounded border border-slate-700" placeholder="Title">
+                                            <input type="text" value="${state.tempEditData[lang].meetup.desc}" onchange="updateEventData('${lang}', 'meetup', 'desc', this.value)" class="w-full px-3 py-2 bg-slate-800 text-white rounded border border-slate-700" placeholder="Description">
+                                        </div>
+                                    </div>
+
+                                    <!-- Schedule -->
+                                    <div class="p-4 bg-slate-900 rounded-lg">
+                                        <div class="flex justify-between items-center mb-2">
+                                            <h5 class="text-orange-400">Schedule</h5>
+                                            <button onclick="addScheduleItem('${lang}')" class="text-green-400 hover:text-green-300 text-sm"><i data-lucide="plus" class="w-4 h-4"></i> Add</button>
+                                        </div>
+                                        <div class="space-y-2">
+                                            ${state.tempEditData[lang].schedule.map((item, idx) => `
+                                                <div class="flex gap-2 items-center">
+                                                    <input type="text" value="${item.day}" onchange="updateSchedule('${lang}', ${idx}, 'day', this.value)" class="flex-1 px-2 py-1 bg-slate-800 text-white rounded border border-slate-700 text-sm" placeholder="Day">
+                                                    <input type="text" value="${item.time}" onchange="updateSchedule('${lang}', ${idx}, 'time', this.value)" class="w-20 px-2 py-1 bg-slate-800 text-white rounded border border-slate-700 text-sm" placeholder="Time">
+                                                    <input type="text" value="${item.type}" onchange="updateSchedule('${lang}', ${idx}, 'type', this.value)" class="flex-1 px-2 py-1 bg-slate-800 text-white rounded border border-slate-700 text-sm" placeholder="Type">
+                                                    <button onclick="removeScheduleItem('${lang}', ${idx})" class="text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else if (state.editingSection === 'clanData') {
+                html += `
+                    <div class="space-y-6">
+                        ${['th', 'zh', 'en'].map(lang => `
+                            <div class="border border-slate-700 rounded-lg p-4">
+                                <h4 class="text-lg text-white mb-4">
+                                    ${lang === 'th' && '🇹🇭 ภาษาไทย'}
+                                    ${lang === 'zh' && '🇨🇳 中文'}
+                                    ${lang === 'en' && '🇬🇧 English'}
+                                </h4>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="text-gray-400 text-sm">วันที่มีผลบังคับใช้:</label>
+                                        <input
+                                            type="text"
+                                            value="${state.tempEditData[lang].effectiveDateText}"
+                                            onchange="updateClanData('${lang}', 'effectiveDateText', this.value)"
+                                            class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:border-orange-500 focus:outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label class="text-gray-400 text-sm">ประวัติความเป็นมา:</label>
+                                        <textarea
+                                            onchange="updateClanData('${lang}', 'aboutHistoryText', this.value)"
+                                            rows="4"
+                                            class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:border-orange-500 focus:outline-none"
+                                        >${state.tempEditData[lang].aboutHistoryText}</textarea>
+                                    </div>
+                                    <div>
+                                        <label class="text-gray-400 text-sm">วิสัยทัศน์:</label>
+                                        <textarea
+                                            onchange="updateClanData('${lang}', 'aboutVisionText', this.value)"
+                                            rows="4"
+                                            class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:border-orange-500 focus:outline-none"
+                                        >${state.tempEditData[lang].aboutVisionText}</textarea>
+                                    </div>
+                                    <div>
+                                        <label class="text-gray-400 text-sm">Free Fire ID หัวหน้าแคลน:</label>
+                                        <input
+                                            type="text"
+                                            value="${state.tempEditData[lang].contactLeaderId}"
+                                            onchange="updateClanData('${lang}', 'contactLeaderId', this.value)"
+                                            class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:border-orange-500 focus:outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label class="text-gray-400 text-sm">WeChat:</label>
+                                        <input
+                                            type="text"
+                                            value="${state.tempEditData[lang].contactWeChat}"
+                                            onchange="updateClanData('${lang}', 'contactWeChat', this.value)"
+                                            class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:border-orange-500 focus:outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label class="text-gray-400 text-sm">หมายเหตุติดต่อ (Contact Note):</label>
+                                        <input
+                                            type="text"
+                                            value="${state.tempEditData[lang].contactNote || ''}"
+                                            onchange="updateClanData('${lang}', 'contactNote', this.value)"
+                                            class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:border-orange-500 focus:outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label class="text-gray-400 text-sm">พื้นที่กิจกรรม (Region):</label>
+                                        <input
+                                            type="text"
+                                            value="${state.tempEditData[lang].activityRegion || ''}"
+                                            onchange="updateClanData('${lang}', 'activityRegion', this.value)"
+                                            class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:border-orange-500 focus:outline-none"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            
+            html += `
+                <div class="flex items-center gap-4 mt-6 pt-6 border-t border-slate-700">
+                    <button
+                        onclick="saveEdit()"
+                        class="flex items-center gap-2 px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
+                    >
+                        <i data-lucide="save" class="w-5 h-5"></i>
+                        บันทึก
+                    </button>
+                    <button
+                        onclick="cancelEdit()"
+                        class="flex items-center gap-2 px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                    >
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                        ยกเลิก
+                    </button>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+            dialog.classList.remove('hidden');
+            dialog.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        // Update functions for edit dialog
+        function updatePolicyTitle(lang, index, value) {
+            state.tempEditData[lang][index].title = value;
+        }
+
+        function updatePolicyContent(lang, index, value) {
+            state.tempEditData[lang][index].content = value.split('\n');
+        }
+
+        function updateLeader(field, value) {
+            state.tempEditData.leader[field] = value;
+        }
+
+        function updateLeaderRole(lang, value) {
+            state.tempEditData.leader.role[lang] = value;
+        }
+
+        function addManagementMember() {
+            const newMember = {
+                name: 'New Management',
+                role: { th: 'ตำแหน่งใหม่', zh: '新职位', en: 'New Role' }
+            };
+            state.tempEditData.management.push(newMember);
+            renderEditDialog();
+        }
+
+        function removeManagementMember(index) {
+            state.tempEditData.management.splice(index, 1);
+            renderEditDialog();
+        }
+
+        function updateManagementMember(index, field, value) {
+            state.tempEditData.management[index][field] = value;
+        }
+
+        function updateManagementMemberRole(index, lang, value) {
+            state.tempEditData.management[index].role[lang] = value;
+        }
+
+        function addSupporter() {
+            const newSupporter = { name: 'New Supporter' };
+            state.tempEditData.supporters.push(newSupporter);
+            renderEditDialog();
+        }
+
+        function removeSupporter(index) {
+            state.tempEditData.supporters.splice(index, 1);
+            renderEditDialog();
+        }
+
+        function updateSupporter(index, value) {
+            state.tempEditData.supporters[index].name = value;
+        }
+
+        function updateMember(index, field, value) {
+            state.tempEditData.regular[index][field] = value;
+        }
+
+        function updatePolicyFlag(lang, index, field, value) {
+            state.tempEditData[lang][index][field] = value;
+        }
+
+        function updateAnnouncementDate(lang, index, value) {
+            state.tempEditData[lang][index].date = value;
+        }
+
+        function updateAnnouncementTitle(lang, index, value) {
+            state.tempEditData[lang][index].title = value;
+        }
+
+        function updateAnnouncementType(lang, index, value) {
+            state.tempEditData[lang][index].type = value;
+        }
+
+        function updateAnnouncementContent(lang, index, value) {
+            state.tempEditData[lang][index].content = value;
+        }
+
+        function updateAnnouncementImage(lang, index, value) {
+            state.tempEditData[lang][index].imageUrl = value;
+        }
+
+        function updateAnnouncementVideo(lang, index, value) {
+            state.tempEditData[lang][index].videoUrl = value;
+        }
+
+        // AI Translation System
+        async function translateText(text, sourceLang, targetLang) {
+            if (!text) return '';
+            // Using MyMemory API (Free tier)
+            try {
+                const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${targetLang}`);
+                const data = await response.json();
+                if (data.responseStatus === 200) {
+                    return data.responseData.translatedText;
+                }
+                console.warn('Translation API warning:', data);
+                return text; // Fallback to original
+            } catch (e) {
+                console.error('Translation failed:', e);
+                return text;
+            }
+        }
+
+        async function handleAutoTranslate() {
+            const btn = document.getElementById('auto-translate-btn');
+            if (!btn) return;
+            
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Translating...';
+            btn.disabled = true;
+            lucide.createIcons(); // Refresh icon for loader
+
+            const sourceLang = 'th';
+            const targets = ['en', 'zh'];
+            const section = state.editingSection;
+            
+            try {
+                if (section === 'policies' || section === 'announcements') {
+                    // Clone structure from TH to others first to ensure sync
+                    const sourceData = state.tempEditData[sourceLang];
+                    
+                    for (const target of targets) {
+                        // Deep copy TH data to Target
+                        state.tempEditData[target] = JSON.parse(JSON.stringify(sourceData));
+                        
+                        // Translate each item
+                        for (let i = 0; i < state.tempEditData[target].length; i++) {
+                            const item = state.tempEditData[target][i];
+                            
+                            // Translate Title
+                            if (item.title) item.title = await translateText(item.title, sourceLang, target);
+                            
+                            // Translate Content
+                            if (Array.isArray(item.content)) {
+                                for (let j = 0; j < item.content.length; j++) {
+                                    item.content[j] = await translateText(item.content[j], sourceLang, target);
+                                }
+                            } else if (typeof item.content === 'string') {
+                                item.content = await translateText(item.content, sourceLang, target);
+                            }
+                        }
+                    }
+                } else if (section === 'clanData') {
+                    for (const target of targets) {
+                        const sData = state.tempEditData[sourceLang];
+                        const tData = state.tempEditData[target];
+                        
+                        const fields = ['effectiveDateText', 'aboutHistoryText', 'aboutVisionText', 'contactNote', 'activityRegion'];
+                        for (const field of fields) {
+                            if (sData[field]) tData[field] = await translateText(sData[field], sourceLang, target);
+                        }
+                    }
+                } else if (section === 'events') {
+                     for (const target of targets) {
+                        const sData = state.tempEditData[sourceLang];
+                        const tData = state.tempEditData[target];
+                        
+                        tData.weekly.title = await translateText(sData.weekly.title, sourceLang, target);
+                        tData.weekly.desc = await translateText(sData.weekly.desc, sourceLang, target);
+                        tData.weekly.time = await translateText(sData.weekly.time, sourceLang, target);
+                        
+                        tData.tournament.title = await translateText(sData.tournament.title, sourceLang, target);
+                        tData.tournament.desc = await translateText(sData.tournament.desc, sourceLang, target);
+                        tData.tournament.date = await translateText(sData.tournament.date, sourceLang, target);
+                        
+                        tData.meetup.title = await translateText(sData.meetup.title, sourceLang, target);
+                        tData.meetup.desc = await translateText(sData.meetup.desc, sourceLang, target);
+                        
+                        // Clone and translate schedule
+                        tData.schedule = JSON.parse(JSON.stringify(sData.schedule));
+                        for (const item of tData.schedule) {
+                            item.day = await translateText(item.day, sourceLang, target);
+                            item.type = await translateText(item.type, sourceLang, target);
+                        }
+                     }
+                } else if (section === 'members') {
+                    // Leader
+                    state.tempEditData.leader.role.en = await translateText(state.tempEditData.leader.role.th, 'th', 'en');
+                    state.tempEditData.leader.role.zh = await translateText(state.tempEditData.leader.role.th, 'th', 'zh');
+                    
+                    // Management
+                    for (const member of state.tempEditData.management) {
+                        member.role.en = await translateText(member.role.th, 'th', 'en');
+                        member.role.zh = await translateText(member.role.th, 'th', 'zh');
+                    }
+                }
+
+                renderEditDialog();
+                alert(state.language === 'th' ? 'แปลภาษาเรียบร้อยแล้ว!' : 'Translation complete!');
+                
+            } catch (e) {
+                console.error(e);
+                alert('Translation failed. Please try again.');
+            } finally {
+                if(btn) {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            }
+        }
+
+        function addAnnouncement(lang) {
+            const newAnnouncement = {
+                id: Date.now(),
+                date: new Date().toLocaleDateString('en-CA'), // YYYY-MM-DD
+                title: 'New Announcement',
+                content: 'Details here...',
+                type: 'info',
+                imageUrl: '',
+                videoUrl: ''
+            };
+            state.tempEditData[lang].unshift(newAnnouncement);
+            renderEditDialog();
+        }
+
+        function updateClanData(lang, field, value) {
+            state.tempEditData[lang][field] = value;
+        }
+
+        // Events Helper Functions
+        function updateEventData(lang, section, field, value) {
+            state.tempEditData[lang][section][field] = value;
+        }
+        function updateSchedule(lang, index, field, value) {
+            state.tempEditData[lang].schedule[index][field] = value;
+        }
+        function addScheduleItem(lang) {
+            state.tempEditData[lang].schedule.push({ day: 'New Day', time: '00:00', type: 'Event' });
+            renderEditDialog();
+        }
+        function removeScheduleItem(lang, index) {
+            state.tempEditData[lang].schedule.splice(index, 1);
+            renderEditDialog();
+        }
+
+        // Supabase Data Functions
+        async function loadData() {
+            try {
+                if (!supabaseClient || typeof supabaseClient.from !== 'function') {
+                    console.log('Supabase client not initialized or invalid, skipping remote load.');
+                    return;
+                }
+
+                const { data, error } = await supabaseClient.from('site_content').select('*');
+                if (error) throw error;
+
+                if (data) {
+                    data.forEach(row => {
+                        if (row.section === 'policies') policies = row.data;
+                        if (row.section === 'announcements') announcements = row.data;
+                        if (row.section === 'members') members = row.data;
+                        if (row.section === 'clanData') clanData = row.data;
+                        if (row.section === 'events') events = row.data;
+                    });
+                }
+            } catch (err) {
+                console.error('Error loading data from Supabase:', err);
+                // Fallback to default data if loading fails
+            }
+        }
+
+        async function saveData(section, data) {
+            try {
+                if (!supabaseClient || typeof supabaseClient.from !== 'function') {
+                    throw new Error('Supabase client unavailable');
+                }
+                const { error } = await supabaseClient
+                    .from('site_content')
+                    .upsert({ section: section, data: data });
+                
+                if (error) throw error;
+                return true;
+            } catch (err) {
+                console.error('Error saving data to Supabase:', err);
+                alert('Error saving data to database. Please check console.');
+                return false;
+            }
+        }
+
+        async function saveEdit() {
+            let success = false;
+            const section = state.editingSection;
+            const data = state.tempEditData;
+
+            // Show saving state (optional UI improvement)
+            const saveBtn = document.querySelector('#edit-dialog button.bg-green-500');
+            const originalBtnText = saveBtn ? saveBtn.innerHTML : '';
+            if (saveBtn) saveBtn.textContent = 'Saving...';
+
+            if (state.editingSection === 'policies') {
+                success = await saveData('policies', data);
+                if (success) policies = JSON.parse(JSON.stringify(data));
+            } else if (state.editingSection === 'announcements') {
+                success = await saveData('announcements', data);
+                if (success) announcements = JSON.parse(JSON.stringify(data));
+            } else if (state.editingSection === 'members') {
+                success = await saveData('members', data);
+                if (success) members = JSON.parse(JSON.stringify(data));
+            } else if (state.editingSection === 'events') {
+                success = await saveData('events', data);
+                if (success) events = JSON.parse(JSON.stringify(data));
+            } else if (state.editingSection === 'clanData') {
+                success = await saveData('clanData', data);
+                if (success) clanData = JSON.parse(JSON.stringify(data));
+            }
+            
+            if (success) {
+                cancelEdit();
+                // Show success message
+                alert(state.language === 'th' ? 'บันทึกสำเร็จ!' : state.language === 'zh' ? '保存成功！' : 'Saved successfully!');
+                
+                // Re-render current page
+                renderContent();
+                // If we were on admin page, re-render it to update counts
+                if (state.currentPage === 'admin') {
+                    renderAdminPage();
+                }
+            } else {
+                // Restore button text if failed
+                if (saveBtn) saveBtn.innerHTML = originalBtnText;
+            }
+        }
+
+        function addMember() {
+            if (state.tempEditData.regular.length < 40) {
+                const newMember = {
+                    id: Date.now(),
+                    name: 'New Member',
+                    gameId: '',
+                    hasViolated: false,
+                    relationship: 'Single',
+                    gender: 'Male',
+                    country: ''
+                };
+                state.tempEditData.regular.push(newMember);
+                renderEditDialog();
+            }
+        }
+
+        function removeMember(index) {
+            state.tempEditData.regular.splice(index, 1);
+            renderEditDialog();
+        }
+
+        function cancelEdit() {
+            state.editingSection = null;
+            state.tempEditData = null;
+            const dialog = document.getElementById('edit-dialog');
+            dialog.classList.add('hidden');
+            dialog.classList.remove('flex');
+        }
+
+        // Login functions
+        function showLoginDialog() {
+            const dialog = document.getElementById('login-dialog');
+            dialog.classList.remove('hidden');
+            dialog.classList.add('flex');
+        }
+
+        function hideLoginDialog() {
+            const dialog = document.getElementById('login-dialog');
+            dialog.classList.add('hidden');
+            dialog.classList.remove('flex');
+            document.getElementById('login-error').classList.add('hidden');
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (!supabaseClient) {
+                alert('Supabase client not initialized');
+                return;
+            }
+
+            try {
+                // ล็อกอินผ่าน Supabase (ปลอดภัย)
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (error) throw error;
+
+                state.isLoggedIn = true;
+                hideLoginDialog();
+                updateLoginUI();
+                setCurrentPage('admin');
+            } catch (error) {
+                const errorText = state.language === 'th' ? 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' : 'Invalid email or password';
+                document.getElementById('login-error-text').textContent = errorText;
+                document.getElementById('login-error').classList.remove('hidden');
+            }
+        }
+
+        async function logout() {
+            if (supabaseClient) {
+                await supabaseClient.auth.signOut();
+            }
+            state.isLoggedIn = false;
+            localStorage.removeItem('adminLoggedIn');
+            updateLoginUI();
+            setCurrentPage('home');
+        }
+
+        function updateLoginUI() {
+            if (state.isLoggedIn) {
+                document.getElementById('nav-login').classList.add('hidden');
+                document.getElementById('nav-login').classList.remove('flex');
+                document.getElementById('nav-logout').classList.remove('hidden');
+                document.getElementById('nav-logout').classList.add('flex');
+                document.getElementById('nav-admin').classList.remove('hidden');
+                document.getElementById('nav-admin').classList.add('flex');
+            } else {
+                document.getElementById('nav-login').classList.remove('hidden');
+                document.getElementById('nav-login').classList.add('flex');
+                document.getElementById('nav-logout').classList.add('hidden');
+                document.getElementById('nav-logout').classList.remove('flex');
+                document.getElementById('nav-admin').classList.add('hidden');
+                document.getElementById('nav-admin').classList.remove('flex');
+            }
+        }
+
+        // UI update functions
+        function updateUI() {
+            const t = translations[state.language];
+            
+            // Update header
+            document.getElementById('clan-name').textContent = t.clanName;
+            document.getElementById('clan-subtitle').textContent = t.subtitle;
+            
+            // Update navigation
+            document.getElementById('nav-home-text').textContent = t.navHome;
+            document.getElementById('nav-announcements-text').textContent = t.navAnnouncements;
+            document.getElementById('nav-about-text').textContent = t.navAbout;
+            document.getElementById('nav-members-text').textContent = t.navMembers;
+            document.getElementById('nav-events-text').textContent = t.navEvents;
+            document.getElementById('nav-contact-text').textContent = t.navContact;
+            
+            // Update page title
+            const pageTitles = {
+                home: t.officialPolicy,
+                announcements: t.navAnnouncements,
+                about: t.navAbout,
+                members: t.navMembers,
+                events: t.navEvents,
+                contact: t.navContact,
+                admin: 'Admin Dashboard'
+            };
+            
+            document.getElementById('current-page-title').textContent = pageTitles[state.currentPage] || t.officialPolicy;
+
+            // Update footer
+            const footerMain = document.getElementById('footer-main-text');
+            if (footerMain) {
+                document.getElementById('footer-main-text').textContent = t.footerText1;
+                document.getElementById('footer-sub-text').textContent = t.footerText2;
+                document.getElementById('footer-clan-name').textContent = t.clanName;
+                document.getElementById('footer-official').textContent = t.officialClan;
+            }
+        }
+    </script>
+</body>
+</html>
