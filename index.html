@@ -185,20 +185,6 @@
             0% { bottom: -100%; }
             50%, 100% { bottom: 100%; }
         }
-
-        /* Modal Animations */
-        @keyframes shimmer {
-            100% { transform: translateX(100%); }
-        }
-        
-        .modal-enter {
-            animation: modalEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-        
-        @keyframes modalEnter {
-            from { opacity: 0; transform: scale(0.95) translateY(10px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
-        }
     </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -287,10 +273,6 @@
                     <i data-lucide="settings" class="w-4 h-4"></i>
                     <span>Admin</span>
                 </button>
-                <button onclick="showRegisterModal()" id="nav-register" class="hidden items-center gap-2 px-4 py-2 rounded-lg transition-all bg-white/10 text-white hover:bg-white/20">
-                    <i data-lucide="user-plus" class="w-4 h-4"></i>
-                    <span>ยื่นเรื่องขอเข้าแคลน</span>
-                </button>
             </div>
         </div>
     </div>
@@ -320,23 +302,17 @@
         </div>
     </footer>
 
-    <!-- Guest Timer Display -->
-    <div id="guest-timer-display" class="hidden fixed bottom-4 right-4 bg-black/50 backdrop-blur-sm text-white px-4 py-2 rounded-lg border border-slate-700 shadow-lg z-[100] items-center gap-2">
-        <i data-lucide="timer" class="w-5 h-5 text-orange-400"></i>
-        <span class="font-mono text-lg">15:00</span>
-    </div>
-
     <!-- Login Dialog -->
-    <div id="login-dialog" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm items-center justify-center z-50">
-        <div class="bg-slate-900 p-8 rounded-3xl shadow-2xl max-w-md w-full mx-4 border border-slate-700 modal-enter">
+    <div id="login-dialog" class="hidden fixed inset-0 bg-black/70 items-center justify-center z-50">
+        <div class="bg-slate-800 p-8 rounded-xl shadow-2xl max-w-md w-full mx-4">
             <h2 class="text-3xl text-center mb-6 text-white">Admin Login</h2>
             <form id="login-form" onsubmit="handleLogin(event)">
                 <div class="mb-4">
                     <label class="block text-gray-300 text-sm font-bold mb-2" for="username">
                         Email
                     </label>
-                    <input required
-                        class="w-full px-4 py-3 bg-slate-950 text-white rounded-xl border border-slate-800 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none transition-all"
+                    <input
+                        class="w-full px-4 py-3 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-orange-500 focus:outline-none"
                         id="username"
                         type="email"
                         placeholder="zeegodstudio04@gmail.com"
@@ -346,8 +322,8 @@
                     <label class="block text-gray-300 text-sm font-bold mb-2" for="password">
                         Password
                     </label>
-                    <input required
-                        class="w-full px-4 py-3 bg-slate-950 text-white rounded-xl border border-slate-800 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none transition-all"
+                    <input
+                        class="w-full px-4 py-3 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-orange-500 focus:outline-none"
                         id="password"
                         type="password"
                     />
@@ -357,13 +333,13 @@
                 </div>
                 <div class="flex items-center gap-4">
                     <button
-                        class="flex-1 bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg shadow-orange-500/20"
+                        class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-lg transition-colors"
                         type="submit"
                     >
                         Login
                     </button>
                     <button
-                        class="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 px-6 rounded-xl transition-colors"
+                        class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
                         type="button"
                         onclick="hideLoginDialog()"
                     >
@@ -374,250 +350,12 @@
         </div>
     </div>
 
-    <!-- Member Login Overlay (Black Background) -->
-    <div id="member-login-overlay" class="hidden fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[60] flex flex-col items-center justify-center p-4 transition-all duration-300">
-        <div class="max-w-md w-full space-y-8 text-center modal-enter">
-            <!-- Icon & Title -->
-            <div class="relative">
-                <div class="absolute inset-0 bg-orange-500/20 blur-3xl rounded-full"></div>
-                <div class="relative flex justify-center mb-4">
-                    <i data-lucide="shield" class="w-24 h-24 text-orange-500 drop-shadow-[0_0_15px_rgba(249,115,22,0.5)]"></i>
-                </div>
-                <h2 class="relative text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-600 tracking-wider mb-2">安镜之锋</h2>
-                <p class="relative text-xl text-gray-400 font-light tracking-widest uppercase">Member Login System</p>
-            </div>
-            
-            <div class="bg-slate-900/80 backdrop-blur-xl p-8 rounded-3xl border border-white/10 shadow-2xl ring-1 ring-white/5">
-                <div class="space-y-6">
-                    <div class="relative group">
-                        <div class="absolute -inset-0.5 bg-gradient-to-r from-orange-600 to-red-600 rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-                        <div class="relative">
-                            <input id="member-id-input" type="text" placeholder="Enter Clan ID / Game ID" 
-                                class="w-full px-6 py-4 bg-slate-950 text-white text-lg rounded-xl border border-slate-800 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 focus:outline-none transition-all text-center placeholder-gray-600 font-mono tracking-wide">
-                        </div>
-                    </div>
-                    <button onclick="handleMemberLogin()" class="w-full group relative px-6 py-4 rounded-xl bg-gradient-to-r from-orange-600 to-red-600 text-white font-bold text-lg tracking-wide overflow-hidden transition-all hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(234,88,12,0.5)]">
-                        <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
-                        <span>LOGIN SYSTEM</span>
-                    </button>
-                </div>
-                
-                <div class="mt-8 pt-6 border-t border-white/5">
-                    <button onclick="enterGuestMode()" class="group flex items-center justify-center gap-2 w-full text-gray-500 hover:text-white transition-colors text-sm font-medium py-2">
-                        <span class="p-1 rounded-full bg-white/5 group-hover:bg-white/10 transition-colors">
-                            <i data-lucide="eye" class="w-4 h-4"></i>
-                        </span>
-                        Visit as Guest (Policy Only)
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Login Confirmation Modal -->
-    <div id="login-confirm-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[70] items-center justify-center p-4">
-        <div class="bg-slate-900 p-1 rounded-3xl max-w-sm w-full shadow-2xl modal-enter bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700">
-            <div class="bg-slate-900/90 rounded-[22px] p-8 text-center">
-                <div class="w-24 h-24 bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6 ring-1 ring-orange-500/30 shadow-[0_0_30px_rgba(249,115,22,0.1)]">
-                    <i data-lucide="user-check" class="w-12 h-12 text-orange-500"></i>
-                </div>
-                <h3 class="text-2xl text-white font-bold mb-2">Verify Identity</h3>
-                <p class="text-gray-500 text-sm mb-6">Is this your account?</p>
-                
-                <div class="space-y-3 mb-8 text-left bg-slate-950/50 p-5 rounded-2xl border border-slate-800">
-                    <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-                        <span class="text-gray-500 text-xs uppercase tracking-wider">Name</span>
-                        <span id="confirm-name" class="text-white font-semibold"></span>
-                    </div>
-                    <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-                        <span class="text-gray-500 text-xs uppercase tracking-wider">Gender</span>
-                        <span id="confirm-gender" class="text-gray-300"></span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-500 text-xs uppercase tracking-wider">Status</span>
-                        <span id="confirm-status" class="text-orange-400"></span>
-                    </div>
-                </div>
-                
-                <div class="flex gap-3">
-                    <button onclick="confirmLogin(true)" class="flex-1 bg-green-600 hover:bg-green-500 text-white py-3.5 rounded-xl font-bold transition-all hover:shadow-lg hover:shadow-green-500/20 active:scale-95">
-                        Yes, It's Me
-                    </button>
-                    <button onclick="confirmLogin(false)" class="flex-1 bg-slate-800 hover:bg-slate-700 text-gray-300 border border-slate-700 py-3.5 rounded-xl font-bold transition-all active:scale-95">
-                        Not Me
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Welcome Back Modal -->
-    <div id="welcome-modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md z-[70] items-center justify-center p-4">
-        <div class="relative bg-slate-900 p-8 rounded-3xl max-w-md w-full border border-orange-500/20 text-center shadow-[0_0_50px_rgba(234,88,12,0.15)] modal-enter overflow-hidden">
-            <!-- Decorative background elements -->
-            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-red-500 to-orange-500"></div>
-            <div class="absolute -top-24 -right-24 w-48 h-48 bg-orange-500/10 rounded-full blur-3xl"></div>
-            
-            <div class="relative">
-                <h2 class="text-4xl text-white font-bold mb-2 tracking-tight">Welcome Back!</h2>
-                <p id="welcome-username" class="text-2xl text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500 font-bold mb-8"></p>
-                
-                <div class="bg-slate-950/80 p-6 rounded-2xl mb-8 border border-slate-800 relative overflow-hidden group">
-                    <div class="absolute inset-0 bg-gradient-to-r from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <p class="text-gray-500 text-xs uppercase tracking-widest mb-2">Time since last login</p>
-                    <p id="last-login-time" class="text-xl text-white font-mono font-medium"></p>
-                </div>
-                
-                <button onclick="closeWelcomeModal()" class="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white py-4 rounded-2xl font-bold text-lg transition-all transform hover:scale-[1.02] shadow-lg shadow-orange-500/25">
-                    เข้าสู่เว็บไซต์แคลน (Enter)
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Registration Modal -->
-    <div id="register-modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm z-[70] items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-slate-900 p-8 rounded-3xl max-w-lg w-full border border-slate-700 shadow-2xl modal-enter my-8 relative">
-            <div class="flex justify-between items-center mb-8">
-                <div>
-                    <h3 class="text-2xl text-white font-bold">ยื่นเรื่องขอเข้าแคลน</h3>
-                    <p class="text-gray-500 text-sm mt-1">Join Request Form</p>
-                </div>
-                <button onclick="closeRegisterModal()" class="p-2 bg-slate-800 rounded-full text-gray-400 hover:text-white hover:bg-slate-700 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            <form id="register-form" onsubmit="handleRegisterPreview(event)" class="space-y-5">
-                <div class="space-y-1">
-                    <label class="text-gray-400 text-xs uppercase font-bold tracking-wider ml-1">In-Game Name</label>
-                    <input required id="reg-name" type="text" class="w-full px-4 py-3 bg-slate-950 text-white rounded-xl border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all" placeholder="ชื่อในเกมของคุณ">
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-1">
-                        <label class="text-gray-400 text-xs uppercase font-bold tracking-wider ml-1">Level</label>
-                        <input required id="reg-level" type="number" class="w-full px-4 py-3 bg-slate-950 text-white rounded-xl border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all" placeholder="เลเวลในเกม">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-gray-400 text-xs uppercase font-bold tracking-wider ml-1">Game ID</label>
-                        <input required id="reg-id" type="text" class="w-full px-4 py-3 bg-slate-950 text-white rounded-xl border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all" placeholder="ID ในเกม">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-1">
-                        <label class="text-gray-400 text-xs uppercase font-bold tracking-wider ml-1">Gender</label>
-                        <select id="reg-gender" class="w-full px-4 py-3 bg-slate-950 text-white rounded-xl border border-slate-800 focus:border-blue-500 outline-none transition-all appearance-none"><option>Male</option><option>Female</option><option>Third Gender</option></select>
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-gray-400 text-xs uppercase font-bold tracking-wider ml-1">Status</label>
-                        <select id="reg-status" class="w-full px-4 py-3 bg-slate-950 text-white rounded-xl border border-slate-800 focus:border-blue-500 outline-none transition-all appearance-none"><option>Single</option><option>Not Single</option></select>
-                    </div>
-                </div>
-                <div class="space-y-1">
-                    <label class="text-gray-400 text-xs uppercase font-bold tracking-wider ml-1">Country</label>
-                    <input required id="reg-country" type="text" class="w-full px-4 py-3 bg-slate-950 text-white rounded-xl border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all" placeholder="ประเทศที่อาศัย">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-gray-400 text-xs uppercase font-bold tracking-wider ml-1">Profile Image</label>
-                    <div class="relative">
-                        <input required id="reg-image" type="file" accept="image/*" class="w-full px-4 py-3 bg-slate-950 text-gray-400 rounded-xl border border-slate-800 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-500/10 file:text-blue-400 hover:file:bg-blue-500/20 cursor-pointer" title="รูปโปรไฟล์ในเกม">
-                    </div>
-                </div>
-
-                <!-- Notification Channel -->
-                <div class="pt-4 mt-4 border-t border-slate-800 space-y-3">
-                    <label class="text-gray-400 text-xs uppercase font-bold tracking-wider ml-1">ช่องทางรับการแจ้งเตือน (Notification Channel)</label>
-                    <select id="reg-notification-channel" onchange="toggleNotificationFields()" class="w-full px-4 py-3 bg-slate-950 text-white rounded-xl border border-slate-800 focus:border-blue-500 outline-none transition-all appearance-none">
-                        <option value="email">Email</option>
-                        <option value="facebook">Facebook</option>
-                        <option value="instagram">Instagram</option>
-                    </select>
-                    
-                    <div id="notification-fields-email" class="space-y-1">
-                        <input required id="reg-notification-email" type="email" class="w-full px-4 py-3 bg-slate-950 text-white rounded-xl border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all" placeholder="your-email@example.com">
-                    </div>
-
-                    <div id="notification-fields-social" class="hidden space-y-3">
-                        <div class="space-y-1">
-                            <label class="text-gray-400 text-xs uppercase font-bold tracking-wider ml-1">ชื่อโปรไฟล์ (Profile Name)</label>
-                            <input id="reg-notification-name" type="text" class="w-full px-4 py-3 bg-slate-950 text-white rounded-xl border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all" placeholder="ชื่อ Facebook / IG">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-gray-400 text-xs uppercase font-bold tracking-wider ml-1">รูปโปรไฟล์ (Profile Picture)</label>
-                            <input id="reg-notification-image" type="file" accept="image/*" class="w-full px-4 py-3 bg-slate-950 text-gray-400 rounded-xl border border-slate-800 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-500/10 file:text-blue-400 hover:file:bg-blue-500/20 cursor-pointer" title="รูปโปรไฟล์ Facebook / IG">
-                        </div>
-                    </div>
-                </div>
-
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-bold mt-6 shadow-lg shadow-blue-500/20 transition-all transform hover:scale-[1.02]">Preview Data</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Registration Preview Modal -->
-    <div id="preview-modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm z-[80] items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-slate-900 p-8 rounded-3xl max-w-2xl w-full border border-blue-500/30 shadow-2xl modal-enter">
-            <h3 class="text-2xl text-white font-bold mb-6 text-center">Verify Information</h3>
-            <div id="preview-content" class="space-y-4 mb-8 text-gray-300 bg-slate-950/50 p-6 rounded-2xl border border-slate-800"></div>
-            <div class="flex gap-4">
-                <button onclick="submitRegister()" class="flex-1 bg-green-600 hover:bg-green-500 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-green-500/20 transition-all hover:scale-[1.02]">Submit Request</button>
-                <button onclick="document.getElementById('preview-modal').classList.add('hidden'); document.getElementById('preview-modal').classList.remove('flex')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-3.5 rounded-xl font-bold transition-all">Edit</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Success Modal -->
-    <div id="success-modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm z-[90] items-center justify-center p-4">
-        <div class="bg-slate-900 p-8 rounded-3xl max-w-md w-full border border-green-500/30 text-center shadow-[0_0_50px_rgba(34,197,94,0.15)] modal-enter">
-            <div class="w-24 h-24 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6 ring-1 ring-green-500/20">
-                <i data-lucide="check" class="w-12 h-12 text-green-500"></i>
-            </div>
-            <h3 class="text-2xl text-white font-bold mb-4">Request Sent!</h3>
-            <p id="success-message" class="text-gray-300 mb-6 leading-relaxed"></p>
-            <button onclick="location.reload()" class="w-full bg-slate-800 hover:bg-slate-700 text-white py-3.5 rounded-xl font-bold transition-all">Close</button>
-        </div>
-    </div>
-
-    <!-- Guest Confirmation Modal -->
-    <div id="guest-confirm-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[70] items-center justify-center p-4">
-        <div class="bg-slate-900 p-1 rounded-3xl max-w-md w-full shadow-2xl modal-enter bg-gradient-to-b from-slate-800 to-slate-900 border border-blue-500/30">
-            <div class="bg-slate-900/95 rounded-[22px] p-8 text-center relative overflow-hidden">
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-cyan-400"></div>
-                
-                <div class="w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-6 ring-1 ring-blue-500/20">
-                    <i data-lucide="timer" class="w-10 h-10 text-blue-400"></i>
-                </div>
-                
-                <h3 class="text-2xl text-white font-bold mb-4">Guest Session</h3>
-                
-                <div class="bg-blue-500/5 border border-blue-500/10 rounded-xl p-4 mb-6 text-left">
-                    <p class="text-gray-300 text-sm leading-relaxed mb-4">
-                        <span class="text-blue-400 font-bold">15 นาที</span> คือเวลาที่คุณสามารถเข้าเยี่ยมชมได้ กรุณาใช้เวลาให้เป็นประโยชน์เพื่อให้ผู้เยี่ยมชมท่านอื่นได้มีโอกาสเข้าชมบ้าง
-                    </p>
-                    <p class="text-gray-500 text-xs italic border-t border-blue-500/10 pt-3">
-                        (You have 15 minutes for this guest session. Please use your time wisely to allow others to visit.)
-                    </p>
-                </div>
-                
-                <button onclick="confirmAndStartGuestSession()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-bold transition-all hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 flex items-center justify-center gap-2">
-                    <span>ยอมรับและเข้าชม</span>
-                    <span class="text-blue-200 text-sm font-normal">(Accept & Visit)</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Reject Reason Modal -->
-    <div id="reject-reason-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[95] items-center justify-center p-4">
-        <div class="bg-slate-900 p-8 rounded-3xl max-w-md w-full border border-red-500/30 shadow-2xl modal-enter">
-            <!-- Content will be dynamically loaded here -->
-        </div>
-    </div>
-
     <!-- Admin Edit Dialog -->
-    <div id="edit-dialog" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm items-center justify-center z-50 p-4 overflow-y-auto">
-        <div class="bg-slate-900/95 backdrop-blur-xl rounded-3xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-slate-700 shadow-2xl modal-enter">
+    <div id="edit-dialog" class="hidden fixed inset-0 bg-black/70 items-center justify-center z-50 p-4 overflow-y-auto">
+        <div class="bg-slate-800 rounded-xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <!-- Content will be dynamically loaded here -->
         </div>
     </div>
-
 
     <script>
         // Application State
@@ -625,9 +363,6 @@
             language: 'th',
             currentPage: 'announcements',
             isLoggedIn: false,
-            isMemberLoggedIn: false,
-            isGuest: false,
-            pendingRequests: [],
             loading: false,
             editingSection: null,
             tempEditData: null
@@ -1335,18 +1070,8 @@
                 if (enterBtn) {
                     enterBtn.addEventListener('click', () => {
                         closeOverlay();
-                        
-                        // If already a guest from a page refresh, just let them be.
-                        if (state.isGuest) {
-                            return;
-                        }
-
-                        // Check Member Login
-                        const isMember = localStorage.getItem('memberLoggedIn') === 'true';
-                        if (!isMember) {
-                            document.getElementById('member-login-overlay').classList.remove('hidden');
-                        } else if (!localStorage.getItem('hasSeenTour')) {
-                            // If logged in and first time, start tour
+                        // Start tour if first time visit
+                        if (!localStorage.getItem('hasSeenTour')) {
                             setTimeout(startTour, 800); // Wait for overlay to fade out
                         }
                     });
@@ -1395,20 +1120,6 @@
                 console.warn('Supabase not available, using default data');
             }
             
-            // Check for active guest session on page load
-            const guestEndTimeStr = sessionStorage.getItem('guestEndTime');
-            if (guestEndTimeStr) {
-                const endTime = parseInt(guestEndTimeStr, 10);
-                if (Date.now() < endTime) {
-                    state.isGuest = true;
-                    startGuestTimer(endTime);
-                } else {
-                    // Session expired while away, clean up silently
-                    sessionStorage.removeItem('guestId');
-                    sessionStorage.removeItem('guestEndTime');
-                }
-            }
-            
             // Check login status via Supabase Auth
             if (supabaseClient) {
                 const { data: { session } } = await supabaseClient.auth.getSession();
@@ -1424,13 +1135,6 @@
             // Load data from Supabase
             await loadData();
             
-            // Load pending requests if admin is logged in
-            if (state.isLoggedIn) {
-                await loadPendingRequests();
-            } else {
-                state.pendingRequests = [];
-            }
-
             // Load initial content
             document.getElementById('loading').style.display = 'none';
             // Initialize language UI and ensure the correct navigation is active
@@ -1458,12 +1162,6 @@
 
         // Navigation functions
         function setCurrentPage(page) {
-            // Guest Restriction
-            if (state.isGuest && page !== 'home') {
-                alert('Guest Access Restricted: You can only view the Clan Policy page.\n\nผู้เยี่ยมชมสามารถดูได้เฉพาะหน้านโยบายแคลนเท่านั้น');
-                return;
-            }
-
             state.currentPage = page;
             
             // Update navigation buttons
@@ -1594,373 +1292,6 @@
 
             document.getElementById('content-container').innerHTML = html;
             lucide.createIcons();
-        }
-
-        // --- Guest Mode Limiter System ---
-        let guestTimerInterval = null;
-        const GUEST_LIMIT = 5;
-        const GUEST_DURATION_MS = 15 * 60 * 1000; // 15 minutes
-
-        function startGuestTimer(endTime) {
-            const timerElement = document.getElementById('guest-timer-display');
-            if (!timerElement) return;
-
-            timerElement.classList.remove('hidden');
-            timerElement.classList.add('flex');
-
-            if (guestTimerInterval) {
-                clearInterval(guestTimerInterval);
-            }
-
-            const updateTimer = () => {
-                const now = Date.now();
-                const remainingMs = endTime - now;
-
-                if (remainingMs <= 0) {
-                    timerElement.querySelector('span').textContent = '00:00';
-                    kickOutGuest('Your 15-minute guest session has expired.\n\nเซสชั่นการเยี่ยมชม 15 นาทีของคุณหมดอายุแล้ว');
-                    return;
-                }
-
-                const minutes = Math.floor(remainingMs / 60000);
-                const seconds = Math.floor((remainingMs % 60000) / 1000);
-
-                timerElement.querySelector('span').textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-            };
-
-            updateTimer();
-            guestTimerInterval = setInterval(updateTimer, 1000);
-        }
-
-        function kickOutGuest(message) {
-            if (message) {
-                alert(message);
-            }
-
-            if (guestTimerInterval) {
-                clearInterval(guestTimerInterval);
-                guestTimerInterval = null;
-            }
-
-            // Hide timer display
-            const timerElement = document.getElementById('guest-timer-display');
-            if (timerElement) {
-                timerElement.classList.add('hidden');
-            }
-
-            // Remove this guest's slot from localStorage
-            const guestId = sessionStorage.getItem('guestId');
-            if (guestId) {
-                let guestSlots = JSON.parse(localStorage.getItem('guestSlots') || '[]');
-                guestSlots = guestSlots.filter(slot => slot.id !== guestId);
-                localStorage.setItem('guestSlots', JSON.stringify(guestSlots));
-            }
-
-            // Clear session storage
-            sessionStorage.removeItem('guestId');
-            sessionStorage.removeItem('guestEndTime');
-
-            // Reset state and reload for a clean slate
-            state.isGuest = false;
-            location.reload();
-        }
-
-        window.addEventListener('beforeunload', () => {
-            const guestId = sessionStorage.getItem('guestId');
-            if (guestId) {
-                let guestSlots = JSON.parse(localStorage.getItem('guestSlots') || '[]');
-                guestSlots = guestSlots.filter(slot => slot.id !== guestId);
-                localStorage.setItem('guestSlots', JSON.stringify(guestSlots));
-            }
-        });
-
-        // --- Member Login System ---
-
-        let tempMemberData = null;
-        let tempGuestData = null;
-
-        function handleMemberLogin() {
-            const inputId = document.getElementById('member-id-input').value.trim();
-            if (!inputId) {
-                alert('Please enter your Game ID');
-                return;
-            }
-
-            // Search for member in all categories
-            let foundMember = null;
-            
-            // Check Leader
-            if (members.leader && (members.leader.gameId === inputId || members.leader.name === inputId)) {
-                foundMember = { ...members.leader, type: 'Leader', status: 'Active' };
-            }
-
-            // Check Management
-            if (!foundMember && members.management) {
-                foundMember = members.management.find(m => m.gameId === inputId || m.name === inputId);
-            }
-
-            // Check Regular
-            if (!foundMember && members.regular) {
-                foundMember = members.regular.find(m => m.gameId === inputId || m.name === inputId);
-            }
-
-            if (foundMember) {
-                tempMemberData = foundMember;
-                document.getElementById('confirm-name').textContent = foundMember.name;
-                document.getElementById('confirm-gender').textContent = foundMember.gender || 'Not specified';
-                document.getElementById('confirm-status').textContent = foundMember.relationship || 'Active';
-                
-                document.getElementById('login-confirm-modal').classList.remove('hidden');
-                document.getElementById('login-confirm-modal').classList.add('flex');
-            } else {
-                alert('ID not found in clan records.\nไม่พบข้อมูล ID นี้ในระบบ');
-            }
-        }
-
-        function confirmLogin(isCorrect) {
-            document.getElementById('login-confirm-modal').classList.add('hidden');
-            document.getElementById('login-confirm-modal').classList.remove('flex');
-
-            if (isCorrect) {
-                // Calculate time since last login
-                const lastLoginStr = localStorage.getItem('lastMemberLoginTime');
-                let timeMsg = 'First time login';
-                
-                if (lastLoginStr) {
-                    const last = new Date(lastLoginStr);
-                    const now = new Date();
-                    const diffMs = now - last;
-                    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                    const diffHrs = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    timeMsg = `${diffDays} days, ${diffHrs} hours ago`;
-                }
-
-                // Update storage
-                localStorage.setItem('memberLoggedIn', 'true');
-                localStorage.setItem('lastMemberLoginTime', new Date().toISOString());
-                state.isMemberLoggedIn = true;
-
-                // Show Welcome
-                document.getElementById('welcome-username').textContent = tempMemberData.name;
-                document.getElementById('last-login-time').textContent = timeMsg;
-                
-                document.getElementById('welcome-modal').classList.remove('hidden');
-                document.getElementById('welcome-modal').classList.add('flex');
-                
-                // Hide main overlay
-                document.getElementById('member-login-overlay').classList.add('hidden');
-            } else {
-                // Not me
-                alert("Don't enter someone else's ID, it's not good.\nอย่าเข้าของคนอื่น ไม่ดีนะ!");
-                document.getElementById('member-id-input').value = '';
-            }
-        }
-
-        function closeWelcomeModal() {
-            document.getElementById('welcome-modal').classList.add('hidden');
-            document.getElementById('welcome-modal').classList.remove('flex');
-            updateUI();
-        }
-
-        function enterGuestMode() {
-            // 1. Manage guest slots
-            let guestSlots = JSON.parse(localStorage.getItem('guestSlots') || '[]');
-            const now = Date.now();
-
-            // 2. Clean up expired slots
-            guestSlots = guestSlots.filter(slot => (now - slot.startTime) < GUEST_DURATION_MS);
-
-            // 3. Check limit
-            if (guestSlots.length >= GUEST_LIMIT) {
-                alert(`The maximum number of guests (${GUEST_LIMIT}) has been reached. Please try again later.\n\nมีผู้เยี่ยมชมครบ ${GUEST_LIMIT} คนแล้ว โปรดลองอีกครั้งในภายหลัง`);
-                localStorage.setItem('guestSlots', JSON.stringify(guestSlots)); // Save cleaned slots
-                return;
-            }
-
-            // 4. Prepare guest data but don't save yet
-            const guestId = `guest_${now}`;
-            const guestEndTime = now + GUEST_DURATION_MS;
-            const newSlot = { id: guestId, startTime: now };
-
-            tempGuestData = { guestId, guestEndTime, newSlot, guestSlots };
-
-            // 5. Show confirmation modal
-            document.getElementById('guest-confirm-modal').classList.remove('hidden');
-            document.getElementById('guest-confirm-modal').classList.add('flex');
-        }
-
-        function confirmAndStartGuestSession() {
-            if (!tempGuestData) return;
-
-            const { guestId, guestEndTime, newSlot, guestSlots } = tempGuestData;
-
-            document.getElementById('guest-confirm-modal').classList.add('hidden');
-            document.getElementById('guest-confirm-modal').classList.remove('flex');
-            document.getElementById('member-login-overlay').classList.add('hidden');
-
-            guestSlots.push(newSlot);
-            localStorage.setItem('guestSlots', JSON.stringify(guestSlots));
-            sessionStorage.setItem('guestId', guestId);
-            sessionStorage.setItem('guestEndTime', guestEndTime);
-
-            state.isGuest = true;
-            startGuestTimer(guestEndTime);
-            setCurrentPage('home');
-            updateUI();
-
-            tempGuestData = null;
-        }
-
-        // --- Registration System ---
-
-        function showRegisterModal() {
-            document.getElementById('register-modal').classList.remove('hidden');
-            document.getElementById('register-modal').classList.add('flex');
-        }
-
-        function closeRegisterModal() {
-            document.getElementById('register-modal').classList.add('hidden');
-            document.getElementById('register-modal').classList.remove('flex');
-        }
-
-        function toggleNotificationFields() {
-            const channel = document.getElementById('reg-notification-channel').value;
-            const emailFields = document.getElementById('notification-fields-email');
-            const socialFields = document.getElementById('notification-fields-social');
-            const emailInput = document.getElementById('reg-notification-email');
-            const socialNameInput = document.getElementById('reg-notification-name');
-            const socialImageInput = document.getElementById('reg-notification-image');
-
-            if (channel === 'email') {
-                emailFields.style.display = 'block';
-                socialFields.style.display = 'none';
-                emailInput.required = true;
-                socialNameInput.required = false;
-                socialImageInput.required = false;
-            } else {
-                emailFields.style.display = 'none';
-                socialFields.style.display = 'block';
-                emailInput.required = false;
-                socialNameInput.required = true;
-                socialImageInput.required = true;
-            }
-        }
-
-        let regData = {};
-
-        function handleRegisterPreview(e) {
-            e.preventDefault();
-            
-            const fileInput = document.getElementById('reg-image');
-            let imgHtml = '';
-            let notificationImgHtml = '';
-            
-            if (fileInput.files && fileInput.files[0]) {
-                const imgUrl = URL.createObjectURL(fileInput.files[0]);
-                imgHtml = `<img src="${imgUrl}" class="w-24 h-24 object-cover rounded-lg border-2 border-orange-500" alt="Game Profile">`;
-            }
-
-            const notificationChannel = document.getElementById('reg-notification-channel').value;
-            const notificationImageInput = document.getElementById('reg-notification-image');
-            if ((notificationChannel === 'facebook' || notificationChannel === 'instagram') && notificationImageInput.files && notificationImageInput.files[0]) {
-                const notificationImgUrl = URL.createObjectURL(notificationImageInput.files[0]);
-                notificationImgHtml = `<img src="${notificationImgUrl}" class="w-24 h-24 object-cover rounded-lg border-2 border-blue-500" alt="Notification Profile">`;
-            }
-
-            regData = {
-                name: document.getElementById('reg-name').value,
-                level: document.getElementById('reg-level').value,
-                id: document.getElementById('reg-id').value,
-                gender: document.getElementById('reg-gender').value,
-                status: document.getElementById('reg-status').value,
-                country: document.getElementById('reg-country').value,
-                notification_channel: notificationChannel,
-                notification_contact: notificationChannel === 'email' 
-                    ? document.getElementById('reg-notification-email').value
-                    : document.getElementById('reg-notification-name').value,
-                // We will handle file uploads on final submission
-                game_profile_image: fileInput.files[0],
-                notification_profile_image: notificationImageInput.files[0]
-            };
-
-            const html = `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <h4 class="text-lg font-bold text-orange-400 mb-3 border-b border-slate-700 pb-2">Game Information</h4>
-                        <div class="flex gap-4 items-center mb-4">${imgHtml} <span class="text-2xl font-bold text-white">${regData.name}</span></div>
-                        <div class="grid grid-cols-2 gap-2 text-sm">
-                            <span class="text-gray-500">Level:</span> <span class="text-white">${regData.level}</span>
-                            <span class="text-gray-500">ID:</span> <span class="text-white">${regData.id}</span>
-                            <span class="text-gray-500">Gender:</span> <span class="text-white">${regData.gender}</span>
-                            <span class="text-gray-500">Status:</span> <span class="text-white">${regData.status}</span>
-                            <span class="text-gray-500">Country:</span> <span class="text-white">${regData.country}</span>
-                        </div>
-                    </div>
-                     <div>
-                        <h4 class="text-lg font-bold text-blue-400 mb-3 border-b border-slate-700 pb-2">Notification Channel</h4>
-                        <div class="flex gap-4 items-center mb-4">${notificationImgHtml} <span class="text-xl font-bold text-white">${regData.notification_contact}</span></div>
-                        <div class="grid grid-cols-2 gap-2 text-sm">
-                            <span class="text-gray-500">Channel:</span> <span class="text-white capitalize">${regData.notification_channel}</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            document.getElementById('preview-content').innerHTML = html;
-            document.getElementById('register-modal').classList.add('hidden');
-            document.getElementById('preview-modal').classList.remove('hidden');
-            document.getElementById('preview-modal').classList.add('flex');
-        }
-
-        async function submitRegister() {
-            document.getElementById('preview-modal').classList.add('hidden');
-            document.getElementById('preview-modal').classList.remove('flex');
-
-            if (!supabaseClient) {
-                alert('Error: Cannot connect to the server. Please try again later.');
-                return;
-            }
-
-            try {
-                // 1. Upload images to Supabase Storage
-                let gameProfileUrl = null;
-                let notificationProfileUrl = null;
-                const timestamp = Date.now();
-
-                if (regData.game_profile_image) {
-                    const { data, error } = await supabaseClient.storage
-                        .from('join_requests_images')
-                        .upload(`game_profile_${timestamp}_${regData.game_profile_image.name}`, regData.game_profile_image);
-                    if (error) throw error;
-                    gameProfileUrl = supabaseClient.storage.from('join_requests_images').getPublicUrl(data.path).data.publicUrl;
-                }
-
-                if (regData.notification_profile_image) {
-                     const { data, error } = await supabaseClient.storage
-                        .from('join_requests_images')
-                        .upload(`notification_profile_${timestamp}_${regData.notification_profile_image.name}`, regData.notification_profile_image);
-                    if (error) throw error;
-                    notificationProfileUrl = supabaseClient.storage.from('join_requests_images').getPublicUrl(data.path).data.publicUrl;
-                }
-
-                // 2. Insert data into 'join_requests' table
-                const requestPayload = { ...regData, game_profile_image_url: gameProfileUrl, notification_profile_image_url: notificationProfileUrl };
-                delete requestPayload.game_profile_image;
-                delete requestPayload.notification_profile_image;
-
-                const { error: insertError } = await supabaseClient.from('join_requests').insert([requestPayload]);
-                if (insertError) throw insertError;
-
-                // 3. Show success message
-                const msg = `คำขอของคุณถูกส่งไปยังทีมงานแล้ว<br>โปรดรอการแจ้งเตือนผลการสมัครผ่านช่องทางที่คุณเลือกไว้<br><br>(Your request has been sent. Please wait for a notification via your chosen channel.)`;
-                document.getElementById('success-message').innerHTML = msg;
-                document.getElementById('success-modal').classList.remove('hidden');
-                document.getElementById('success-modal').classList.add('flex');
-
-            } catch (error) {
-                console.error('Error submitting registration:', error);
-                alert(`An error occurred: ${error.message}`);
-            }
         }
 
         // Helper to extract YouTube ID
@@ -2411,233 +1742,99 @@
             const t = translations[state.language];
             
             const html = `
-                <div class="mb-10 relative pl-6">
-                    <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-orange-500 to-red-600 rounded-full"></div>
-                    <h2 class="text-4xl text-white font-bold mb-2 tracking-tight">Admin Dashboard</h2>
-                    <p class="text-gray-400 text-lg">จัดการข้อมูลแคลน <span class="text-orange-500 font-semibold">安镜之锋</span></p>
+                <div class="mb-8">
+                    <h2 class="text-3xl text-white mb-2">Admin Dashboard</h2>
+                    <p class="text-gray-400">จัดการข้อมูลแคลน 安镜之锋</p>
                 </div>
 
-                <div class="grid grid-cols-1 gap-6">
+                <div class="space-y-6">
                     <!-- Edit Policies -->
-                    <div class="group relative bg-slate-900/60 backdrop-blur-xl rounded-3xl p-8 border border-orange-500/20 shadow-xl hover:shadow-orange-500/10 transition-all duration-300 overflow-hidden">
-                        <div class="absolute top-0 right-0 w-40 h-40 bg-orange-500/5 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-orange-500/10"></div>
-                        
-                        <div class="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
-                            <div class="flex items-center gap-5">
-                                <div class="w-16 h-16 rounded-2xl bg-orange-500/10 flex items-center justify-center border border-orange-500/20 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(249,115,22,0.1)]">
-                                    <i data-lucide="shield" class="w-8 h-8 text-orange-500"></i>
-                                </div>
-                                <div>
-                                    <h3 class="text-2xl text-white font-bold mb-1">นโยบายแคลน</h3>
-                                    <p class="text-orange-400/60 text-sm font-medium uppercase tracking-wider">Policies</p>
-                                </div>
-                            </div>
-                            
-                            <div class="flex items-center gap-4">
-                                <div class="bg-slate-950/50 rounded-2xl px-6 py-3 border border-slate-800/50 flex flex-col items-center min-w-[100px]">
-                                    <span class="text-gray-500 text-xs uppercase tracking-wider mb-1">Total</span>
-                                    <span class="text-2xl text-white font-mono font-bold">${policies[state.language].length}</span>
-                                </div>
-                                <button onclick="startEdit('policies')" class="h-14 px-6 bg-slate-800 hover:bg-orange-600 text-white rounded-2xl transition-all border border-slate-700 hover:border-orange-500 group-hover:shadow-lg flex items-center gap-2 font-semibold">
-                                    <i data-lucide="edit" class="w-5 h-5"></i>
-                                    <span>แก้ไข</span>
-                                </button>
-                            </div>
+                    <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xl text-white flex items-center gap-2">
+                                <i data-lucide="shield" class="w-5 h-5 text-orange-400"></i>
+                                นโยบายแคลน (Policies)
+                            </h3>
+                            <button
+                                onclick="startEdit('policies')"
+                                class="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                            >
+                                <i data-lucide="edit" class="w-4 h-4"></i>
+                                แก้ไข
+                            </button>
                         </div>
+                        <p class="text-gray-400 text-sm mb-4">จำนวนนโยบาย: ${policies[state.language].length} ข้อ</p>
                     </div>
 
                     <!-- Edit Announcements -->
-                    <div class="group relative bg-slate-900/60 backdrop-blur-xl rounded-3xl p-8 border border-blue-500/20 shadow-xl hover:shadow-blue-500/10 transition-all duration-300 overflow-hidden">
-                        <div class="absolute top-0 right-0 w-40 h-40 bg-blue-500/5 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-blue-500/10"></div>
-                        
-                        <div class="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
-                            <div class="flex items-center gap-5">
-                                <div class="w-16 h-16 rounded-2xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
-                                    <i data-lucide="megaphone" class="w-8 h-8 text-blue-500"></i>
-                                </div>
-                                <div>
-                                    <h3 class="text-2xl text-white font-bold mb-1">ประกาศและข่าวสาร</h3>
-                                    <p class="text-blue-400/60 text-sm font-medium uppercase tracking-wider">Announcements</p>
-                                </div>
-                            </div>
-                            
-                            <div class="flex items-center gap-4">
-                                <div class="bg-slate-950/50 rounded-2xl px-6 py-3 border border-slate-800/50 flex flex-col items-center min-w-[100px]">
-                                    <span class="text-gray-500 text-xs uppercase tracking-wider mb-1">Total</span>
-                                    <span class="text-2xl text-white font-mono font-bold">${announcements[state.language].length}</span>
-                                </div>
-                                <button onclick="startEdit('announcements')" class="h-14 px-6 bg-slate-800 hover:bg-blue-600 text-white rounded-2xl transition-all border border-slate-700 hover:border-blue-500 group-hover:shadow-lg flex items-center gap-2 font-semibold">
-                                    <i data-lucide="edit" class="w-5 h-5"></i>
-                                    <span>แก้ไข</span>
-                                </button>
-                            </div>
+                    <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xl text-white flex items-center gap-2">
+                                <i data-lucide="megaphone" class="w-5 h-5 text-blue-400"></i>
+                                ประกาศและข่าวสาร (Announcements)
+                            </h3>
+                            <button
+                                onclick="startEdit('announcements')"
+                                class="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                            >
+                                <i data-lucide="edit" class="w-4 h-4"></i>
+                                แก้ไข
+                            </button>
                         </div>
+                        <p class="text-gray-400 text-sm mb-4">จำนวนประกาศ: ${announcements[state.language].length} รายการ</p>
                     </div>
 
                     <!-- Edit Members -->
-                    <div class="group relative bg-slate-900/60 backdrop-blur-xl rounded-3xl p-8 border border-green-500/20 shadow-xl hover:shadow-green-500/10 transition-all duration-300 overflow-hidden">
-                        <div class="absolute top-0 right-0 w-40 h-40 bg-green-500/5 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-green-500/10"></div>
-                        
-                        <div class="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
-                            <div class="flex items-center gap-5">
-                                <div class="w-16 h-16 rounded-2xl bg-green-500/10 flex items-center justify-center border border-green-500/20 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(34,197,94,0.1)]">
-                                    <i data-lucide="users" class="w-8 h-8 text-green-500"></i>
-                                </div>
-                                <div>
-                                    <h3 class="text-2xl text-white font-bold mb-1">สมาชิกแคลน</h3>
-                                    <p class="text-green-400/60 text-sm font-medium uppercase tracking-wider">Members</p>
-                                </div>
-                            </div>
-                            
-                            <div class="flex items-center gap-4">
-                                <div class="hidden md:flex gap-2">
-                                    <div class="bg-slate-950/50 rounded-2xl px-4 py-3 border border-slate-800/50 flex flex-col items-center">
-                                        <span class="text-gray-500 text-[10px] uppercase tracking-wider mb-1">Mgmt</span>
-                                        <span class="text-lg text-white font-mono font-bold">${members.management.length}</span>
-                                    </div>
-                                    <div class="bg-slate-950/50 rounded-2xl px-4 py-3 border border-slate-800/50 flex flex-col items-center">
-                                        <span class="text-gray-500 text-[10px] uppercase tracking-wider mb-1">Support</span>
-                                        <span class="text-lg text-white font-mono font-bold">${members.supporters.length}</span>
-                                    </div>
-                                    <div class="bg-slate-950/50 rounded-2xl px-4 py-3 border border-slate-800/50 flex flex-col items-center">
-                                        <span class="text-gray-500 text-[10px] uppercase tracking-wider mb-1">Regular</span>
-                                        <span class="text-lg text-white font-mono font-bold">${members.regular.length}<span class="text-gray-600 text-xs">/40</span></span>
-                                    </div>
-                                </div>
-                                <button onclick="startEdit('members')" class="h-14 px-6 bg-slate-800 hover:bg-green-600 text-white rounded-2xl transition-all border border-slate-700 hover:border-green-500 group-hover:shadow-lg flex items-center gap-2 font-semibold">
-                                    <i data-lucide="edit" class="w-5 h-5"></i>
-                                    <span>แก้ไข</span>
-                                </button>
-                            </div>
+                    <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xl text-white flex items-center gap-2">
+                                <i data-lucide="users" class="w-5 h-5 text-green-400"></i>
+                                สมาชิกแคลน (Members)
+                            </h3>
+                            <button
+                                onclick="startEdit('members')"
+                                class="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                            >
+                                <i data-lucide="edit" class="w-4 h-4"></i>
+                                แก้ไข
+                            </button>
                         </div>
-                        <!-- Mobile stats view -->
-                        <div class="md:hidden grid grid-cols-3 gap-2 mt-6">
-                            <div class="bg-slate-950/50 rounded-2xl p-3 border border-slate-800/50 text-center">
-                                <p class="text-gray-500 text-[10px] uppercase tracking-wider mb-1">Mgmt</p>
-                                <p class="text-lg text-white font-bold">${members.management.length}</p>
-                            </div>
-                            <div class="bg-slate-950/50 rounded-2xl p-3 border border-slate-800/50 text-center">
-                                <p class="text-gray-500 text-[10px] uppercase tracking-wider mb-1">Support</p>
-                                <p class="text-lg text-white font-bold">${members.supporters.length}</p>
-                            </div>
-                            <div class="bg-slate-950/50 rounded-2xl p-3 border border-slate-800/50 text-center">
-                                <p class="text-gray-500 text-[10px] uppercase tracking-wider mb-1">Regular</p>
-                                <p class="text-lg text-white font-bold">${members.regular.length}</p>
-                            </div>
-                        </div>
+                        <p class="text-gray-400 text-sm mb-1">ทีมบริหาร: ${members.management.length} คน</p>
+                        <p class="text-gray-400 text-sm mb-1">ผู้สนับสนุน: ${members.supporters.length} คน</p>
+                        <p class="text-gray-400 text-sm mb-4">สมาชิกทั่วไป: ${members.regular.length} / 40 คน</p>
                     </div>
 
                     <!-- Edit Events -->
-                    <div class="group relative bg-slate-900/60 backdrop-blur-xl rounded-3xl p-8 border border-yellow-500/20 shadow-xl hover:shadow-yellow-500/10 transition-all duration-300 overflow-hidden">
-                        <div class="absolute top-0 right-0 w-40 h-40 bg-yellow-500/5 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-yellow-500/10"></div>
-                        
-                        <div class="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
-                            <div class="flex items-center gap-5">
-                                <div class="w-16 h-16 rounded-2xl bg-yellow-500/10 flex items-center justify-center border border-yellow-500/20 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(234,179,8,0.1)]">
-                                    <i data-lucide="party-popper" class="w-8 h-8 text-yellow-500"></i>
-                                </div>
-                                <div>
-                                    <h3 class="text-2xl text-white font-bold mb-1">กิจกรรม</h3>
-                                    <p class="text-yellow-400/60 text-sm font-medium uppercase tracking-wider">Events</p>
-                                </div>
-                            </div>
-                            
-                            <div class="flex items-center gap-4">
-                                <div class="bg-slate-950/50 rounded-2xl px-6 py-3 border border-slate-800/50 flex flex-col items-center min-w-[100px]">
-                                    <span class="text-gray-500 text-xs uppercase tracking-wider mb-1">Schedule</span>
-                                    <span class="text-2xl text-white font-mono font-bold">${events[state.language].schedule.length}</span>
-                                </div>
-                                <button onclick="startEdit('events')" class="h-14 px-6 bg-slate-800 hover:bg-yellow-600 text-white rounded-2xl transition-all border border-slate-700 hover:border-yellow-500 group-hover:shadow-lg flex items-center gap-2 font-semibold">
-                                    <i data-lucide="edit" class="w-5 h-5"></i>
-                                    <span>แก้ไข</span>
-                                </button>
-                            </div>
+                    <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xl text-white flex items-center gap-2">
+                                <i data-lucide="party-popper" class="w-5 h-5 text-yellow-400"></i>
+                                กิจกรรม (Events)
+                            </h3>
+                            <button onclick="startEdit('events')" class="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors">
+                                <i data-lucide="edit" class="w-4 h-4"></i>
+                                แก้ไข
+                            </button>
                         </div>
+                        <p class="text-gray-400 text-sm mb-4">จัดการตารางฝึกซ้อมและกิจกรรมต่างๆ</p>
                     </div>
 
                     <!-- Edit About -->
-                    <div class="group relative bg-slate-900/60 backdrop-blur-xl rounded-3xl p-8 border border-purple-500/20 shadow-xl hover:shadow-purple-500/10 transition-all duration-300 overflow-hidden">
-                        <div class="absolute top-0 right-0 w-40 h-40 bg-purple-500/5 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-purple-500/10"></div>
-                        
-                        <!-- Pending Requests Badge -->
-                        ${state.pendingRequests.length > 0 ? `
-                        <div class="absolute -top-3 -right-3 w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white font-bold text-sm ring-4 ring-slate-900 animate-pulse">
-                            ${state.pendingRequests.length}
-                        </div>` : ''}
-                        
-                        <div class="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
-                            <div class="flex items-center gap-5">
-                                <div class="w-16 h-16 rounded-2xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
-                                    <i data-lucide="info" class="w-8 h-8 text-purple-500"></i>
-                                </div>
-                                <div>
-                                    <h3 class="text-2xl text-white font-bold mb-1">เกี่ยวกับแคลน</h3>
-                                    <p class="text-purple-400/60 text-sm font-medium uppercase tracking-wider">About Clan</p>
-                                </div>
-                            </div>
-                            
-                            <div class="flex items-center gap-4">
-                                <button onclick="startEdit('clanData')" class="h-14 px-6 bg-slate-800 hover:bg-purple-600 text-white rounded-2xl transition-all border border-slate-700 hover:border-purple-500 group-hover:shadow-lg flex items-center gap-2 font-semibold">
-                                    <i data-lucide="edit" class="w-5 h-5"></i>
-                                    <span>แก้ไข</span>
-                                </button>
-                            </div>
+                    <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xl text-white flex items-center gap-2">
+                                <i data-lucide="info" class="w-5 h-5 text-purple-400"></i>
+                                เกี่ยวกับแคลน (About)
+                            </h3>
+                            <button
+                                onclick="startEdit('clanData')"
+                                class="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                            >
+                                <i data-lucide="edit" class="w-4 h-4"></i>
+                                แก้ไข
+                            </button>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Pending Join Requests -->
-                <div class="mt-10">
-                    <div class="mb-6 relative pl-6">
-                        <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-blue-500 to-cyan-600 rounded-full"></div>
-                        <h2 class="text-3xl text-white font-bold tracking-tight">คำขอเข้าร่วมที่รอการอนุมัติ</h2>
-                        <p class="text-gray-400">Pending Join Requests</p>
-                    </div>
-                    <div id="pending-requests-container" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        ${state.pendingRequests.length > 0 ? state.pendingRequests.map(req => `
-                            <div class="bg-slate-900/80 backdrop-blur-xl rounded-3xl p-6 border border-slate-800 shadow-lg">
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <h4 class="text-lg font-bold text-orange-400 mb-3 border-b border-slate-700 pb-2">Game Info</h4>
-                                        <div class="flex gap-4 items-center mb-4">
-                                            <img src="${req.game_profile_image_url || 'https://via.placeholder.com/96'}" class="w-16 h-16 object-cover rounded-lg border-2 border-orange-500" alt="Game Profile">
-                                            <span class="text-xl font-bold text-white">${req.name}</span>
-                                        </div>
-                                        <div class="grid grid-cols-2 gap-1 text-sm">
-                                            <span class="text-gray-500">Level:</span> <span class="text-white">${req.level}</span>
-                                            <span class="text-gray-500">ID:</span> <span class="text-white">${req.id}</span>
-                                            <span class="text-gray-500">Gender:</span> <span class="text-white">${req.gender}</span>
-                                            <span class="text-gray-500">Status:</span> <span class="text-white">${req.status}</span>
-                                            <span class="text-gray-500">Country:</span> <span class="text-white">${req.country}</span>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <h4 class="text-lg font-bold text-blue-400 mb-3 border-b border-slate-700 pb-2">Notification</h4>
-                                        <div class="flex gap-4 items-center mb-4">
-                                            ${req.notification_profile_image_url ? `<img src="${req.notification_profile_image_url}" class="w-16 h-16 object-cover rounded-lg border-2 border-blue-500" alt="Notification Profile">` : ''}
-                                            <span class="text-lg font-bold text-white truncate">${req.notification_contact}</span>
-                                        </div>
-                                        <div class="grid grid-cols-2 gap-1 text-sm">
-                                            <span class="text-gray-500">Channel:</span> <span class="text-white capitalize">${req.notification_channel}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="mt-6 pt-4 border-t border-slate-800 flex gap-4">
-                                    <button onclick="handleRequestAction(${req.request_id}, 'accepted')" class="flex-1 bg-green-600 hover:bg-green-500 text-white py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-green-500/10">
-                                        <i data-lucide="check" class="w-4 h-4 inline-block mr-1"></i> Accept
-                                    </button>
-                                    <button onclick="showRejectReasonModal(${req.request_id})" class="flex-1 bg-red-600 hover:bg-red-500 text-white py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-red-500/10">
-                                        <i data-lucide="x" class="w-4 h-4 inline-block mr-1"></i> Reject
-                                    </button>
-                                </div>
-                            </div>
-                        `).join('') : `
-                            <div class="col-span-1 lg:col-span-2 text-center py-10 bg-slate-900/50 rounded-2xl border border-dashed border-slate-700">
-                                <i data-lucide="inbox" class="w-12 h-12 text-gray-600 mx-auto mb-4"></i>
-                                <p class="text-gray-500">ไม่มีคำขอเข้าร่วมในขณะนี้</p>
-                                <p class="text-gray-600 text-sm">No pending requests at the moment.</p>
-                            </div>
-                        `}
+                        <p class="text-gray-400 text-sm mb-2">ประวัติ, วิสัยทัศน์, จำนวนสมาชิก, ข้อมูลติดต่อ</p>
                     </div>
                 </div>
             `;
@@ -3427,29 +2624,10 @@
                         if (row.section === 'clanData') clanData = row.data;
                         if (row.section === 'events') events = row.data;
                     });
-                } else {
-                    ['policies', 'announcements', 'members', 'clanData', 'events'].forEach(async (section) => {
-                        await saveData(section, eval(`default${section.charAt(0).toUpperCase() + section.slice(1)}`));
-                    });
                 }
             } catch (err) {
                 console.error('Error loading data from Supabase:', err);
                 // Fallback to default data if loading fails
-            }
-        }
-        
-        async function loadPendingRequests() {
-            if (!supabaseClient) return;
-            try {
-                const { data, error } = await supabaseClient
-                    .from('join_requests')
-                    .select('*')
-                    .order('created_at', { ascending: true });
-                if (error) throw error;
-                state.pendingRequests = data || [];
-            } catch (err) {
-                console.error('Error loading pending requests:', err);
-                state.pendingRequests = [];
             }
         }
 
@@ -3459,7 +2637,7 @@
                     throw new Error('Supabase client unavailable');
                 }
                 const { error } = await supabaseClient
-                    .from('clan_content')
+                    .from('site_content')
                     .upsert({ section: section, data: data });
                 
                 if (error) throw error;
@@ -3583,7 +2761,6 @@
                 state.isLoggedIn = true;
                 hideLoginDialog();
                 updateLoginUI();
-                await loadPendingRequests();
                 setCurrentPage('admin');
             } catch (error) {
                 const errorText = state.language === 'th' ? 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' : 'Invalid email or password';
@@ -3596,7 +2773,6 @@
             if (supabaseClient) {
                 await supabaseClient.auth.signOut();
             }
-            state.pendingRequests = [];
             state.isLoggedIn = false;
             localStorage.removeItem('adminLoggedIn');
             updateLoginUI();
@@ -3618,64 +2794,6 @@
                 document.getElementById('nav-logout').classList.remove('flex');
                 document.getElementById('nav-admin').classList.add('hidden');
                 document.getElementById('nav-admin').classList.remove('flex');
-            }
-        }
-
-        function showRejectReasonModal(requestId) {
-            const modal = document.getElementById('reject-reason-modal');
-            const html = `
-                <h3 class="text-2xl text-white font-bold mb-4">เหตุผลในการปฏิเสธ (Reason for Rejection)</h3>
-                <p class="text-gray-400 mb-6">เลือกเหตุผลที่จะส่งแจ้งเตือนไปยังผู้สมัคร</p>
-                <div class="space-y-3 mb-6">
-                    <button onclick="handleRequestAction(${requestId}, 'rejected', 'ข้อมูลที่กรอกไม่ครบถ้วนหรือไม่ถูกต้อง (Incomplete or incorrect information)')" class="w-full text-left p-3 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-white">ข้อมูลไม่ครบถ้วน / ไม่ถูกต้อง</p>
-                    <button onclick="handleRequestAction(${requestId}, 'rejected', 'รูปโปรไฟล์ไม่ตรงกับที่ระบุ (Profile picture does not match)')" class="w-full text-left p-3 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-white">รูปโปรไฟล์ไม่ตรง</p>
-                    <button onclick="handleRequestAction(${requestId}, 'rejected', 'แคลนเต็มแล้วในขณะนี้ (The clan is currently full)')" class="w-full text-left p-3 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-white">แคลนเต็ม</p>
-                </div>
-                <div>
-                    <label class="text-gray-400 text-sm">หรือระบุเหตุผลอื่น:</label>
-                    <textarea id="custom-reject-reason" rows="3" class="w-full mt-1 p-2 bg-slate-800 rounded-lg border border-slate-700 text-white"></textarea>
-                </div>
-                <div class="flex gap-4 mt-6">
-                    <button onclick="handleRequestAction(${requestId}, 'rejected', document.getElementById('custom-reject-reason').value)" class="flex-1 bg-red-600 hover:bg-red-500 text-white py-2.5 rounded-xl font-bold">ส่งเหตุผลที่กำหนดเอง</button>
-                    <button onclick="document.getElementById('reject-reason-modal').classList.add('hidden')" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2.5 rounded-xl font-bold">ยกเลิก</button>
-                </div>
-            `;
-            modal.querySelector('div').innerHTML = html;
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
-
-        async function handleRequestAction(requestId, status, reason = null) {
-            if (!supabaseClient) return;
-
-            // Hide reject modal if open
-            document.getElementById('reject-reason-modal').classList.add('hidden');
-
-            try {
-                // In a real app, you would send a notification here using the reason.
-                // For this demo, we'll just log it.
-                if (status === 'rejected' && reason) {
-                    console.log(`Rejected request ${requestId}. Reason: ${reason}`);
-                    alert(`Rejected with reason: ${reason}`);
-                } else if (status === 'accepted') {
-                    console.log(`Accepted request ${requestId}.`);
-                    alert(`Request Accepted!`);
-                }
-
-                // Delete the request from the database
-                const { error } = await supabaseClient
-                    .from('join_requests')
-                    .delete()
-                    .eq('request_id', requestId);
-
-                if (error) throw error;
-
-                // Refresh the list
-                await loadPendingRequests();
-                renderAdminPage();
-            } catch (error) {
-                console.error('Error handling request:', error);
-                alert(`Error: ${error.message}`);
             }
         }
 
@@ -3715,16 +2833,6 @@
                 document.getElementById('footer-sub-text').textContent = t.footerText2;
                 document.getElementById('footer-clan-name').textContent = t.clanName;
                 document.getElementById('footer-official').textContent = t.officialClan;
-            }
-
-            // Guest Mode UI adjustments
-            if (state.isGuest) {
-                ['nav-announcements', 'nav-about', 'nav-members', 'nav-events', 'nav-contact', 'nav-login'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if(el) el.style.display = 'none';
-                });
-                document.getElementById('nav-register').classList.remove('hidden');
-                document.getElementById('nav-register').classList.add('flex');
             }
         }
     </script>
