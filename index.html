@@ -543,6 +543,11 @@
                             <label class="text-gray-400 text-xs uppercase font-bold tracking-wider ml-1">รูปโปรไฟล์ (Profile Picture)</label>
                             <input id="reg-notification-image" type="file" accept="image/*" class="w-full px-4 py-3 bg-slate-950 text-gray-400 rounded-xl border border-slate-800 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-500/10 file:text-blue-400 hover:file:bg-blue-500/20 cursor-pointer" title="รูปโปรไฟล์ Facebook / IG">
                         </div>
+                        <div id="instagram-note" class="hidden mt-3 p-3 bg-blue-900/50 border border-blue-500/30 rounded-lg text-xs text-blue-200 space-y-2">
+                            <p class="font-bold flex items-center gap-2"><i data-lucide="info" class="w-4 h-4"></i>ข้อควรทราบสำหรับ Instagram</p>
+                            <p>ทีมงานจะใช้บัญชีชื่อผู้ใช้ <strong class="text-white">ajrecruitmentig</strong> (ชื่อโปรไฟล์: <strong class="text-white">shenwang Ent</strong>) ในการแอดเพื่อนไปหาคุณเพื่อแจ้งผล</p>
+                            <p>กรุณาตรวจสอบชื่อให้ถูกต้องก่อนกดรับเพื่อน</p>
+                        </div>
                     </div>
                 </div>
 
@@ -611,12 +616,30 @@
         </div>
     </div>
 
+    <!-- Action Message Modal -->
+    <div id="action-message-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[96] items-center justify-center p-4">
+        <div class="bg-slate-900 p-8 rounded-3xl max-w-lg w-full border border-slate-700 shadow-2xl modal-enter">
+            <!-- Content will be dynamically loaded here -->
+        </div>
+    </div>
+
     <!-- Admin Edit Dialog -->
     <div id="edit-dialog" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm items-center justify-center z-50 p-4 overflow-y-auto">
         <div class="bg-slate-900/95 backdrop-blur-xl rounded-3xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-slate-700 shadow-2xl modal-enter">
             <!-- Content will be dynamically loaded here -->
         </div>
     </div>
+
+    <!-- Image Preview Modal -->
+    <div id="image-preview-modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-lg z-[1100] items-center justify-center p-4" onclick="closeImagePreview()">
+        <div class="relative max-w-4xl max-h-[90vh]" onclick="event.stopPropagation()">
+            <img id="preview-image-element" src="" class="object-contain w-full h-full rounded-lg shadow-2xl">
+            <button onclick="closeImagePreview()" class="absolute -top-3 -right-3 md:-top-5 md:-right-5 w-10 h-10 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/20">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+    </div>
+
 
     <!-- Custom Alert Modal -->
     <div id="custom-alert-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[1000] items-center justify-center p-4">
@@ -657,9 +680,10 @@
             isGuest: false,
             pendingRequests: [],
             loading: false,
-            editingSection: null,
-            tempEditData: null
+            editingSection: null, // 'policies', 'members', etc.
+            tempEditData: null,
         };
+        let currentActionData = {};
 
         // Translations
         const translations = {
@@ -1306,6 +1330,25 @@
             console.log('Members data validated:', members);
         }
 
+        // Realtime Subscription for Join Requests
+        function setupRealtimeSubscription() {
+            if (!supabaseClient) return;
+            
+            supabaseClient
+                .channel('public:join_requests')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'join_requests' }, payload => {
+                    if (state.isLoggedIn) {
+                        showAlert(`มีคำขอเข้าร่วมใหม่จาก: ${payload.new.name}\n(New Join Request)`, 'info', 'New Request');
+                        loadPendingRequests().then(() => {
+                            if (state.currentPage === 'admin') {
+                                renderAdminPage();
+                            }
+                        });
+                    }
+                })
+                .subscribe();
+        }
+
         // เรียกใช้ฟังก์ชันตรวจสอบข้อมูลเมื่อเริ่มต้น
         validateMembersData();
 
@@ -1481,6 +1524,18 @@
                 console.warn('Supabase not available, using default data');
             }
             
+            // Check Member Login Expiration (14 Days)
+            const lastMemberLoginTime = localStorage.getItem('lastMemberLoginTime');
+            if (lastMemberLoginTime) {
+                const fourteenDaysMs = 14 * 24 * 60 * 60 * 1000;
+                if (Date.now() - new Date(lastMemberLoginTime).getTime() > fourteenDaysMs) {
+                    localStorage.removeItem('memberLoggedIn');
+                    localStorage.removeItem('lastMemberLoginTime');
+                    state.isMemberLoggedIn = false;
+                    console.log('Member session expired (14 days limit)');
+                }
+            }
+            
             // Check for active guest session on page load
             const guestEndTimeStr = sessionStorage.getItem('guestEndTime');
             if (guestEndTimeStr) {
@@ -1502,6 +1557,7 @@
                     state.isLoggedIn = true;
                     updateLoginUI();
                 }
+                setupRealtimeSubscription();
             } else {
                 // Fallback (ล้างค่าเก่าทิ้งเพื่อความปลอดภัย)
                 localStorage.removeItem('adminLoggedIn');
@@ -1874,6 +1930,8 @@
                 localStorage.setItem('memberLoggedIn', 'true');
                 localStorage.setItem('lastMemberLoginTime', new Date().toISOString());
                 state.isMemberLoggedIn = true;
+                
+                showAlert('เข้าสู่ระบบสำเร็จ! เซสชั่นของคุณมีอายุ 14 วัน\n(Login successful! Session valid for 14 days)', 'success', 'Welcome Member');
 
                 // Show Welcome
                 document.getElementById('welcome-username').textContent = tempMemberData.name;
@@ -1965,6 +2023,7 @@
             const emailInput = document.getElementById('reg-notification-email');
             const socialNameInput = document.getElementById('reg-notification-name');
             const socialImageInput = document.getElementById('reg-notification-image');
+            const instagramNote = document.getElementById('instagram-note');
 
             if (channel === 'email') {
                 emailFields.style.display = 'block';
@@ -1978,6 +2037,15 @@
                 emailInput.required = false;
                 socialNameInput.required = true;
                 socialImageInput.required = true;
+            }
+
+            // Show note only for Instagram
+            if (instagramNote) {
+                if (channel === 'instagram') {
+                    instagramNote.style.display = 'block';
+                } else {
+                    instagramNote.style.display = 'none';
+                }
             }
         }
 
@@ -2090,11 +2158,11 @@
                 const msg = `
                     <p class="mb-4">คำขอของคุณถูกส่งไปยังทีมงานแล้ว โปรดรอการแจ้งเตือนผลการสมัครผ่านช่องทางที่คุณเลือกไว้</p>
                     <div class="text-left text-sm bg-slate-950/50 p-4 rounded-lg border border-slate-800 space-y-2">
-                        <p class="font-bold text-orange-400">สิ่งที่ต้องทำต่อไป:</p>
-                        <p>1. ทีมงานชื่อ <strong class="text-white">王明君</strong> จะส่งคำขอเป็นเพื่อนไปหาคุณในเกม</p>
-                        <p>2. เข้าเกม > รายชื่อเพื่อน > คำขอเป็นเพื่อน</p>
-                        <p>3. ตรวจสอบว่าชื่อตรงกันแล้วกด "รับเพื่อน"</p>
-                        <p>4. พิมพ์แชทหาทีมงานว่า "ติดต่อขอเข้าแคลน" แล้วรอทีมงานเชิญเข้าแคลน</p>
+                        <p class="font-bold text-orange-400">สิ่งที่ต้องทำต่อไป (สำคัญมาก):</p>
+                        <p>1. ทีมงานชื่อ <strong class="text-white">王明君</strong> จะส่งคำขอเป็นเพื่อนไปหาคุณใน <strong class="text-yellow-400">เกม</strong></p>
+                        <p>2. เข้าเกม > รายชื่อเพื่อน > คำขอเป็นเพื่อน > ตรวจสอบว่าชื่อตรงกันแล้วกด "รับเพื่อน"</p>
+                        <p>3. พิมพ์แชทหาทีมงานว่า "ติดต่อขอเข้าแคลน" แล้วรอทีมงานเชิญเข้าแคลน</p>
+                        <p class="mt-3 pt-3 border-t border-slate-700">4. หากคุณเลือกรับการแจ้งเตือนผ่าน <strong class="text-cyan-400">Instagram</strong> ทีมงานจะใช้บัญชีชื่อผู้ใช้ <strong class="text-white">ajrecruitmentig</strong> (ชื่อโปรไฟล์: <strong class="text-white">shenwang Ent</strong>) ในการแอดเพื่อนไปหาคุณเพื่อแจ้งผล</p>
                     </div>`;
                 document.getElementById('success-message').innerHTML = msg;
                 document.getElementById('success-modal').classList.remove('hidden');
@@ -2611,7 +2679,7 @@
 
         function renderAdminPage() {
             const t = translations[state.language];
-            
+
             const html = `
                 <div class="mb-10 relative pl-6">
                     <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-orange-500 to-red-600 rounded-full"></div>
@@ -2619,195 +2687,60 @@
                     <p class="text-gray-400 text-lg">จัดการข้อมูลแคลน <span class="text-orange-500 font-semibold">安镜之锋</span></p>
                 </div>
 
-                <div class="grid grid-cols-1 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Edit Policies -->
-                    <div class="group relative bg-slate-900/60 backdrop-blur-xl rounded-3xl p-8 border border-orange-500/20 shadow-xl hover:shadow-orange-500/10 transition-all duration-300 overflow-hidden">
-                        <div class="absolute top-0 right-0 w-40 h-40 bg-orange-500/5 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-orange-500/10"></div>
-                        
-                        <div class="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
-                            <div class="flex items-center gap-5">
-                                <div class="w-16 h-16 rounded-2xl bg-orange-500/10 flex items-center justify-center border border-orange-500/20 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(249,115,22,0.1)]">
-                                    <i data-lucide="shield" class="w-8 h-8 text-orange-500"></i>
-                                </div>
-                                <div>
-                                    <h3 class="text-2xl text-white font-bold mb-1">นโยบายแคลน</h3>
-                                    <p class="text-orange-400/60 text-sm font-medium uppercase tracking-wider">Policies</p>
-                                </div>
-                            </div>
-                            
+                    <div class="group relative bg-slate-900/60 backdrop-blur-xl rounded-3xl p-6 border border-orange-500/20 shadow-xl hover:shadow-orange-500/10 transition-all duration-300 overflow-hidden">
+                        <div class="absolute top-0 right-0 w-40 h-40 bg-orange-500/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                        <div class="relative flex items-center justify-between gap-4">
                             <div class="flex items-center gap-4">
-                                <div class="bg-slate-950/50 rounded-2xl px-6 py-3 border border-slate-800/50 flex flex-col items-center min-w-[100px]">
-                                    <span class="text-gray-500 text-xs uppercase tracking-wider mb-1">Total</span>
-                                    <span class="text-2xl text-white font-mono font-bold">${policies[state.language].length}</span>
-                                </div>
-                                <button onclick="startEdit('policies')" class="h-14 px-6 bg-slate-800 hover:bg-orange-600 text-white rounded-2xl transition-all border border-slate-700 hover:border-orange-500 group-hover:shadow-lg flex items-center gap-2 font-semibold">
-                                    <i data-lucide="edit" class="w-5 h-5"></i>
-                                    <span>แก้ไข</span>
-                                </button>
+                                <div class="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center border border-orange-500/20"><i data-lucide="shield" class="w-6 h-6 text-orange-500"></i></div>
+                                <div><h3 class="text-lg text-white font-bold">นโยบายแคลน</h3><p class="text-orange-400/60 text-xs uppercase">Policies</p></div>
                             </div>
+                            <button onclick="startEdit('policies')" class="h-12 px-5 bg-slate-800 hover:bg-orange-600 text-white rounded-xl transition-all border border-slate-700 hover:border-orange-500 flex items-center gap-2 font-semibold"><i data-lucide="edit" class="w-4 h-4"></i><span>แก้ไข</span></button>
                         </div>
                     </div>
-
                     <!-- Edit Announcements -->
-                    <div class="group relative bg-slate-900/60 backdrop-blur-xl rounded-3xl p-8 border border-blue-500/20 shadow-xl hover:shadow-blue-500/10 transition-all duration-300 overflow-hidden">
-                        <div class="absolute top-0 right-0 w-40 h-40 bg-blue-500/5 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-blue-500/10"></div>
-                        
-                        <div class="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
-                            <div class="flex items-center gap-5">
-                                <div class="w-16 h-16 rounded-2xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
-                                    <i data-lucide="megaphone" class="w-8 h-8 text-blue-500"></i>
-                                </div>
-                                <div>
-                                    <h3 class="text-2xl text-white font-bold mb-1">ประกาศและข่าวสาร</h3>
-                                    <p class="text-blue-400/60 text-sm font-medium uppercase tracking-wider">Announcements</p>
-                                </div>
-                            </div>
-                            
+                    <div class="group relative bg-slate-900/60 backdrop-blur-xl rounded-3xl p-6 border border-blue-500/20 shadow-xl hover:shadow-blue-500/10 transition-all duration-300 overflow-hidden">
+                        <div class="absolute top-0 right-0 w-40 h-40 bg-blue-500/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                        <div class="relative flex items-center justify-between gap-4">
                             <div class="flex items-center gap-4">
-                                <div class="bg-slate-950/50 rounded-2xl px-6 py-3 border border-slate-800/50 flex flex-col items-center min-w-[100px]">
-                                    <span class="text-gray-500 text-xs uppercase tracking-wider mb-1">Total</span>
-                                    <span class="text-2xl text-white font-mono font-bold">${announcements[state.language].length}</span>
-                                </div>
-                                <button onclick="startEdit('announcements')" class="h-14 px-6 bg-slate-800 hover:bg-blue-600 text-white rounded-2xl transition-all border border-slate-700 hover:border-blue-500 group-hover:shadow-lg flex items-center gap-2 font-semibold">
-                                    <i data-lucide="edit" class="w-5 h-5"></i>
-                                    <span>แก้ไข</span>
-                                </button>
+                                <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20"><i data-lucide="megaphone" class="w-6 h-6 text-blue-500"></i></div>
+                                <div><h3 class="text-lg text-white font-bold">ประกาศ</h3><p class="text-blue-400/60 text-xs uppercase">Announcements</p></div>
                             </div>
+                            <button onclick="startEdit('announcements')" class="h-12 px-5 bg-slate-800 hover:bg-blue-600 text-white rounded-xl transition-all border border-slate-700 hover:border-blue-500 flex items-center gap-2 font-semibold"><i data-lucide="edit" class="w-4 h-4"></i><span>แก้ไข</span></button>
                         </div>
                     </div>
-
                     <!-- Edit Members -->
-                    <div class="group relative bg-slate-900/60 backdrop-blur-xl rounded-3xl p-8 border border-green-500/20 shadow-xl hover:shadow-green-500/10 transition-all duration-300 overflow-hidden">
-                        <div class="absolute top-0 right-0 w-40 h-40 bg-green-500/5 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-green-500/10"></div>
-                        
-                        <div class="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
-                            <div class="flex items-center gap-5">
-                                <div class="w-16 h-16 rounded-2xl bg-green-500/10 flex items-center justify-center border border-green-500/20 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(34,197,94,0.1)]">
-                                    <i data-lucide="users" class="w-8 h-8 text-green-500"></i>
-                                </div>
-                                <div>
-                                    <h3 class="text-2xl text-white font-bold mb-1">สมาชิกแคลน</h3>
-                                    <p class="text-green-400/60 text-sm font-medium uppercase tracking-wider">Members</p>
-                                </div>
-                            </div>
-                            
+                    <div class="group relative bg-slate-900/60 backdrop-blur-xl rounded-3xl p-6 border border-green-500/20 shadow-xl hover:shadow-green-500/10 transition-all duration-300 overflow-hidden">
+                        <div class="absolute top-0 right-0 w-40 h-40 bg-green-500/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                        <div class="relative flex items-center justify-between gap-4">
                             <div class="flex items-center gap-4">
-                                <div class="hidden md:flex gap-2">
-                                    <div class="bg-slate-950/50 rounded-2xl px-4 py-3 border border-slate-800/50 flex flex-col items-center">
-                                        <span class="text-gray-500 text-[10px] uppercase tracking-wider mb-1">Mgmt</span>
-                                        <span class="text-lg text-white font-mono font-bold">${members.management.length}</span>
-                                    </div>
-                                    <div class="bg-slate-950/50 rounded-2xl px-4 py-3 border border-slate-800/50 flex flex-col items-center">
-                                        <span class="text-gray-500 text-[10px] uppercase tracking-wider mb-1">Support</span>
-                                        <span class="text-lg text-white font-mono font-bold">${members.supporters.length}</span>
-                                    </div>
-                                    <div class="bg-slate-950/50 rounded-2xl px-4 py-3 border border-slate-800/50 flex flex-col items-center">
-                                        <span class="text-gray-500 text-[10px] uppercase tracking-wider mb-1">Regular</span>
-                                        <span class="text-lg text-white font-mono font-bold">${members.regular.length}<span class="text-gray-600 text-xs">/40</span></span>
-                                    </div>
-                                </div>
-                                <button onclick="startEdit('members')" class="h-14 px-6 bg-slate-800 hover:bg-green-600 text-white rounded-2xl transition-all border border-slate-700 hover:border-green-500 group-hover:shadow-lg flex items-center gap-2 font-semibold">
-                                    <i data-lucide="edit" class="w-5 h-5"></i>
-                                    <span>แก้ไข</span>
-                                </button>
+                                <div class="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center border border-green-500/20"><i data-lucide="users" class="w-6 h-6 text-green-500"></i></div>
+                                <div><h3 class="text-lg text-white font-bold">สมาชิก</h3><p class="text-green-400/60 text-xs uppercase">Members</p></div>
                             </div>
-                        </div>
-                        <!-- Mobile stats view -->
-                        <div class="md:hidden grid grid-cols-3 gap-2 mt-6">
-                            <div class="bg-slate-950/50 rounded-2xl p-3 border border-slate-800/50 text-center">
-                                <p class="text-gray-500 text-[10px] uppercase tracking-wider mb-1">Mgmt</p>
-                                <p class="text-lg text-white font-bold">${members.management.length}</p>
-                            </div>
-                            <div class="bg-slate-950/50 rounded-2xl p-3 border border-slate-800/50 text-center">
-                                <p class="text-gray-500 text-[10px] uppercase tracking-wider mb-1">Support</p>
-                                <p class="text-lg text-white font-bold">${members.supporters.length}</p>
-                            </div>
-                            <div class="bg-slate-950/50 rounded-2xl p-3 border border-slate-800/50 text-center">
-                                <p class="text-gray-500 text-[10px] uppercase tracking-wider mb-1">Regular</p>
-                                <p class="text-lg text-white font-bold">${members.regular.length}</p>
-                            </div>
+                            <button onclick="startEdit('members')" class="h-12 px-5 bg-slate-800 hover:bg-green-600 text-white rounded-xl transition-all border border-slate-700 hover:border-green-500 flex items-center gap-2 font-semibold"><i data-lucide="edit" class="w-4 h-4"></i><span>แก้ไข</span></button>
                         </div>
                     </div>
-
                     <!-- Edit Events -->
-                    <div class="group relative bg-slate-900/60 backdrop-blur-xl rounded-3xl p-8 border border-yellow-500/20 shadow-xl hover:shadow-yellow-500/10 transition-all duration-300 overflow-hidden">
-                        <div class="absolute top-0 right-0 w-40 h-40 bg-yellow-500/5 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-yellow-500/10"></div>
-                        
-                        <div class="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
-                            <div class="flex items-center gap-5">
-                                <div class="w-16 h-16 rounded-2xl bg-yellow-500/10 flex items-center justify-center border border-yellow-500/20 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(234,179,8,0.1)]">
-                                    <i data-lucide="party-popper" class="w-8 h-8 text-yellow-500"></i>
-                                </div>
-                                <div>
-                                    <h3 class="text-2xl text-white font-bold mb-1">กิจกรรม</h3>
-                                    <p class="text-yellow-400/60 text-sm font-medium uppercase tracking-wider">Events</p>
-                                </div>
-                            </div>
-                            
+                    <div class="group relative bg-slate-900/60 backdrop-blur-xl rounded-3xl p-6 border border-yellow-500/20 shadow-xl hover:shadow-yellow-500/10 transition-all duration-300 overflow-hidden">
+                        <div class="absolute top-0 right-0 w-40 h-40 bg-yellow-500/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                        <div class="relative flex items-center justify-between gap-4">
                             <div class="flex items-center gap-4">
-                                <div class="bg-slate-950/50 rounded-2xl px-6 py-3 border border-slate-800/50 flex flex-col items-center min-w-[100px]">
-                                    <span class="text-gray-500 text-xs uppercase tracking-wider mb-1">Schedule</span>
-                                    <span class="text-2xl text-white font-mono font-bold">${events[state.language].schedule.length}</span>
-                                </div>
-                                <button onclick="startEdit('events')" class="h-14 px-6 bg-slate-800 hover:bg-yellow-600 text-white rounded-2xl transition-all border border-slate-700 hover:border-yellow-500 group-hover:shadow-lg flex items-center gap-2 font-semibold">
-                                    <i data-lucide="edit" class="w-5 h-5"></i>
-                                    <span>แก้ไข</span>
-                                </button>
+                                <div class="w-12 h-12 rounded-xl bg-yellow-500/10 flex items-center justify-center border border-yellow-500/20"><i data-lucide="party-popper" class="w-6 h-6 text-yellow-500"></i></div>
+                                <div><h3 class="text-lg text-white font-bold">กิจกรรม</h3><p class="text-yellow-400/60 text-xs uppercase">Events</p></div>
                             </div>
+                            <button onclick="startEdit('events')" class="h-12 px-5 bg-slate-800 hover:bg-yellow-600 text-white rounded-xl transition-all border border-slate-700 hover:border-yellow-500 flex items-center gap-2 font-semibold"><i data-lucide="edit" class="w-4 h-4"></i><span>แก้ไข</span></button>
                         </div>
                     </div>
-
-                    <!-- Edit About -->
-                    <div class="group relative bg-slate-900/60 backdrop-blur-xl rounded-3xl p-8 border border-purple-500/20 shadow-xl hover:shadow-purple-500/10 transition-all duration-300 overflow-hidden">
-                        <div class="absolute top-0 right-0 w-40 h-40 bg-purple-500/5 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-purple-500/10"></div>
-                        
-                        <!-- Pending Requests Badge -->
-                        ${state.pendingRequests.length > 0 ? `
-                        <div class="absolute -top-3 -right-3 w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white font-bold text-sm ring-4 ring-slate-900 animate-pulse">
-                            ${state.pendingRequests.length}
-                        </div>` : ''}
-                        
-                        <div class="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
-                            <div class="flex items-center gap-5">
-                                <div class="w-16 h-16 rounded-2xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
-                                    <i data-lucide="info" class="w-8 h-8 text-purple-500"></i>
-                                </div>
-                                <div>
-                                    <h3 class="text-2xl text-white font-bold mb-1">เกี่ยวกับแคลน</h3>
-                                    <p class="text-purple-400/60 text-sm font-medium uppercase tracking-wider">About Clan</p>
-                                </div>
-                            </div>
-                            
+                    <!-- Edit About & Contact -->
+                    <div class="group relative bg-slate-900/60 backdrop-blur-xl rounded-3xl p-6 border border-purple-500/20 shadow-xl hover:shadow-purple-500/10 transition-all duration-300 overflow-hidden">
+                        <div class="absolute top-0 right-0 w-40 h-40 bg-purple-500/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                        <div class="relative flex items-center justify-between gap-4">
                             <div class="flex items-center gap-4">
-                                <button onclick="startEdit('clanData')" class="h-14 px-6 bg-slate-800 hover:bg-purple-600 text-white rounded-2xl transition-all border border-slate-700 hover:border-purple-500 group-hover:shadow-lg flex items-center gap-2 font-semibold">
-                                    <i data-lucide="edit" class="w-5 h-5"></i>
-                                    <span>แก้ไข</span>
-                                </button>
+                                <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20"><i data-lucide="info" class="w-6 h-6 text-purple-500"></i></div>
+                                <div><h3 class="text-lg text-white font-bold">เกี่ยวกับ/ติดต่อ</h3><p class="text-purple-400/60 text-xs uppercase">About & Contact</p></div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Edit Contact -->
-                <div class="group relative bg-slate-900/60 backdrop-blur-xl rounded-3xl p-8 border border-cyan-500/20 shadow-xl hover:shadow-cyan-500/10 transition-all duration-300 overflow-hidden">
-                    <div class="absolute top-0 right-0 w-40 h-40 bg-cyan-500/5 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-cyan-500/10"></div>
-                    
-                    <div class="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
-                        <div class="flex items-center gap-5">
-                            <div class="w-16 h-16 rounded-2xl bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
-                                <i data-lucide="message-square" class="w-8 h-8 text-cyan-500"></i>
-                            </div>
-                            <div>
-                                <h3 class="text-2xl text-white font-bold mb-1">ข้อมูลติดต่อ</h3>
-                                <p class="text-cyan-400/60 text-sm font-medium uppercase tracking-wider">Contact Info</p>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-center gap-4">
-                            <button onclick="startEdit('clanData')" class="h-14 px-6 bg-slate-800 hover:bg-cyan-600 text-white rounded-2xl transition-all border border-slate-700 hover:border-cyan-500 group-hover:shadow-lg flex items-center gap-2 font-semibold">
-                                <i data-lucide="edit" class="w-5 h-5"></i>
-                                <span>แก้ไข</span>
-                            </button>
+                            <button onclick="startEdit('clanData')" class="h-12 px-5 bg-slate-800 hover:bg-purple-600 text-white rounded-xl transition-all border border-slate-700 hover:border-purple-500 flex items-center gap-2 font-semibold"><i data-lucide="edit" class="w-4 h-4"></i><span>แก้ไข</span></button>
                         </div>
                     </div>
                 </div>
@@ -2821,12 +2754,12 @@
                     </div>
                     <div id="pending-requests-container" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         ${state.pendingRequests.length > 0 ? state.pendingRequests.map(req => `
-                            <div class="bg-slate-900/80 backdrop-blur-xl rounded-3xl p-6 border border-slate-800 shadow-lg">
+                            <div id="request-card-${req.request_id}" class="bg-slate-900/80 backdrop-blur-xl rounded-3xl p-6 border border-slate-800 shadow-lg transition-all duration-300">
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <h4 class="text-lg font-bold text-orange-400 mb-3 border-b border-slate-700 pb-2">Game Info</h4>
                                         <div class="flex gap-4 items-center mb-4">
-                                            <img src="${req.game_profile_image_url || 'https://via.placeholder.com/96'}" class="w-16 h-16 object-cover rounded-lg border-2 border-orange-500" alt="Game Profile">
+                                            <img onclick="showImagePreview('${req.game_profile_image_url}')" src="${req.game_profile_image_url || 'https://via.placeholder.com/96'}" class="w-16 h-16 object-cover rounded-lg border-2 border-orange-500 cursor-pointer hover:scale-110 transition-transform" alt="Game Profile">
                                             <span class="text-xl font-bold text-white">${req.name}</span>
                                         </div>
                                         <div class="grid grid-cols-2 gap-1 text-sm">
@@ -2840,7 +2773,7 @@
                                     <div>
                                         <h4 class="text-lg font-bold text-blue-400 mb-3 border-b border-slate-700 pb-2">Notification</h4>
                                         <div class="flex gap-4 items-center mb-4">
-                                            ${req.notification_profile_image_url ? `<img src="${req.notification_profile_image_url}" class="w-16 h-16 object-cover rounded-lg border-2 border-blue-500" alt="Notification Profile">` : ''}
+                                            ${req.notification_profile_image_url ? `<img onclick="showImagePreview('${req.notification_profile_image_url}')" src="${req.notification_profile_image_url}" class="w-16 h-16 object-cover rounded-lg border-2 border-blue-500 cursor-pointer hover:scale-110 transition-transform" alt="Notification Profile">` : ''}
                                             <span class="text-lg font-bold text-white truncate">${req.notification_contact}</span>
                                         </div>
                                         <div class="grid grid-cols-2 gap-1 text-sm">
@@ -2849,7 +2782,7 @@
                                     </div>
                                 </div>
                                 <div class="mt-6 pt-4 border-t border-slate-800 flex gap-4">
-                                    <button onclick="handleRequestAction(${req.request_id}, 'accepted')" class="flex-1 bg-green-600 hover:bg-green-500 text-white py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-green-500/10">
+                                    <button onclick="showActionMessage(${req.request_id}, 'accepted')" class="flex-1 bg-green-600 hover:bg-green-500 text-white py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-green-500/10">
                                         <i data-lucide="check" class="w-4 h-4 inline-block mr-1"></i> Accept
                                     </button>
                                     <button onclick="showRejectReasonModal(${req.request_id})" class="flex-1 bg-red-600 hover:bg-red-500 text-white py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-red-500/10">
@@ -3185,9 +3118,14 @@
                                 <div class="p-4 bg-slate-900 rounded-lg border border-slate-800">
                                     <div class="flex justify-between items-center mb-4">
                                         <p class="text-white font-semibold">สมาชิก #${index + 1}</p>
-                                        <button onclick="removeMember(${index})" class="text-red-400 hover:text-red-300 text-sm">
-                                            <i data-lucide="trash-2" class="w-4 h-4 inline-block mr-1"></i>ลบ
-                                        </button>
+                                        <div class="flex items-center">
+                                            <button onclick="moveToViolators(${index})" class="text-yellow-500 hover:text-yellow-400 text-sm mr-3 flex items-center">
+                                                <i data-lucide="alert-triangle" class="w-4 h-4 mr-1"></i>ย้ายไปผู้กระทำผิด
+                                            </button>
+                                            <button onclick="removeMember(${index})" class="text-red-400 hover:text-red-300 text-sm flex items-center">
+                                                <i data-lucide="trash-2" class="w-4 h-4 mr-1"></i>ลบ
+                                            </button>
+                                        </div>
                                     </div>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
@@ -3508,6 +3446,24 @@
         function addSupporter() {
             const newSupporter = { name: 'New Supporter' };
             state.tempEditData.supporters.push(newSupporter);
+            renderEditDialog();
+        }
+
+        function moveToViolators(index) {
+            if (!confirm('คุณแน่ใจหรือไม่ที่จะย้ายสมาชิกนี้ไปยังรายชื่อผู้กระทำผิดกฎ?')) return;
+            
+            const member = state.tempEditData.regular[index];
+            state.tempEditData.regular.splice(index, 1);
+            
+            if (!state.tempEditData.violators) state.tempEditData.violators = [];
+            state.tempEditData.violators.push({
+                ...member,
+                id: Date.now(),
+                reason: 'Moved from Regular Members',
+                duration: 'TBD',
+                ruleBroken: 'TBD'
+            });
+            
             renderEditDialog();
         }
 
@@ -3994,16 +3950,16 @@
                 <h3 class="text-2xl text-white font-bold mb-4">เหตุผลในการปฏิเสธ (Reason for Rejection)</h3>
                 <p class="text-gray-400 mb-6">เลือกเหตุผลที่จะส่งแจ้งเตือนไปยังผู้สมัคร</p>
                 <div class="space-y-3 mb-6">
-                    <button onclick="handleRequestAction(${requestId}, 'rejected', 'ข้อมูลที่กรอกไม่ครบถ้วนหรือไม่ถูกต้อง (Incomplete or incorrect information)')" class="w-full text-left p-3 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-white">ข้อมูลไม่ครบถ้วน / ไม่ถูกต้อง</p>
-                    <button onclick="handleRequestAction(${requestId}, 'rejected', 'รูปโปรไฟล์ไม่ตรงกับที่ระบุ (Profile picture does not match)')" class="w-full text-left p-3 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-white">รูปโปรไฟล์ไม่ตรง</p>
-                    <button onclick="handleRequestAction(${requestId}, 'rejected', 'แคลนเต็มแล้วในขณะนี้ (The clan is currently full)')" class="w-full text-left p-3 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-white">แคลนเต็ม</p>
+                    <button onclick="showActionMessage(${requestId}, 'rejected', 'ข้อมูลที่กรอกไม่ครบถ้วนหรือไม่ถูกต้อง (Incomplete or incorrect information)')" class="w-full text-left p-3 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-white">ข้อมูลไม่ครบถ้วน / ไม่ถูกต้อง</p>
+                    <button onclick="showActionMessage(${requestId}, 'rejected', 'รูปโปรไฟล์ไม่ตรงกับที่ระบุ (Profile picture does not match)')" class="w-full text-left p-3 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-white">รูปโปรไฟล์ไม่ตรง</p>
+                    <button onclick="showActionMessage(${requestId}, 'rejected', 'แคลนเต็มแล้วในขณะนี้ (The clan is currently full)')" class="w-full text-left p-3 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-white">แคลนเต็ม</p>
                 </div>
                 <div>
                     <label class="text-gray-400 text-sm">หรือระบุเหตุผลอื่น:</label>
                     <textarea id="custom-reject-reason" rows="3" class="w-full mt-1 p-2 bg-slate-800 rounded-lg border border-slate-700 text-white"></textarea>
                 </div>
                 <div class="flex gap-4 mt-6">
-                    <button onclick="handleRequestAction(${requestId}, 'rejected', document.getElementById('custom-reject-reason').value)" class="flex-1 bg-red-600 hover:bg-red-500 text-white py-2.5 rounded-xl font-bold">ส่งเหตุผลที่กำหนดเอง</button>
+                    <button onclick="showActionMessage(${requestId}, 'rejected', document.getElementById('custom-reject-reason').value)" class="flex-1 bg-red-600 hover:bg-red-500 text-white py-2.5 rounded-xl font-bold">ส่งเหตุผลที่กำหนดเอง</button>
                     <button onclick="document.getElementById('reject-reason-modal').classList.add('hidden')" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2.5 rounded-xl font-bold">ยกเลิก</button>
                 </div>
             `;
@@ -4017,6 +3973,12 @@
 
             // Hide reject modal if open
             document.getElementById('reject-reason-modal').classList.add('hidden');
+
+            const card = document.getElementById(`request-card-${requestId}`);
+            if (card) {
+                card.style.opacity = '0.5';
+                card.style.pointerEvents = 'none';
+            }
 
             try {
                 // In a real app, you would send a notification here using the reason.
@@ -4037,13 +3999,130 @@
 
                 if (error) throw error;
 
-                // Refresh the list
-                await loadPendingRequests();
-                renderAdminPage();
+                // Update local state first
+                state.pendingRequests = state.pendingRequests.filter(req => req.request_id !== requestId);
+
+                // Animate and remove card from DOM
+                if (card) {
+                    card.style.transition = 'all 0.3s ease-out';
+                    card.style.transform = 'scale(0.9)';
+                    card.style.opacity = '0';
+                    setTimeout(() => {
+                        card.remove();
+                        const container = document.getElementById('pending-requests-container');
+                        if (container && container.children.length === 0) {
+                            container.innerHTML = `
+                                <div class="col-span-1 lg:col-span-2 text-center py-10 bg-slate-900/50 rounded-2xl border border-dashed border-slate-700">
+                                    <i data-lucide="inbox" class="w-12 h-12 text-gray-600 mx-auto mb-4"></i>
+                                    <p class="text-gray-500">ไม่มีคำขอเข้าร่วมในขณะนี้</p>
+                                    <p class="text-gray-600 text-sm">No pending requests at the moment.</p>
+                                </div>
+                            `;
+                            lucide.createIcons();
+                        }
+                    }, 300);
+                }
+
+                // Update the badge count on the Admin dashboard card
+                const badge = document.getElementById('admin-requests-badge');
+                if (badge) {
+                    if (state.pendingRequests.length > 0) {
+                        badge.textContent = state.pendingRequests.length;
+                    } else {
+                        badge.remove();
+                    }
+                }
             } catch (error) {
                 console.error('Error handling request:', error);
                 showAlert(`Error: ${error.message}`, 'error');
+                if (card) {
+                    card.style.opacity = '1';
+                    card.style.pointerEvents = 'auto';
+                }
             }
+        }
+
+        function showActionMessage(requestId, status, reason = null) {
+            // Hide reject modal if it was open
+            document.getElementById('reject-reason-modal').classList.add('hidden');
+
+            const req = state.pendingRequests.find(r => r.request_id === requestId);
+            if (!req) return;
+
+            currentActionData = { requestId, status, reason };
+
+            let title = '';
+            let message = '';
+            let borderColor = 'border-slate-700';
+
+            if (status === 'accepted') {
+                title = 'ข้อความตอบรับ (Acceptance Message)';
+                borderColor = 'border-green-500/50';
+                message = `สวัสดีครับ/ค่ะ คุณ ${req.name},\n\nทีมงาน 安镜之锋 มีความยินดีที่จะแจ้งให้ทราบว่า **คุณผ่านการคัดเลือก** และได้รับสิทธิ์ในการเข้าร่วมเป็นสมาชิกของแคลนเราครับ/ค่ะ\n\n**ขั้นตอนต่อไป (สำคัญมาก):**\n1. ทีมงานชื่อ **王明君** จะส่งคำขอเป็นเพื่อนไปหาคุณใน **เกม**\n2. กรุณาเข้าเกม > รายชื่อเพื่อน > คำขอเป็นเพื่อน > ตรวจสอบว่าชื่อตรงกันแล้วกด "รับเพื่อน"\n3. เมื่อรับเพื่อนแล้ว กรุณาพิมพ์แชทหาทีมงานในเกมว่า "ติดต่อขอเข้าแคลน" เพื่อให้ทีมงานดำเนินการเชิญเข้าแคลนต่อไป\n\nขอแสดงความยินดีและยินดีต้อนรับสู่ครอบครัว 安镜之锋 ครับ/ค่ะ`;
+            } else { // rejected
+                title = 'ข้อความปฏิเสธ (Rejection Message)';
+                borderColor = 'border-red-500/50';
+                const reasonText = reason || 'เหตุผลทั่วไป';
+                message = `สวัสดีครับ/ค่ะ คุณ ${req.name},\n\nทีมงาน 安镜之锋 ขอขอบคุณสำหรับความสนใจในการสมัครเข้าร่วมแคลนของเราครับ/ค่ะ\n\nหลังจากพิจารณาใบสมัครของคุณแล้ว เราเสียใจที่ต้องแจ้งให้ทราบว่าในขณะนี้ **คุณยังไม่ผ่านการคัดเลือก** เนื่องจาก: ${reasonText}\n\nอย่างไรก็ตาม เราขอขอบคุณสำหรับความสนใจและหวังว่าจะมีโอกาสได้ร่วมงานกับคุณในอนาคตครับ/ค่ะ\n\nขอแสดงความนับถือ,\nทีมงาน 安镜之锋`;
+            }
+
+            const modal = document.getElementById('action-message-modal');
+            const container = modal.querySelector('div');
+
+            // Remove old border colors
+            container.classList.remove('border-green-500/50', 'border-red-500/50');
+
+            const html = `
+                <h3 class="text-2xl text-white font-bold mb-4">${title}</h3>
+                <p class="text-gray-400 mb-4 text-sm">คัดลอกข้อความนี้เพื่อส่งแจ้งผลให้ผู้สมัครผ่านทาง Facebook หรือ Instagram</p>
+                <textarea id="action-message-textarea" readonly class="w-full h-56 p-3 bg-slate-950 text-gray-300 rounded-lg border border-slate-800 whitespace-pre-wrap font-sans text-sm">${message.replace(/\*\*/g, '')}</textarea>
+                <div class="grid grid-cols-2 gap-3 mt-6">
+                    <button onclick="copyActionMessage()" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2">
+                        <i data-lucide="copy" class="w-4 h-4"></i> <span id="copy-btn-text">คัดลอกข้อความ</span>
+                    </button>
+                    <button onclick="reviewRequestAgain()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i> <span>ตรวจสอบอีกครั้ง</span>
+                    </button>
+                    <button onclick="closeActionMessageAndProceed()" class="col-span-2 bg-green-700 hover:bg-green-600 text-white py-3 rounded-xl font-bold transition-all">
+                        เสร็จสิ้นและลบคำขอ
+                    </button>
+                </div>
+            `;
+
+            container.innerHTML = html;
+            container.classList.add(borderColor);
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function copyActionMessage() {
+            const textarea = document.getElementById('action-message-textarea');
+            textarea.select();
+            document.execCommand('copy');
+            
+            const btnText = document.getElementById('copy-btn-text');
+            const originalText = btnText.textContent;
+            btnText.textContent = 'คัดลอกแล้ว!';
+            setTimeout(() => {
+                btnText.textContent = originalText;
+            }, 2000);
+        }
+
+        function reviewRequestAgain() {
+            const modal = document.getElementById('action-message-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function closeActionMessageAndProceed() {
+            const modal = document.getElementById('action-message-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            
+            const { requestId, status, reason } = currentActionData;
+            handleRequestAction(requestId, status, reason);
+            currentActionData = {}; // Clear it
         }
 
         // Custom Alert System
@@ -4105,6 +4184,25 @@
             modal.classList.add('flex');
             lucide.createIcons();
         }
+
+        // Image Preview Modal
+        function showImagePreview(imageUrl) {
+            if (!imageUrl) return;
+            const modal = document.getElementById('image-preview-modal');
+            const img = document.getElementById('preview-image-element');
+            img.src = imageUrl;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closeImagePreview() {
+            const modal = document.getElementById('image-preview-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.getElementById('preview-image-element').src = '';
+        }
+
 
         // Translation Modal Helpers
         function showTranslationLoading() {
