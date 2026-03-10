@@ -275,10 +275,6 @@
                     <i data-lucide="message-square" class="w-4 h-4"></i>
                     <span id="nav-contact-text">Contact</span>
                 </button>
-                <button onclick="showLoginDialog()" id="nav-login" class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all bg-white/10 text-white hover:bg-white/20">
-                    <i data-lucide="lock" class="w-4 h-4"></i>
-                    <span>Login</span>
-                </button>
                 <button onclick="logout()" id="nav-logout" class="hidden items-center gap-2 px-4 py-2 rounded-lg transition-all bg-white/10 text-white hover:bg-white/20">
                     <i data-lucide="log-out" class="w-4 h-4"></i>
                     <span>Logout</span>
@@ -290,6 +286,10 @@
                 <button onclick="showRegisterModal()" id="nav-register" class="hidden items-center gap-2 px-4 py-2 rounded-lg transition-all bg-white/10 text-white hover:bg-white/20">
                     <i data-lucide="user-plus" class="w-4 h-4"></i>
                     <span>ยื่นเรื่องขอเข้าแคลน</span>
+                </button>
+                <button onclick="setCurrentPage('profile')" id="nav-profile" class="hidden items-center gap-2 px-4 py-2 rounded-lg transition-all bg-white/10 text-white hover:bg-white/20">
+                    <i data-lucide="user-circle" class="w-4 h-4"></i>
+                    <span>Profile</span>
                 </button>
             </div>
         </div>
@@ -418,9 +418,7 @@
     <div id="login-confirm-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[70] items-center justify-center p-4">
         <div class="bg-slate-900 p-1 rounded-3xl max-w-sm w-full shadow-2xl modal-enter bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700">
             <div class="bg-slate-900/90 rounded-[22px] p-8 text-center">
-                <div class="w-24 h-24 bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6 ring-1 ring-orange-500/30 shadow-[0_0_30px_rgba(249,115,22,0.1)]">
-                    <i data-lucide="user-check" class="w-12 h-12 text-orange-500"></i>
-                </div>
+                <img id="confirm-image" src="" alt="Profile Picture" class="w-24 h-24 object-cover rounded-full border-4 border-orange-500/50 shadow-lg mx-auto mb-6">
                 <h3 class="text-2xl text-white font-bold mb-2">Verify Identity</h3>
                 <p class="text-gray-500 text-sm mb-6">Is this your account?</p>
                 
@@ -682,6 +680,8 @@
             loading: false,
             editingSection: null, // 'policies', 'members', etc.
             tempEditData: null,
+            adminSubPage: 'pending', // Default admin sub-page
+            currentMember: null // To store logged-in member's data
         };
         let currentActionData = {};
 
@@ -1246,7 +1246,9 @@
                     gender: 'Male',
                     relationship: 'Single',
                     country: 'Thailand',
-                    hasViolated: false
+                    hasViolated: false,
+                    description: 'A test member account.',
+                    profilePictureUrl: ''
                 }
             ],
             violators: [],
@@ -1436,76 +1438,55 @@
 
         // Initialize application
         document.addEventListener('DOMContentLoaded', async function() {
-            // Video Intro Logic
+            // --- Start: Video Intro Logic ---
             const video = document.getElementById('intro-video');
             const overlay = document.getElementById('intro-overlay');
             const enterBtn = document.getElementById('enter-site-btn');
             
             if (video && overlay) {
                 const closeOverlay = () => {
-                    if (overlay.style.opacity === '0') return;
-                    
-                    overlay.style.transition = 'opacity 0.5s ease';
-                    overlay.style.opacity = '0';
-                    setTimeout(() => {
-                        overlay.style.display = 'none';
-                        video.pause();
-                    }, 500);
+                    if (overlay.style.opacity !== '0') {
+                        overlay.style.transition = 'opacity 0.5s ease';
+                        overlay.style.opacity = '0';
+                        setTimeout(() => {
+                            overlay.style.display = 'none';
+                            video.pause();
+                        }, 500);
+                    }
                 };
 
                 const showEnterButton = () => {
-                    if (enterBtn) {
-                        enterBtn.style.display = 'block';
-                    } else {
-                        closeOverlay();
-                    }
+                    if (enterBtn) enterBtn.style.display = 'block';
+                    else closeOverlay();
                 };
 
                 if (enterBtn) {
                     enterBtn.addEventListener('click', () => {
                         closeOverlay();
-                        
-                        // If already a guest from a page refresh, just let them be.
-                        if (state.isGuest) {
-                            return;
-                        }
-
-                        // Check Member Login
-                        const isMember = localStorage.getItem('memberLoggedIn') === 'true';
-                        if (!isMember) {
+                        // After the state is determined by the logic below,
+                        // decide whether to show login or the tour.
+                        if (!state.isMemberLoggedIn && !state.isGuest) {
                             document.getElementById('member-login-overlay').classList.remove('hidden');
-                        } else if (!localStorage.getItem('hasSeenTour')) {
-                            // If logged in and first time, start tour
-                            setTimeout(startTour, 800); // Wait for overlay to fade out
+                        } else if (state.isMemberLoggedIn && !localStorage.getItem('hasSeenTour')) {
+                            setTimeout(startTour, 800);
                         }
                     });
                 }
 
                 video.onended = showEnterButton;
-                
-                // Robust Error Handling (ระบบป้องกันจอดำ)
                 video.onerror = closeOverlay;
                 const sources = video.getElementsByTagName('source');
-                for (let i = 0; i < sources.length; i++) {
-                    sources[i].onerror = closeOverlay;
-                }
+                for (let i = 0; i < sources.length; i++) { sources[i].onerror = closeOverlay; }
                 
-                // Safety Timeout: ถ้าวิดีโอไม่เริ่มเล่นภายใน 3 วินาที ให้ข้ามเลย
                 setTimeout(() => {
-                    // ถ้าผ่านไป 5 วินาทีแล้ววิดีโอยังไม่เล่น (อาจจะเพราะเน็ตช้าหรือ Autoplay ไม่ติดจริงๆ) ให้ข้าม
                     if (video.paused && video.currentTime < 0.1) {
                         closeOverlay();
                     }
                 }, 5000);
                 
-                // Ensure autoplay works
-                // บังคับปิดเสียงใน JS เพื่อให้ Autoplay ทำงานได้ดีขึ้นในบาง Browser
                 video.muted = true;
-                
                 video.play().catch(e => {
                     console.log('Autoplay error:', e);
-                    // กรณี Autoplay ถูกบล็อก: อย่าเพิ่งปิดวิดีโอ (ลบ endVideo ออก)
-                    // ให้รอผู้ใช้แตะหน้าจอ 1 ครั้งเพื่อเริ่มเล่นแทน (แก้ปัญหาจอดำ)
                     const forcePlay = () => {
                         video.play();
                         document.removeEventListener('click', forcePlay);
@@ -1515,56 +1496,58 @@
                     document.addEventListener('touchstart', forcePlay);
                 });
             }
+            // --- End: Video Intro Logic ---
 
             // Initialize Lucide icons
             lucide.createIcons();
             
             // Initialize Supabase
-            if (!initSupabase()) {
-                console.warn('Supabase not available, using default data');
-            }
+            initSupabase();
+
+            // Load all data from Supabase first
+            await loadData();
             
-            // Check Member Login Expiration (14 Days)
+            // Check for expired member session
             const lastMemberLoginTime = localStorage.getItem('lastMemberLoginTime');
             if (lastMemberLoginTime) {
                 const fourteenDaysMs = 14 * 24 * 60 * 60 * 1000;
                 if (Date.now() - new Date(lastMemberLoginTime).getTime() > fourteenDaysMs) {
-                    localStorage.removeItem('memberLoggedIn');
-                    localStorage.removeItem('lastMemberLoginTime');
-                    state.isMemberLoggedIn = false;
                     console.log('Member session expired (14 days limit)');
+                    memberLogout();
                 }
             }
             
-            // Check for active guest session on page load
+            // Verify logged-in member against the fresh data
+            const memberId = localStorage.getItem('loggedInMemberId');
+            if (memberId) {
+                const member = findMemberById(memberId);
+                if (member) {
+                    state.currentMember = member;
+                    state.isMemberLoggedIn = true;
+                } else {
+                    // Member ID from storage not found in DB, so log out
+                    memberLogout();
+                }
+            }
+
+            // Check for active guest session
             const guestEndTimeStr = sessionStorage.getItem('guestEndTime');
             if (guestEndTimeStr) {
                 const endTime = parseInt(guestEndTimeStr, 10);
-                if (Date.now() < endTime) {
-                    state.isGuest = true;
-                    startGuestTimer(endTime);
-                } else {
-                    // Session expired while away, clean up silently
-                    sessionStorage.removeItem('guestId');
-                    sessionStorage.removeItem('guestEndTime');
-                }
+                if (Date.now() < endTime) { state.isGuest = true; startGuestTimer(endTime); } 
+                else { sessionStorage.removeItem('guestId'); sessionStorage.removeItem('guestEndTime'); }
             }
             
-            // Check login status via Supabase Auth
+            // Check admin login status
             if (supabaseClient) {
                 const { data: { session } } = await supabaseClient.auth.getSession();
                 if (session) {
                     state.isLoggedIn = true;
-                    updateLoginUI();
                 }
                 setupRealtimeSubscription();
             } else {
-                // Fallback (ล้างค่าเก่าทิ้งเพื่อความปลอดภัย)
                 localStorage.removeItem('adminLoggedIn');
             }
-            
-            // Load data from Supabase
-            await loadData();
             
             // Load pending requests if admin is logged in
             if (state.isLoggedIn) {
@@ -1575,9 +1558,14 @@
 
             // Load initial content
             document.getElementById('loading').style.display = 'none';
-            // Initialize language UI and ensure the correct navigation is active
             setLanguage(state.language);
             setCurrentPage(state.currentPage);
+
+            if (sessionStorage.getItem('showLoginAfterReload') === 'true') {
+                sessionStorage.removeItem('showLoginAfterReload');
+                document.getElementById('member-login-overlay').classList.remove('hidden');
+                showAlert('You have been logged out.', 'info', 'Logged Out');
+            }
         });
 
         // Language functions
@@ -1635,7 +1623,8 @@
                 members: t.navMembers,
                 events: t.navEvents,
                 contact: t.navContact,
-                admin: 'Admin Dashboard'
+                admin: 'Admin Dashboard',
+                profile: 'User Profile'
             };
             
             document.getElementById('current-page-title').textContent = pageTitles[page] || t.officialPolicy;
@@ -1672,6 +1661,9 @@
                     break;
                 case 'admin':
                     renderAdminPage();
+                    break;
+                case 'profile':
+                    renderProfilePage();
                     break;
             }
         }
@@ -1897,6 +1889,8 @@
         
             if (foundMember) {
                 tempMemberData = foundMember;
+                const profilePic = foundMember.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(foundMember.name)}&background=ea580c&color=fff&size=192`;
+                document.getElementById('confirm-image').src = profilePic;
                 document.getElementById('confirm-name').textContent = foundMember.name || 'Unknown';
                 document.getElementById('confirm-gender').textContent = foundMember.gender || 'Not specified';
                 document.getElementById('confirm-status').textContent = foundMember.relationship || 'Active';
@@ -1929,6 +1923,8 @@
                 // Update storage
                 localStorage.setItem('memberLoggedIn', 'true');
                 localStorage.setItem('lastMemberLoginTime', new Date().toISOString());
+                localStorage.setItem('loggedInMemberId', tempMemberData.gameId); // Store the ID
+                state.currentMember = tempMemberData; // Set current member in state
                 state.isMemberLoggedIn = true;
                 
                 showAlert('เข้าสู่ระบบสำเร็จ! เซสชั่นของคุณมีอายุ 14 วัน\n(Login successful! Session valid for 14 days)', 'success', 'Welcome Member');
@@ -2677,76 +2673,25 @@
             lucide.createIcons();
         }
 
+        function setAdminSubPage(page) {
+            state.adminSubPage = page;
+            renderAdminPage();
+        }
+
         function renderAdminPage() {
             const t = translations[state.language];
+            const subPage = state.adminSubPage;
 
-            const html = `
-                <div class="mb-10 relative pl-6">
-                    <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-orange-500 to-red-600 rounded-full"></div>
-                    <h2 class="text-4xl text-white font-bold mb-2 tracking-tight">Admin Dashboard</h2>
-                    <p class="text-gray-400 text-lg">จัดการข้อมูลแคลน <span class="text-orange-500 font-semibold">安镜之锋</span></p>
-                </div>
+            const getTabClass = (pageName) => {
+                return subPage === pageName 
+                    ? 'bg-orange-600 text-white shadow-lg shadow-orange-500/20' 
+                    : 'bg-slate-800 text-gray-400 hover:bg-slate-700';
+            };
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Edit Policies -->
-                    <div class="group relative bg-slate-900/60 backdrop-blur-xl rounded-3xl p-6 border border-orange-500/20 shadow-xl hover:shadow-orange-500/10 transition-all duration-300 overflow-hidden">
-                        <div class="absolute top-0 right-0 w-40 h-40 bg-orange-500/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
-                        <div class="relative flex items-center justify-between gap-4">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center border border-orange-500/20"><i data-lucide="shield" class="w-6 h-6 text-orange-500"></i></div>
-                                <div><h3 class="text-lg text-white font-bold">นโยบายแคลน</h3><p class="text-orange-400/60 text-xs uppercase">Policies</p></div>
-                            </div>
-                            <button onclick="startEdit('policies')" class="h-12 px-5 bg-slate-800 hover:bg-orange-600 text-white rounded-xl transition-all border border-slate-700 hover:border-orange-500 flex items-center gap-2 font-semibold"><i data-lucide="edit" class="w-4 h-4"></i><span>แก้ไข</span></button>
-                        </div>
-                    </div>
-                    <!-- Edit Announcements -->
-                    <div class="group relative bg-slate-900/60 backdrop-blur-xl rounded-3xl p-6 border border-blue-500/20 shadow-xl hover:shadow-blue-500/10 transition-all duration-300 overflow-hidden">
-                        <div class="absolute top-0 right-0 w-40 h-40 bg-blue-500/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
-                        <div class="relative flex items-center justify-between gap-4">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20"><i data-lucide="megaphone" class="w-6 h-6 text-blue-500"></i></div>
-                                <div><h3 class="text-lg text-white font-bold">ประกาศ</h3><p class="text-blue-400/60 text-xs uppercase">Announcements</p></div>
-                            </div>
-                            <button onclick="startEdit('announcements')" class="h-12 px-5 bg-slate-800 hover:bg-blue-600 text-white rounded-xl transition-all border border-slate-700 hover:border-blue-500 flex items-center gap-2 font-semibold"><i data-lucide="edit" class="w-4 h-4"></i><span>แก้ไข</span></button>
-                        </div>
-                    </div>
-                    <!-- Edit Members -->
-                    <div class="group relative bg-slate-900/60 backdrop-blur-xl rounded-3xl p-6 border border-green-500/20 shadow-xl hover:shadow-green-500/10 transition-all duration-300 overflow-hidden">
-                        <div class="absolute top-0 right-0 w-40 h-40 bg-green-500/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
-                        <div class="relative flex items-center justify-between gap-4">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center border border-green-500/20"><i data-lucide="users" class="w-6 h-6 text-green-500"></i></div>
-                                <div><h3 class="text-lg text-white font-bold">สมาชิก</h3><p class="text-green-400/60 text-xs uppercase">Members</p></div>
-                            </div>
-                            <button onclick="startEdit('members')" class="h-12 px-5 bg-slate-800 hover:bg-green-600 text-white rounded-xl transition-all border border-slate-700 hover:border-green-500 flex items-center gap-2 font-semibold"><i data-lucide="edit" class="w-4 h-4"></i><span>แก้ไข</span></button>
-                        </div>
-                    </div>
-                    <!-- Edit Events -->
-                    <div class="group relative bg-slate-900/60 backdrop-blur-xl rounded-3xl p-6 border border-yellow-500/20 shadow-xl hover:shadow-yellow-500/10 transition-all duration-300 overflow-hidden">
-                        <div class="absolute top-0 right-0 w-40 h-40 bg-yellow-500/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
-                        <div class="relative flex items-center justify-between gap-4">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-xl bg-yellow-500/10 flex items-center justify-center border border-yellow-500/20"><i data-lucide="party-popper" class="w-6 h-6 text-yellow-500"></i></div>
-                                <div><h3 class="text-lg text-white font-bold">กิจกรรม</h3><p class="text-yellow-400/60 text-xs uppercase">Events</p></div>
-                            </div>
-                            <button onclick="startEdit('events')" class="h-12 px-5 bg-slate-800 hover:bg-yellow-600 text-white rounded-xl transition-all border border-slate-700 hover:border-yellow-500 flex items-center gap-2 font-semibold"><i data-lucide="edit" class="w-4 h-4"></i><span>แก้ไข</span></button>
-                        </div>
-                    </div>
-                    <!-- Edit About & Contact -->
-                    <div class="group relative bg-slate-900/60 backdrop-blur-xl rounded-3xl p-6 border border-purple-500/20 shadow-xl hover:shadow-purple-500/10 transition-all duration-300 overflow-hidden">
-                        <div class="absolute top-0 right-0 w-40 h-40 bg-purple-500/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
-                        <div class="relative flex items-center justify-between gap-4">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20"><i data-lucide="info" class="w-6 h-6 text-purple-500"></i></div>
-                                <div><h3 class="text-lg text-white font-bold">เกี่ยวกับ/ติดต่อ</h3><p class="text-purple-400/60 text-xs uppercase">About & Contact</p></div>
-                            </div>
-                            <button onclick="startEdit('clanData')" class="h-12 px-5 bg-slate-800 hover:bg-purple-600 text-white rounded-xl transition-all border border-slate-700 hover:border-purple-500 flex items-center gap-2 font-semibold"><i data-lucide="edit" class="w-4 h-4"></i><span>แก้ไข</span></button>
-                        </div>
-                    </div>
-                </div>
+            let contentHtml = '';
 
-                <!-- Pending Join Requests -->
-                <div class="mt-10">
+            if (subPage === 'pending') {
+                contentHtml = `
                     <div class="mb-6 relative pl-6">
                         <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-blue-500 to-cyan-600 rounded-full"></div>
                         <h2 class="text-3xl text-white font-bold tracking-tight">คำขอเข้าร่วมที่รอการอนุมัติ</h2>
@@ -2798,11 +2743,203 @@
                             </div>
                         `}
                     </div>
+                `;
+            } else if (subPage === 'management') {
+                contentHtml = `
+                    <div class="mb-6 relative pl-6">
+                        <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-purple-500 to-pink-600 rounded-full"></div>
+                        <h2 class="text-3xl text-white font-bold tracking-tight">จัดการเว็บไซต์</h2>
+                        <p class="text-gray-400">Site Management</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Edit Policies -->
+                        <div class="group relative bg-slate-900/60 backdrop-blur-xl rounded-3xl p-6 border border-orange-500/20 shadow-xl hover:shadow-orange-500/10 transition-all duration-300 overflow-hidden">
+                            <div class="absolute top-0 right-0 w-40 h-40 bg-orange-500/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                            <div class="relative flex items-center justify-between gap-4">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center border border-orange-500/20"><i data-lucide="shield" class="w-6 h-6 text-orange-500"></i></div>
+                                    <div><h3 class="text-lg text-white font-bold">นโยบายแคลน</h3><p class="text-orange-400/60 text-xs uppercase">Policies</p></div>
+                                </div>
+                                <button onclick="startEdit('policies')" class="h-12 px-5 bg-slate-800 hover:bg-orange-600 text-white rounded-xl transition-all border border-slate-700 hover:border-orange-500 flex items-center gap-2 font-semibold"><i data-lucide="edit" class="w-4 h-4"></i><span>แก้ไข</span></button>
+                            </div>
+                        </div>
+                        <!-- Edit Announcements -->
+                        <div class="group relative bg-slate-900/60 backdrop-blur-xl rounded-3xl p-6 border border-blue-500/20 shadow-xl hover:shadow-blue-500/10 transition-all duration-300 overflow-hidden">
+                            <div class="absolute top-0 right-0 w-40 h-40 bg-blue-500/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                            <div class="relative flex items-center justify-between gap-4">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20"><i data-lucide="megaphone" class="w-6 h-6 text-blue-500"></i></div>
+                                    <div><h3 class="text-lg text-white font-bold">ประกาศ</h3><p class="text-blue-400/60 text-xs uppercase">Announcements</p></div>
+                                </div>
+                                <button onclick="startEdit('announcements')" class="h-12 px-5 bg-slate-800 hover:bg-blue-600 text-white rounded-xl transition-all border border-slate-700 hover:border-blue-500 flex items-center gap-2 font-semibold"><i data-lucide="edit" class="w-4 h-4"></i><span>แก้ไข</span></button>
+                            </div>
+                        </div>
+                        <!-- Edit Members -->
+                        <div class="group relative bg-slate-900/60 backdrop-blur-xl rounded-3xl p-6 border border-green-500/20 shadow-xl hover:shadow-green-500/10 transition-all duration-300 overflow-hidden">
+                            <div class="absolute top-0 right-0 w-40 h-40 bg-green-500/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                            <div class="relative flex items-center justify-between gap-4">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center border border-green-500/20"><i data-lucide="users" class="w-6 h-6 text-green-500"></i></div>
+                                    <div><h3 class="text-lg text-white font-bold">สมาชิก</h3><p class="text-green-400/60 text-xs uppercase">Members</p></div>
+                                </div>
+                                <button onclick="startEdit('members')" class="h-12 px-5 bg-slate-800 hover:bg-green-600 text-white rounded-xl transition-all border border-slate-700 hover:border-green-500 flex items-center gap-2 font-semibold"><i data-lucide="edit" class="w-4 h-4"></i><span>แก้ไข</span></button>
+                            </div>
+                        </div>
+                        <!-- Edit Events -->
+                        <div class="group relative bg-slate-900/60 backdrop-blur-xl rounded-3xl p-6 border border-yellow-500/20 shadow-xl hover:shadow-yellow-500/10 transition-all duration-300 overflow-hidden">
+                            <div class="absolute top-0 right-0 w-40 h-40 bg-yellow-500/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                            <div class="relative flex items-center justify-between gap-4">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-xl bg-yellow-500/10 flex items-center justify-center border border-yellow-500/20"><i data-lucide="party-popper" class="w-6 h-6 text-yellow-500"></i></div>
+                                    <div><h3 class="text-lg text-white font-bold">กิจกรรม</h3><p class="text-yellow-400/60 text-xs uppercase">Events</p></div>
+                                </div>
+                                <button onclick="startEdit('events')" class="h-12 px-5 bg-slate-800 hover:bg-yellow-600 text-white rounded-xl transition-all border border-slate-700 hover:border-yellow-500 flex items-center gap-2 font-semibold"><i data-lucide="edit" class="w-4 h-4"></i><span>แก้ไข</span></button>
+                            </div>
+                        </div>
+                        <!-- Edit About & Contact -->
+                        <div class="group relative bg-slate-900/60 backdrop-blur-xl rounded-3xl p-6 border border-purple-500/20 shadow-xl hover:shadow-purple-500/10 transition-all duration-300 overflow-hidden">
+                            <div class="absolute top-0 right-0 w-40 h-40 bg-purple-500/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                            <div class="relative flex items-center justify-between gap-4">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20"><i data-lucide="info" class="w-6 h-6 text-purple-500"></i></div>
+                                    <div><h3 class="text-lg text-white font-bold">เกี่ยวกับ/ติดต่อ</h3><p class="text-purple-400/60 text-xs uppercase">About & Contact</p></div>
+                                </div>
+                                <button onclick="startEdit('clanData')" class="h-12 px-5 bg-slate-800 hover:bg-purple-600 text-white rounded-xl transition-all border border-slate-700 hover:border-purple-500 flex items-center gap-2 font-semibold"><i data-lucide="edit" class="w-4 h-4"></i><span>แก้ไข</span></button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const html = `
+                <div class="mb-10 relative pl-6">
+                    <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-orange-500 to-red-600 rounded-full"></div>
+                    <h2 class="text-4xl text-white font-bold mb-2 tracking-tight">Admin Dashboard</h2>
+                    <p class="text-gray-400 text-lg">จัดการข้อมูลแคลน <span class="text-orange-500 font-semibold">安镜之锋</span></p>
+                </div>
+
+                <div class="bg-slate-900/50 rounded-2xl p-2 mb-8 flex items-center gap-2 border border-slate-800">
+                    <button onclick="setAdminSubPage('pending')" class="relative flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl transition-all ${getTabClass('pending')}">
+                        <i data-lucide="inbox" class="w-5 h-5"></i>
+                        <span>คำขอที่รออนุมัติ</span>
+                        ${state.pendingRequests.length > 0 ? `<span id="admin-requests-badge" class="absolute -top-2 -right-2 w-6 h-6 bg-red-600 rounded-full flex items-center justify-center text-white font-bold text-xs ring-2 ring-slate-900">${state.pendingRequests.length}</span>` : ''}
+                    </button>
+                    <button onclick="setAdminSubPage('management')" class="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl transition-all ${getTabClass('management')}">
+                        <i data-lucide="settings" class="w-5 h-5"></i>
+                        <span>จัดการเว็บไซต์</span>
+                    </button>
+                </div>
+
+                <div id="admin-subpage-content">
+                    ${contentHtml}
                 </div>
             `;
             
             document.getElementById('content-container').innerHTML = html;
             lucide.createIcons();
+        }
+
+        function findMemberById(id) {
+            if (!members) return null;
+            if (members.leader && members.leader.gameId === id) {
+                return { ...members.leader, type: 'leader' };
+            }
+            const managementMember = members.management.find(m => m.gameId === id);
+            if (managementMember) {
+                return { ...managementMember, type: 'management' };
+            }
+            const regularMember = members.regular.find(m => m.gameId === id);
+            if (regularMember) {
+                return { ...regularMember, type: 'regular' };
+            }
+            return null;
+        }
+
+        function memberLogout() {
+            localStorage.removeItem('memberLoggedIn');
+            localStorage.removeItem('lastMemberLoginTime');
+            localStorage.removeItem('loggedInMemberId');
+            state.isMemberLoggedIn = false;
+            state.currentMember = null;
+            sessionStorage.setItem('showLoginAfterReload', 'true');
+            location.reload();
+        }
+
+        function previewProfilePicture(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('profile-pic-preview').src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function handleProfileUpdate() {
+            if (!state.currentMember) return;
+
+            const newName = document.getElementById('profile-name').value;
+            const newDescription = document.getElementById('profile-description').value;
+            const fileInput = document.getElementById('profile-pic-upload');
+            const file = fileInput.files[0];
+
+            let newProfilePictureUrl = state.currentMember.profilePictureUrl;
+
+            showAlert('Saving profile...', 'info', 'Updating');
+
+            try {
+                if (file) {
+                    const filePath = `public/${state.currentMember.gameId}-${Date.now()}-${file.name}`;
+                    const { data, error } = await supabaseClient.storage
+                        .from('member_avatars')
+                        .upload(filePath, file, { cacheControl: '3600', upsert: true });
+                    
+                    if (error) throw error;
+
+                    const { data: urlData } = supabaseClient.storage.from('member_avatars').getPublicUrl(filePath);
+                    newProfilePictureUrl = urlData.publicUrl;
+                }
+
+                const memberId = state.currentMember.gameId;
+                let memberUpdated = false;
+
+                if (members.leader && members.leader.gameId === memberId) {
+                    members.leader.name = newName;
+                    members.leader.description = newDescription;
+                    members.leader.profilePictureUrl = newProfilePictureUrl;
+                    memberUpdated = true;
+                } else {
+                    ['management', 'regular'].forEach(group => {
+                        if (memberUpdated) return;
+                        const memberIndex = members[group].findIndex(m => m.gameId === memberId);
+                        if (memberIndex > -1) {
+                            members[group][memberIndex].name = newName;
+                            members[group][memberIndex].description = newDescription;
+                            members[group][memberIndex].profilePictureUrl = newProfilePictureUrl;
+                            memberUpdated = true;
+                        }
+                    });
+                }
+
+                if (!memberUpdated) throw new Error("Could not find the member to update.");
+
+                const success = await saveData('members', members);
+                if (!success) throw new Error("Failed to save data to the database.");
+
+                state.currentMember.name = newName;
+                state.currentMember.description = newDescription;
+                state.currentMember.profilePictureUrl = newProfilePictureUrl;
+
+                closeAlert();
+                showAlert('Profile updated successfully!', 'success', 'Success');
+                renderProfilePage();
+
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                closeAlert();
+                showAlert(`Error updating profile: ${error.message}`, 'error', 'Update Failed');
+            }
         }
 
         // Admin functions
@@ -3404,6 +3541,63 @@
             lucide.createIcons();
         }
 
+        function renderProfilePage() {
+            if (!state.isMemberLoggedIn || !state.currentMember) {
+                setCurrentPage('home');
+                showAlert('You must be logged in to view your profile.', 'warning', 'Access Denied');
+                return;
+            }
+
+            const member = state.currentMember;
+            const profilePic = member.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=ea580c&color=fff&size=192`;
+
+            const html = `
+                <div class="mb-8">
+                    <h2 class="text-3xl text-white mb-2">Member Profile</h2>
+                    <p class="text-gray-400">จัดการข้อมูลส่วนตัวของคุณ</p>
+                </div>
+                <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-8 border border-slate-700/50 grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Profile Picture Section -->
+                    <div class="md:col-span-1 flex flex-col items-center">
+                        <div class="relative group w-48 h-48 mb-4">
+                            <img id="profile-pic-preview" src="${profilePic}" alt="Profile Picture" class="w-full h-full object-cover rounded-full border-4 border-orange-500/50 shadow-lg">
+                            <label for="profile-pic-upload" class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                                <i data-lucide="camera" class="w-10 h-10"></i>
+                            </label>
+                            <input type="file" id="profile-pic-upload" class="hidden" accept="image/*" onchange="previewProfilePicture(event)">
+                        </div>
+                        <h3 class="text-2xl text-white font-bold text-center">${member.name}</h3>
+                        <p class="text-orange-400">${member.gameId}</p>
+                    </div>
+
+                    <!-- Profile Details Section -->
+                    <div class="md:col-span-2 space-y-6">
+                        <div>
+                            <label for="profile-name" class="block text-gray-400 text-sm font-bold mb-2">In-Game Name (เปลี่ยนเมื่อชื่อในเกมเปลี่ยนเท่านั้น)</label>
+                            <input type="text" id="profile-name" value="${member.name}" class="w-full px-4 py-3 bg-slate-950 text-white rounded-xl border border-slate-800 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-all">
+                        </div>
+                        <div>
+                            <label for="profile-description" class="block text-gray-400 text-sm font-bold mb-2">Description</label>
+                            <textarea id="profile-description" rows="4" class="w-full px-4 py-3 bg-slate-950 text-white rounded-xl border border-slate-800 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-all">${member.description || ''}</textarea>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-4 pt-4 border-t border-slate-700">
+                            <button onclick="handleProfileUpdate()" class="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg shadow-green-500/20 flex items-center justify-center gap-2">
+                                <i data-lucide="save" class="w-5 h-5"></i>
+                                Save Changes
+                            </button>
+                            <button onclick="memberLogout()" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg shadow-red-500/20 flex items-center justify-center gap-2">
+                                <i data-lucide="log-out" class="w-5 h-5"></i>
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('content-container').innerHTML = html;
+            lucide.createIcons();
+        }
+
         // Update functions for edit dialog
         function updatePolicyTitle(lang, index, value) {
             state.tempEditData[lang][index].title = value;
@@ -3802,7 +3996,9 @@
                     hasViolated: false,
                     relationship: 'Single',
                     gender: 'Male',
-                    country: ''
+                    country: '',
+                    description: '',
+                    profilePictureUrl: ''
                 };
                 state.tempEditData.regular.push(newMember);
                 renderEditDialog();
@@ -3928,15 +4124,11 @@
 
         function updateLoginUI() {
             if (state.isLoggedIn) {
-                document.getElementById('nav-login').classList.add('hidden');
-                document.getElementById('nav-login').classList.remove('flex');
                 document.getElementById('nav-logout').classList.remove('hidden');
                 document.getElementById('nav-logout').classList.add('flex');
                 document.getElementById('nav-admin').classList.remove('hidden');
                 document.getElementById('nav-admin').classList.add('flex');
             } else {
-                document.getElementById('nav-login').classList.remove('hidden');
-                document.getElementById('nav-login').classList.add('flex');
                 document.getElementById('nav-logout').classList.add('hidden');
                 document.getElementById('nav-logout').classList.remove('flex');
                 document.getElementById('nav-admin').classList.add('hidden');
@@ -4125,6 +4317,19 @@
             currentActionData = {}; // Clear it
         }
 
+        // Secret Admin Login Command
+        function _ajz(command) {
+            if (command === 'openam') {
+                showLoginDialog();
+                console.log('Admin login dialog opened.');
+                return 'Login dialog opened.';
+            } else {
+                console.log('Usage: _ajz("openam")');
+                return 'Invalid command.';
+            }
+        }
+        window._ajz = _ajz;
+
         // Custom Alert System
         function closeAlert() {
             const modal = document.getElementById('custom-alert-modal');
@@ -4263,6 +4468,14 @@
                 });
                 document.getElementById('nav-register').classList.remove('hidden');
                 document.getElementById('nav-register').classList.add('flex');
+            }
+
+            if (state.isMemberLoggedIn) {
+                document.getElementById('nav-profile').classList.remove('hidden');
+                document.getElementById('nav-profile').classList.add('flex');
+            } else {
+                document.getElementById('nav-profile').classList.add('hidden');
+                document.getElementById('nav-profile').classList.remove('flex');
             }
         }
     </script>
