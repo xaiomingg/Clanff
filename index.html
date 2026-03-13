@@ -6,7 +6,7 @@
     <title>安镜之锋 - Free Fire Clan</title>
     <meta name="description" content="安镜之锋 - Free Fire Clan แคลนรักสงบ ยินดีต้อนรับเข้าสู่ครอบครัวของเรา">
     <meta name="keywords" content="安镜之锋, Free Fire Clan, แคลนฟีฟาย, swplayer, ajpolity">
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🛡️%3C/text%3E%3C/svg%3E">
+    <link rel="icon" href="assets/ALclan.png">
     
     <!-- Tailwind CSS (CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -275,6 +275,10 @@
                     <i data-lucide="message-square" class="w-4 h-4"></i>
                     <span id="nav-contact-text">Contact</span>
                 </button>
+                <button onclick="setCurrentPage('stream')" id="nav-stream" class="hidden items-center gap-2 px-4 py-2 rounded-lg transition-all bg-white/10 text-white hover:bg-white/20">
+                    <i data-lucide="clapperboard" class="w-4 h-4"></i>
+                    <span id="nav-stream-text">Stream</span>
+                </button>
                 <button onclick="logout()" id="nav-logout" class="hidden items-center gap-2 px-4 py-2 rounded-lg transition-all bg-white/10 text-white hover:bg-white/20">
                     <i data-lucide="log-out" class="w-4 h-4"></i>
                     <span>Logout</span>
@@ -308,7 +312,7 @@
 
     <!-- Site Footer -->
     <footer id="site-footer" class="max-w-5xl mx-auto px-4 py-12 sm:px-6 lg:px-8 mt-12">
-        <div class="bg-slate-800/30 rounded-xl p-8 border border-slate-700/50 text-center">
+        <div class="bg-slate-800/30 rounded-xl p-8 border border-slate-700/50 text-center relative">
             <div class="flex flex-col items-center gap-4">
                 <i data-lucide="shield" class="w-12 h-12 text-orange-500"></i>
                 <p id="footer-main-text" class="text-white text-lg font-semibold max-w-2xl"></p>
@@ -317,6 +321,7 @@
                 <p id="footer-clan-name" class="text-orange-400 text-2xl font-semibold"></p>
                 <p id="footer-official" class="text-gray-500 text-sm mt-2"></p>
             </div>
+            <span onclick="showLoginDialog()" style="position: absolute; bottom: 5px; right: 5px; color: rgba(100, 116, 139, 0.3); cursor: pointer; font-size: 10px; padding: 5px; user-select: none;">.</span>
         </div>
     </footer>
 
@@ -410,7 +415,80 @@
                         Visit as Guest (Policy Only)
                     </button>
                 </div>
+
+                <div id="watch-live-guest-btn" class="mt-4">
+                    <button onclick="handleWatchLiveGuest()" class="w-full group relative px-6 py-4 rounded-xl bg-gradient-to-r from-red-600 to-purple-600 text-white font-bold text-lg tracking-wide overflow-hidden transition-all hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(220,38,38,0.5)]">
+                        <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
+                        <span class="flex items-center justify-center gap-3">
+                            <i data-lucide="clapperboard" class="w-6 h-6"></i>
+                            <span>ดูไลฟ์ (สำหรับบุคคลภายนอก)</span>
+                            <div class="flex items-center gap-1.5 bg-red-600/90 px-2.5 py-1 rounded-full text-white text-xs font-bold ring-2 ring-white/20">
+                                <span class="relative flex h-2 w-2">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                                </span>
+                                LIVE
+                            </div>
+                        </span>
+                    </button>
+                </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Stream Guest Setup Modal -->
+    <div id="stream-guest-setup-modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm z-[70] items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-slate-900 p-8 rounded-3xl max-w-md w-full border border-red-500/30 shadow-2xl modal-enter my-8 relative">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h3 class="text-2xl text-white font-bold">สร้างโปรไฟล์สำหรับแชทสด</h3>
+                    <p class="text-gray-500 text-sm mt-1">Create a profile for live chat</p>
+                </div>
+                <button onclick="closeStreamGuestSetupModal()" class="p-2 bg-slate-800 rounded-full text-gray-400 hover:text-white hover:bg-slate-700 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="stream-guest-form" onsubmit="handleStreamGuestSetup(event)" class="space-y-5">
+                <div class="space-y-1">
+                    <label class="text-gray-400 text-xs uppercase font-bold tracking-wider ml-1">ชื่อที่แสดง (Display Name)</label>
+                    <input required id="stream-guest-name" type="text" class="w-full px-4 py-3 bg-slate-950 text-white rounded-xl border border-slate-800 focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-all" placeholder="ชื่อของคุณในแชท">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-gray-400 text-xs uppercase font-bold tracking-wider ml-1">รูปโปรไฟล์ (Profile Picture)</label>
+                    <div class="relative">
+                        <input required id="stream-guest-image" type="file" accept="image/*" class="w-full px-4 py-3 bg-slate-950 text-gray-400 rounded-xl border border-slate-800 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-500/10 file:text-red-400 hover:file:bg-red-500/20 cursor-pointer">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-red-600 hover:bg-red-500 text-white py-4 rounded-xl font-bold mt-6 shadow-lg shadow-red-500/20 transition-all transform hover:scale-[1.02]">เข้าร่วมแชทสด (Join Live Chat)</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Stream Guest Info Modal (Terms & Conditions) -->
+    <div id="stream-guest-info-modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md z-[80] items-center justify-center p-4">
+        <div class="bg-slate-900 p-8 rounded-3xl max-w-lg w-full border border-red-500/30 shadow-2xl modal-enter relative overflow-hidden">
+             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-600 to-purple-600"></div>
+             <div class="flex items-center gap-4 mb-6">
+                <div class="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center border border-red-500/20">
+                    <i data-lucide="shield-alert" class="w-6 h-6 text-red-500"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl text-white font-bold">ข้อตกลงการใช้งาน (Terms of Use)</h3>
+                    <p class="text-gray-500 text-sm">สำหรับผู้เข้าชมไลฟ์สตรีม (Guest)</p>
+                </div>
+             </div>
+             <div class="space-y-4 text-sm text-gray-300 bg-slate-950/50 p-4 rounded-xl border border-slate-800 max-h-[60vh] overflow-y-auto">
+                <p><strong class="text-white">1. สิทธิ์การใช้งาน:</strong> บัญชีนี้เป็นบัญชีชั่วคราวสำหรับรับชมไลฟ์สดและร่วมแชทเท่านั้น ไม่สามารถเข้าถึงส่วนอื่นๆ ของเว็บไซต์ได้</p>
+                <p><strong class="text-white">2. ระยะเวลา:</strong> เมื่อการถ่ายทอดสดจบลง ระบบจะตัดการเชื่อมต่อทันที หากต้องการเข้าชมครั้งต่อไปต้องทำรายการใหม่เมื่อมีไลฟ์</p>
+                <p><strong class="text-white">3. ลิขสิทธิ์และทรัพย์สินทางปัญญา:</strong></p>
+                <ul class="list-disc list-inside pl-2 space-y-1 text-gray-400">
+                    <li>ห้ามนำเนื้อหาไปเผยแพร่ต่อโดยไม่ได้รับอนุญาต</li>
+                    <li>ข้อมูลทั้งหมดในเว็บไซต์ รวมถึงชื่อโดเมน ซับโดเมน และ IP ของแคลน ถือเป็นทรัพย์สินของแคลน <strong>安镜之锋</strong></li>
+                    <li>อยู่ภายใต้การดูแลของ <strong>shenwang Ent.</strong> และฝ่ายสนับสนุน</li>
+                </ul>
+                <p class="text-red-400 text-xs mt-2">*การฝ่าฝืนอาจนำไปสู่การดำเนินการทางกฎหมาย</p>
+             </div>
+             <button onclick="enterStreamAsGuest()" class="w-full bg-gradient-to-r from-red-600 to-purple-600 hover:from-red-500 hover:to-purple-500 text-white py-3.5 rounded-xl font-bold mt-6 shadow-lg shadow-red-500/20 transition-all">
+                รับทราบและเข้าสู่ไลฟ์สตรีม (Acknowledge & Enter)
+             </button>
         </div>
     </div>
 
@@ -678,10 +756,11 @@
             isGuest: false,
             pendingRequests: [],
             loading: false,
-            editingSection: null, // 'policies', 'members', etc.
+            editingSection: null, // 'policies', 'members', 'streamData', etc.
             tempEditData: null,
             adminSubPage: 'pending', // Default admin sub-page
-            currentMember: null // To store logged-in member's data
+            currentMember: null, // To store logged-in member's data
+            streamGuestProfile: null // To store temporary stream guest profile
         };
         let currentActionData = {};
 
@@ -702,6 +781,10 @@
                 navMembers: 'สมาชิก',
                 navEvents: 'กิจกรรม',
                 navContact: 'ติดต่อ',
+                navControlStream: 'ควบคุมไลฟ์',
+                navWatchStream: 'ดูไลฟ์',
+                streamTitle: 'สตรีมสด',
+                streamSubtitle: 'รับชมการถ่ายทอดสดจากทีมงาน',
                 announcementsTitle: 'ประกาศและข่าวสาร',
                 announcementsSubtitle: 'อัพเดทล่าสุดเกี่ยวกับกิจกรรมและข่าวสารของแคลน',
                 aboutTitle: 'เกี่ยวกับแคลน 安镜之锋',
@@ -757,6 +840,10 @@
                 navMembers: '成员',
                 navEvents: '活动',
                 navContact: '联系',
+                navControlStream: '控制直播',
+                navWatchStream: '观看直播',
+                streamTitle: '直播',
+                streamSubtitle: '观看团队的现场直播',
                 announcementsTitle: '公告与新闻',
                 announcementsSubtitle: '战队活动和新闻的最新更新',
                 aboutTitle: '关于战队 安镜之锋',
@@ -811,6 +898,10 @@
                 navMembers: 'Members',
                 navEvents: 'Events',
                 navContact: 'Contact',
+                navControlStream: 'Control Live',
+                navWatchStream: 'Watch Live',
+                streamTitle: 'Live Stream',
+                streamSubtitle: 'Watch the live broadcast from the team',
                 announcementsTitle: 'Announcements & News',
                 announcementsSubtitle: 'Latest updates on clan activities and news',
                 aboutTitle: 'About Clan 安镜之锋',
@@ -1291,12 +1382,21 @@
             }
         };
 
+        const defaultStreamData = {
+            is_live: false,
+            stream_url: '',
+            title: 'SW Player Live',
+            is_paused: false,
+            is_chat_enabled: true
+        };
+
         // Application data
         let policies = JSON.parse(JSON.stringify(defaultPolicies));
         let announcements = JSON.parse(JSON.stringify(defaultAnnouncements));
         let clanData = JSON.parse(JSON.stringify(defaultClanData));
         let members = JSON.parse(JSON.stringify(defaultMembers));
         let events = JSON.parse(JSON.stringify(defaultEvents));
+        let streamData = JSON.parse(JSON.stringify(defaultStreamData));
 
         // เพิ่มฟังก์ชันสำหรับตรวจสอบโครงสร้างข้อมูล members
         function validateMembersData() {
@@ -1329,7 +1429,6 @@
                 members.banned = [];
             }
 
-            console.log('Members data validated:', members);
         }
 
         // Realtime Subscription for Join Requests
@@ -1349,14 +1448,83 @@
                     }
                 })
                 .subscribe();
+
+            // New: Stream State Subscription (Broadcast Trigger)
+            supabaseClient
+                .channel('clan:stream:streamData', { config: { private: false } }) // Set private: false for guests
+                .on('broadcast', { event: '*' }, payload => {
+                    try {
+                        // payload format depends on the server broadcast implementation
+                        const broadcastPayload = payload.payload || payload;
+                        const newRow = broadcastPayload.new || broadcastPayload.NEW || null;
+
+                        if (newRow && newRow.section === 'streamData') {
+                            const oldStatus = streamData.is_live;
+                            streamData = newRow.data;
+
+                            updateUI(); // Update navigation visibility
+
+                            if (state.currentPage === 'stream') {
+                                renderStreamVideoContent();
+                                
+                                // Update Chat UI State without re-rendering messages
+                                const chatInput = document.getElementById('stream-chat-input-container');
+                                if (chatInput) {
+                                    if (streamData.is_chat_enabled) chatInput.classList.remove('disabled');
+                                    else chatInput.classList.add('disabled');
+                                }
+                                const chatHeaderStatus = document.querySelector('.stream-chat-header span:last-child');
+                                if (chatHeaderStatus) {
+                                    chatHeaderStatus.textContent = streamData.is_chat_enabled ? 'เปิดอยู่' : 'ปิดอยู่';
+                                }
+                            }
+
+                            // Live Status Alerts
+                            if (oldStatus === false && streamData.is_live === true) {
+                                showAlert('🔴 Live stream has started!', 'info', 'Live Stream');
+                            }
+                            if (oldStatus === true && streamData.is_live === false) {
+                                showAlert('🔴 Live stream has ended!', 'info', 'Live Stream');
+                                
+                                // Guest expiration logic
+                                if (state.streamGuestProfile || sessionStorage.getItem('streamGuestProfile')) {
+                                    showAlert('เซสชั่นผู้เยี่ยมชมของคุณจะหมดอายุใน 3 นาที และจะกลับสู่หน้าล็อกอิน', 'info', 'Session Expiration');
+                                    setTimeout(() => {
+                                        if (sessionStorage.getItem('streamGuestProfile')) {
+                                            clearStreamGuestSession(true);
+                                        }
+                                    }, 3 * 60 * 1000); // 3 minutes
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Error handling broadcast payload', e, payload);
+                    }
+                })
+                .subscribe((status) => {
+                    if (status === 'SUBSCRIBED') console.info('Subscribed to clan:stream:streamData');
+                    if (status === 'CHANNEL_ERROR') console.error('Subscription error for streamData');
+                });
+
+            // New: Stream Chat Subscription (For Marquee & Realtime Chat)
+            supabaseClient
+                .channel('public:stream_chat_messages')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'stream_chat_messages' }, payload => {
+                    const msg = payload.new;
+                    if (state.currentPage === 'stream') {
+                        appendChatMessage(msg);
+                        if (msg.is_announcement) showMarqueeText(msg.message);
+                    }
+                })
+                .subscribe();
         }
 
         // เรียกใช้ฟังก์ชันตรวจสอบข้อมูลเมื่อเริ่มต้น
         validateMembersData();
 
         // Supabase Configuration
-        // ⚠️ สำคัญ: นำ Project URL และ anon Key จาก Supabase > Settings > API มาใส่ตรงนี้แทนของเดิม
-        const supabaseUrl = 'https://fiinjbrtxokjoulhccgi.supabase.co'; // ✅ ผมใส่ URL ให้แล้วครับ
+       
+        const supabaseUrl = 'https://fiinjbrtxokjoulhccgi.supabase.co'; 
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpaW5qYnJ0eG9ram91bGhjY2dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2OTA2MjIsImV4cCI6MjA4NjI2NjYyMn0.3CfMlkgZXVnCx5sMyLg5FSd7tTDdlmeSXa-R0DklIYk';
         let supabaseClient = null;
 
@@ -1364,7 +1532,6 @@
         function initSupabase() {
             if (window.supabase && window.supabase.createClient) {
                 supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
-                console.log('Supabase initialized:', supabaseClient);
                 return true;
             }
             return false;
@@ -1502,7 +1669,16 @@
             lucide.createIcons();
             
             // Initialize Supabase
-            initSupabase();
+            if (initSupabase()) {
+                // If supabase is initialized, set up subscriptions for everyone.
+                setupRealtimeSubscription();
+            }
+
+            // Check for existing stream guest profile
+            const storedGuestProfile = sessionStorage.getItem('streamGuestProfile');
+            if (storedGuestProfile) {
+                state.streamGuestProfile = JSON.parse(storedGuestProfile);
+            }
 
             // Load all data from Supabase first
             await loadData();
@@ -1512,7 +1688,6 @@
             if (lastMemberLoginTime) {
                 const fourteenDaysMs = 14 * 24 * 60 * 60 * 1000;
                 if (Date.now() - new Date(lastMemberLoginTime).getTime() > fourteenDaysMs) {
-                    console.log('Member session expired (14 days limit)');
                     memberLogout();
                 }
             }
@@ -1544,16 +1719,10 @@
                 if (session) {
                     state.isLoggedIn = true;
                 }
-                setupRealtimeSubscription();
-            } else {
-                localStorage.removeItem('adminLoggedIn');
-            }
-            
-            // Load pending requests if admin is logged in
-            if (state.isLoggedIn) {
-                await loadPendingRequests();
-            } else {
-                state.pendingRequests = [];
+                // Load pending requests if admin is logged in
+                if (state.isLoggedIn) {
+                    await loadPendingRequests();
+                }
             }
 
             // Load initial content
@@ -1588,9 +1757,20 @@
 
         // Navigation functions
         async function setCurrentPage(page) {
+            // Stream Guest Restriction: Force stay on stream page
+            if (state.streamGuestProfile) {
+                page = 'stream';
+            }
+
             // Guest Restriction
             if (state.isGuest && page !== 'home' && page !== 'announcements') {
                 showAlert('Guest Access Restricted: You can only view the Clan Policy page.\n\nผู้เยี่ยมชมสามารถดูได้เฉพาะหน้านโยบายแคลนเท่านั้น', 'warning', 'Access Restricted');
+                return;
+            }
+
+            // Stream Restriction
+            if (page === 'stream' && (!streamData || !streamData.is_live)) {
+                showAlert('The stream is currently offline.', 'info', 'Stream Offline');
                 return;
             }
 
@@ -1623,6 +1803,7 @@
                 members: t.navMembers,
                 events: t.navEvents,
                 contact: t.navContact,
+                stream: (state.isLoggedIn && !state.streamGuestProfile) ? t.navControlStream : t.navWatchStream,
                 admin: 'Admin Dashboard',
                 profile: 'User Profile'
             };
@@ -1658,6 +1839,9 @@
                     break;
                 case 'contact':
                     renderContactPage();
+                    break;
+                case 'stream':
+                    renderStreamPage();
                     break;
                 case 'admin':
                     renderAdminPage();
@@ -2178,6 +2362,15 @@
             return (match && match[2].length === 11) ? match[2] : null;
         }
 
+        // Helper to extract Twitch Channel
+        function getTwitchChannel(url) {
+            if (!url) return null;
+            // Matches twitch.tv/channelname and extracts channelname
+            const regExp = /^(?:https?:\/\/)?(?:www\.)?twitch\.tv\/([a-zA-Z0-9_]+)(?:\/.*)?$/;
+            const match = url.match(regExp);
+            return (match && match[1]) ? match[1] : null;
+        }
+
         function renderAnnouncementsPage() {
             const t = translations[state.language];
             
@@ -2220,24 +2413,42 @@
                 }
                 
                 if (announcement.videoUrl) {
-                    const youtubeId = getYoutubeId(announcement.videoUrl);
-                    if (youtubeId) {
-                        mediaHtml += `
-                            <div class="relative w-full pt-[56.25%] mt-4 mb-2 rounded-lg overflow-hidden bg-black">
-                                <iframe 
-                                    src="https://www.youtube.com/embed/${youtubeId}" 
-                                    class="absolute top-0 left-0 w-full h-full" 
-                                    frameborder="0" 
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                    allowfullscreen>
-                                </iframe>
-                            </div>`;
-                    } else {
+                    const sourceUrl = announcement.videoUrl;
+                    const isDirectVideo = /\.(mp4|webm|ogv)$/i.test(sourceUrl);
+
+                    if (isDirectVideo) {
                         mediaHtml += `
                             <video controls class="w-full rounded-lg mt-4 mb-2 bg-black max-h-[500px]">
-                                <source src="${announcement.videoUrl}">
+                                <source src="${sourceUrl}">
                                 Your browser does not support the video tag.
                             </video>`;
+                    } else {
+                        let embedUrl = ''; // Default to empty to prevent errors
+                        const youtubeId = getYoutubeId(sourceUrl);
+                        const twitchChannel = getTwitchChannel(sourceUrl);
+
+                        if (youtubeId) {
+                            embedUrl = `https://www.youtube.com/embed/${youtubeId}`;
+                        } else if (twitchChannel) {
+                            const parentDomain = window.location.hostname || 'localhost';
+                            embedUrl = `https://player.twitch.tv/?channel=${twitchChannel}&parent=${parentDomain}`;
+                        } else if (sourceUrl && !/youtube\.com|youtu\.be|twitch\.tv/.test(sourceUrl)) {
+                            // For other platforms that allow direct embedding, use the URL as is.
+                            embedUrl = sourceUrl;
+                        }
+                        
+                        if (embedUrl) {
+                            mediaHtml += `
+                                <div class="relative w-full pt-[56.25%] mt-4 mb-2 rounded-lg overflow-hidden bg-black">
+                                    <iframe 
+                                        src="${embedUrl}" 
+                                        class="absolute top-0 left-0 w-full h-full" 
+                                        frameborder="0" 
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                        allowfullscreen>
+                                    </iframe>
+                                </div>`;
+                        }
                     }
                 }
 
@@ -2362,16 +2573,19 @@
                             <i data-lucide="shield" class="w-5 h-5 text-red-400"></i>
                             ${t.leaderTitle}
                         </h3>
+                        ${(() => {
+                            const leaderPicUrl = members.leader.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(members.leader.name)}&background=ef4444&color=fff&size=128`;
+                            return `
                         <div class="flex items-center gap-4 p-4 bg-slate-900/50 rounded-lg">
-                            <div class="w-16 h-16 bg-gradient-to-br from-red-500 to-orange-500 rounded-full flex items-center justify-center">
-                                <i data-lucide="shield" class="w-8 h-8 text-white"></i>
-                            </div>
+                            <img src="${leaderPicUrl}" alt="${members.leader.name}" class="w-16 h-16 object-cover rounded-full border-2 border-red-500/50">
                             <div>
                                 <p class="text-white text-lg">${members.leader.name}</p>
                                 <p class="text-gray-400 text-sm">${members.leader.role[state.language]}</p>
                                 ${members.leader.gameId ? `<p class="text-orange-400/80 text-xs font-mono mt-1">ID: ${members.leader.gameId}</p>` : ''}
                             </div>
                         </div>
+                            `;
+                        })()}
                     </div>
 
                     <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
@@ -2380,18 +2594,18 @@
                             ${t.managementTitle}
                         </h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            ${members.management.map((member, index) => `
+                            ${members.management.map((member, index) => {
+                                const managementPicUrl = member.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=f97316&color=fff&size=128`;
+                                return `
                                 <div class="flex items-center gap-3 p-4 bg-slate-900/50 rounded-lg">
-                                    <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center">
-                                        <i data-lucide="users" class="w-6 h-6 text-white"></i>
-                                    </div>
+                                    <img src="${managementPicUrl}" alt="${member.name}" class="w-12 h-12 object-cover rounded-full border-2 border-orange-500/50">
                                     <div>
                                         <p class="text-white">${member.name}</p>
                                         <p class="text-gray-400 text-sm">${member.role[state.language]}</p>
                                         ${member.gameId ? `<p class="text-orange-400/80 text-xs font-mono mt-1">ID: ${member.gameId}</p>` : ''}
                                     </div>
                                 </div>
-                            `).join('')}
+                            `}).join('')}
                         </div>
                     </div>
 
@@ -2420,11 +2634,11 @@
                             ${t.membersTitle2}
                         </h3>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            ${members.regular.map((member, index) => `
+                            ${members.regular.map((member, index) => {
+                                const regularPicUrl = member.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=3b82f6&color=fff&size=128`;
+                                return `
                                 <div class="flex flex-col items-center gap-2 p-3 bg-slate-900/50 rounded-lg">
-                                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                                        <i data-lucide="users" class="w-5 h-5 text-white"></i>
-                                    </div>
+                                    <img src="${regularPicUrl}" alt="${member.name}" class="w-10 h-10 object-cover rounded-full">
                                     <p class="text-gray-300 text-sm truncate w-full text-center">${member.name}</p>
                                     ${member.gameId ? `<p class="text-orange-400/80 text-xs font-mono">ID: ${member.gameId}</p>` : ''}
                                     <div class="flex items-center gap-1 text-xs text-gray-500">
@@ -2436,7 +2650,7 @@
                                         <span>${member.country}</span>
                                     </div>
                                 </div>
-                            `).join('')}
+                            `}).join('')}
                         </div>
                     </div>
 
@@ -2673,6 +2887,591 @@
             lucide.createIcons();
         }
 
+        function renderStreamPage() {
+            const t = translations[state.language];
+            const html = `
+                <style>
+                    .stream-video-stage { position: relative; padding-bottom: 56.25%; height: 0; background: #000; border-radius: 16px; overflow: hidden; border: 1px solid #2c2f3a; margin-bottom: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 1; }
+                    .stream-video-stage iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; z-index: 10; }
+                    .stream-chat-box { background: #171a22; border-radius: 16px; height: 450px; display: flex; flex-direction: column; border: 1px solid #2a2e3a; }
+                    .stream-chat-header { padding: 12px; border-bottom: 1px solid #2a2e3a; font-weight: 600; color: #ff4655; font-size: 14px; display: flex; justify-content: space-between; }
+                    .stream-chat-messages { flex: 1; padding: 12px; overflow-y: auto; font-size: 13px; }
+                    .stream-chat-messages div { padding: 6px 8px; margin-bottom: 6px; background: rgba(255,255,255,0.02); word-break: break-word; border-radius: 4px; }
+                    .stream-chat-messages .system { border-left: 2px solid #555; color: #aaa; }
+                    .stream-chat-messages .announcement { border: 1px solid #f97316; background: rgba(249,115,22,0.1); font-weight: 600; color: #ffedd5; }
+                    .stream-chat-input-container { padding: 12px; background: #12141c; border-radius: 0 0 16px 16px; }
+                    .stream-chat-input-container.disabled { opacity: 0.5; pointer-events: none; position: relative; }
+                    .stream-chat-input-container.disabled::after { content: "🔇 ปิดแชทโดยทีมงาน"; position: absolute; bottom: 22px; right: 25px; color: #ff4655; font-size: 11px; background: #12141c; padding: 0 5px; }
+                    .stream-chat-input { width: 100%; background: #232635; border: 1px solid #334; padding: 10px 12px; color: white; border-radius: 30px; font-size: 14px; }
+                    
+                    @keyframes marquee {
+                        0% { transform: translateX(100%); }
+                        100% { transform: translateX(-100%); }
+                    }
+                </style>
+                <div id="stream-video-wrapper"></div>
+                <div id="stream-chat-wrapper"></div>
+            `;
+            document.getElementById('content-container').innerHTML = html;
+            
+            // Render components and load chat history
+            renderStreamVideoContent();
+            renderStreamChatContent();
+            loadStreamChatHistory();
+        }
+
+        function renderStreamVideoContent() {
+            const container = document.getElementById('stream-video-wrapper');
+            if (!container) return;
+
+            const t = translations[state.language];
+            // A stream guest should never see admin controls, even if an admin is testing the flow.
+            const isAdmin = state.isLoggedIn && !state.streamGuestProfile;
+
+            const viewerCount = 1200 + Math.floor(Math.random() * 200);
+
+            let embedUrl = '';
+            const sourceUrl = streamData.stream_url || '';
+            const youtubeId = getYoutubeId(sourceUrl);
+            const twitchChannel = getTwitchChannel(sourceUrl);
+
+            if (youtubeId) {
+                let params = 'autoplay=1&mute=1&modestbranding=1&rel=0';
+                // Disable controls for viewers to prevent seeking/pausing via UI
+                if (!isAdmin) {
+                    params += '&controls=0&disablekb=1&fs=0';
+                }
+                embedUrl = `https://www.youtube.com/embed/${youtubeId}?${params}`;
+            } else if (twitchChannel) {
+                const parentDomain = window.location.hostname || 'localhost';
+                embedUrl = `https://player.twitch.tv/?channel=${twitchChannel}&parent=${parentDomain}&autoplay=true&muted=true`;
+            } else if (sourceUrl && !/youtube\.com|youtu\.be|twitch\.tv/.test(sourceUrl)) {
+                embedUrl = sourceUrl;
+            }
+
+            // Logic for video stage content
+            let overlayContent = '';
+            let showIframe = false;
+            
+            if (!streamData.is_live) {
+                 // Stream Ended Screen
+                 overlayContent = `
+                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-black text-center p-4 z-20">
+                       <h3 class="text-4xl text-white font-bold mb-4 animate-pulse">LIVE ENDED</h3>
+                       <p class="text-gray-300 text-xl">ขอบคุณที่รับชมการถ่ายทอดสด</p>
+                       <p class="text-gray-500 mt-2">Thank you for watching</p>
+                       <div class="mt-8">
+                            <i data-lucide="heart" class="w-16 h-16 text-red-500 mx-auto animate-bounce"></i>
+                       </div>
+                   </div>`;
+            } else if (streamData.is_paused) {
+                // Paused Screen (No Iframe)
+                 overlayContent = `
+                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 text-center p-4 z-20">
+                       <div class="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-4 border border-slate-700">
+                            <i data-lucide="pause" class="w-10 h-10 text-orange-500"></i>
+                       </div>
+                       <h3 class="text-2xl text-white font-bold">การถ่ายทอดสดถูกพักชั่วคราว</h3>
+                       <p class="text-gray-400 mt-2">Stream Paused by Admin</p>
+                       <p class="text-gray-500 text-sm mt-4 animate-pulse">โปรดรอสักครู่...</p>
+                   </div>`;
+            } else if (embedUrl) {
+                // Live Video
+                showIframe = true;
+            } else {
+                // No URL
+                overlayContent = `<div class="absolute inset-0 flex flex-col items-center justify-center bg-black text-center p-4 z-20">
+                       <i data-lucide="video-off" class="w-16 h-16 text-gray-600 mb-4"></i>
+                       <h3 class="text-xl text-white font-bold">วิดีโอไม่พร้อมใช้งาน</h3>
+                       <p class="text-gray-400 mt-2">ยังไม่มีการตั้งค่าลิงก์สตรีม</p>
+                       ${isAdmin ? '<p class="text-yellow-400 text-sm mt-2">กรุณาตรวจสอบ URL ในหน้า Admin</p>' : ''}
+                   </div>`;
+            }
+
+            // Marquee Overlay
+            const marqueeHTML = `
+                <div id="stream-marquee-container" class="absolute top-4 left-0 right-0 z-30 pointer-events-none hidden">
+                    <div class="bg-slate-900/60 text-white py-2 overflow-hidden relative shadow-lg transform -skew-x-6 mx-4 rounded-lg border border-orange-400/30 backdrop-blur-sm">
+                        <div class="animate-[marquee_15s_linear_infinite] whitespace-nowrap px-4 font-bold text-lg flex items-center gap-4" id="stream-marquee-text"></div>
+                    </div>
+                </div>
+            `;
+
+            const adminControlsHTML = isAdmin ? `
+                <div class="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-orange-500/30 mb-6 shadow-xl">
+                    <div class="flex justify-between items-center mb-4 pb-4 border-b border-slate-700/50">
+                        <h3 class="text-lg text-white font-bold flex items-center gap-2">
+                            <i data-lucide="sliders-horizontal" class="w-5 h-5 text-orange-400"></i> 
+                            แผงควบคุมทีมงาน (Admin Controls)
+                        </h3>
+                        <div class="flex gap-2">
+                             <button onclick="handleStreamControl('is_chat_enabled', ${!streamData.is_chat_enabled})" class="px-4 py-2 ${streamData.is_chat_enabled ? 'bg-red-500/20 text-red-400 border-red-500/50' : 'bg-green-500/20 text-green-400 border-green-500/50'} border rounded-lg text-sm font-bold transition-all hover:scale-105">
+                                ${streamData.is_chat_enabled ? 'Disable Chat' : 'Enable Chat'}
+                            </button>
+                             <button onclick="handleStreamClearChat()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-bold transition-all hover:scale-105">
+                                <i data-lucide="trash-2" class="w-4 h-4 inline-block mr-1"></i> Clear Chat
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Playback Controls -->
+                        <div class="space-y-3">
+                            <p class="text-gray-400 text-xs uppercase font-bold tracking-wider">Stream Status</p>
+                            <div class="flex gap-3">
+                                <button onclick="handleStreamControl('is_paused', ${!streamData.is_paused})" class="flex-1 flex items-center justify-center gap-2 p-4 ${streamData.is_paused ? 'bg-green-600 hover:bg-green-500' : 'bg-yellow-600 hover:bg-yellow-500'} text-white rounded-xl font-bold transition-all hover:shadow-lg hover:scale-[1.02]">
+                                    <i data-lucide="${streamData.is_paused ? 'play' : 'pause'}" class="w-5 h-5"></i>
+                                    <span>${streamData.is_paused ? 'RESUME STREAM' : 'PAUSE STREAM'}</span>
+                                </button>
+                                <button onclick="handleStreamEndLive()" class="flex-1 flex items-center justify-center gap-2 p-4 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-all hover:shadow-lg shadow-red-500/20 hover:scale-[1.02]">
+                                    <i data-lucide="power" class="w-5 h-5"></i>
+                                    <span>END LIVE</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Announcement Controls -->
+                        <div class="space-y-3">
+                            <p class="text-gray-400 text-xs uppercase font-bold tracking-wider">Broadcast Announcement</p>
+                            <div class="flex gap-2">
+                                <input type="text" id="admin-announce-input" placeholder="พิมพ์ข้อความประกาศวิ่ง..." class="flex-1 bg-slate-950 border border-slate-700 text-white px-4 rounded-xl focus:border-orange-500 outline-none transition-all">
+                                <button onclick="handleStreamAnnounceCustom()" class="bg-orange-600 hover:bg-orange-500 text-white px-4 rounded-xl font-bold transition-all hover:shadow-lg shadow-orange-500/20 flex items-center justify-center">
+                                    <i data-lucide="megaphone" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>` : '';
+
+            container.innerHTML = `
+                <div class="mb-6 flex justify-between items-end">
+                    <div>
+                        <h2 class="text-3xl text-white mb-1 font-bold tracking-tight">${streamData.title || t.streamTitle}</h2>
+                        <p class="text-gray-400 flex items-center gap-2 text-sm">
+                            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                            ${t.streamSubtitle}
+                        </p>
+                    </div>
+                    ${!streamData.is_live ? 
+                        `<div class="px-4 py-2 bg-slate-800 text-gray-400 rounded-lg font-mono text-sm border border-slate-700">OFFLINE</div>` : 
+                        `<div class="flex items-center gap-3 bg-slate-900/50 px-4 py-2 rounded-lg border border-slate-800">
+                            <div class="flex items-center gap-2 bg-red-600/90 px-3 py-1 rounded text-white text-xs font-bold shadow-lg shadow-red-500/20">
+                                <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-white"></span></span>
+                                LIVE
+                            </div>
+                            <div class="text-gray-300 text-sm font-mono flex items-center gap-2">
+                                <i data-lucide="users" class="w-4 h-4 text-orange-500"></i>
+                                <span>${viewerCount.toLocaleString()}</span>
+                            </div>
+                        </div>`
+                    }
+                </div>
+                
+                ${adminControlsHTML}
+                
+                <div class="stream-video-stage" id="stream-video-stage">
+                    <div id="stream-iframe-container" class="absolute inset-0 w-full h-full z-10 ${showIframe ? '' : 'hidden'}">
+                        ${embedUrl ? `<iframe src="${embedUrl}" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen class="absolute inset-0 w-full h-full"></iframe>` : ''}
+                    </div>
+                    <div id="stream-overlay-container">
+                        ${overlayContent}
+                    </div>
+                    ${marqueeHTML}
+                </div>
+            `;
+            
+            // Important: Logic to prevent iframe reload if url hasn't changed could be implemented here,
+            // but simpler: if we are paused, just hide iframe wrapper? 
+            // The user wants "resume plays from original". Hiding iframe might keep it buffered.
+            // Current implementation above re-renders innerHTML, so it restarts.
+            // Let's improve: Check if wrapper exists.
+
+            lucide.createIcons({ nodes: container.querySelectorAll('[data-lucide]') });
+        }
+
+        function renderStreamChatContent() {
+            const container = document.getElementById('stream-chat-wrapper');
+            if (!container) return;
+
+            container.innerHTML = `
+                <div class="stream-chat-box mt-4">
+                    <div class="stream-chat-header">
+                        <span>⚡ CLAN CHAT</span>
+                        <span style="color: #888;">${streamData.is_chat_enabled ? 'เปิดอยู่' : 'ปิดอยู่'}</span>
+                    </div>
+                    <div class="stream-chat-messages" id="stream-chat-messages">
+                        <!-- Messages will be loaded here -->
+                    </div>
+                    <div class="stream-chat-input-container ${!streamData.is_chat_enabled ? 'disabled' : ''}" id="stream-chat-input-container">
+                        <input type="text" id="stream-chat-input" placeholder="พิมพ์ข้อความ..." class="stream-chat-input" onkeypress="handleSendChatMessage(event)">
+                    </div>
+                </div>
+            `;
+        }
+
+        function clearStreamGuestSession(showExpiryMessage = false) {
+            sessionStorage.removeItem('streamGuestProfile');
+            sessionStorage.removeItem('streamGuestWarnings');
+            state.streamGuestProfile = null;
+            
+            if (showExpiryMessage) {
+                // Use sessionStorage to show a message after reload
+                sessionStorage.setItem('showLoginAfterReload', 'true');
+                sessionStorage.setItem('reloadMessage', 'เซสชั่นผู้เยี่ยมชมหมดอายุแล้ว (Guest session expired)');
+                sessionStorage.setItem('reloadMessageType', 'info');
+                sessionStorage.setItem('reloadMessageTitle', 'Session Expired');
+            }
+            
+            // Reload the page to kick the user out and return to the login overlay
+            location.reload();
+        }
+
+        // New helper functions for the stream page
+        function showStreamGuestSetupModal() {
+            const modal = document.getElementById('stream-guest-setup-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeStreamGuestSetupModal() {
+            const modal = document.getElementById('stream-guest-setup-modal');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+
+        function handleWatchLiveGuest() {
+            // This function is called from the login screen
+            if (streamData && streamData.is_live) {
+                showStreamGuestSetupModal();
+            } else {
+                showAlert('สตรีมยังไม่เริ่มถ่ายทอดสดในขณะนี้', 'info', 'Stream Offline');
+            }
+        }
+
+        async function handleStreamGuestSetup(event) {
+            event.preventDefault();
+            const form = document.getElementById('stream-guest-form');
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalBtnHTML = submitBtn.innerHTML;
+
+            const nameInput = document.getElementById('stream-guest-name');
+            const imageInput = document.getElementById('stream-guest-image');
+
+            const name = nameInput.value.trim();
+            const file = imageInput.files[0];
+
+            if (!name || !file) {
+                showAlert('กรุณากรอกชื่อและเลือกรูปโปรไฟล์', 'warning', 'ข้อมูลไม่ครบถ้วน');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto"></i>';
+            lucide.createIcons({ nodes: [submitBtn] });
+
+            try {
+                const filePath = `public/guest_${Date.now()}_${file.name}`;
+                const { data: uploadData, error: uploadError } = await supabaseClient.storage
+                    .from('stream_guest_avatars')
+                    .upload(filePath, file);
+
+                if (uploadError) {
+                    if (uploadError.message.includes('Bucket not found')) {
+                        throw new Error('ไม่พบ Storage bucket "stream_guest_avatars" กรุณาให้แอดมินสร้างใน Supabase');
+                    }
+                    throw uploadError;
+                }
+
+                const { data: urlData } = supabaseClient.storage.from('stream_guest_avatars').getPublicUrl(uploadData.path);
+                const guestProfile = { name, avatar_url: urlData.publicUrl };
+                sessionStorage.setItem('streamGuestProfile', JSON.stringify(guestProfile));
+                state.streamGuestProfile = guestProfile;
+
+                closeStreamGuestSetupModal();
+                // Show info modal instead of going directly
+                document.getElementById('stream-guest-info-modal').classList.remove('hidden');
+                document.getElementById('stream-guest-info-modal').classList.add('flex');
+                lucide.createIcons();
+            } catch (error) {
+                console.error('Error setting up stream guest:', error);
+                showAlert(`เกิดข้อผิดพลาดในการสร้างโปรไฟล์: ${error.message}`, 'error');
+            }
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnHTML;
+        }
+
+        function enterStreamAsGuest() {
+            document.getElementById('stream-guest-info-modal').classList.add('hidden');
+            document.getElementById('stream-guest-info-modal').classList.remove('flex');
+
+            // Hide the main login overlay to reveal the main site content
+            document.getElementById('member-login-overlay').classList.add('hidden');
+
+            setCurrentPage('stream');
+            updateUI();
+        }
+
+        // Optimized render for Real-time updates to avoid iframe reload
+        function renderStreamVideoContent() {
+            const container = document.getElementById('stream-video-wrapper');
+            if (!container) return;
+            
+            const t = translations[state.language];
+            const isAdmin = state.isLoggedIn && !state.streamGuestProfile;
+            const viewerCount = 1200 + Math.floor(Math.random() * 200);
+
+            // 1. Calculate Embed URL
+            let embedUrl = '';
+            const sourceUrl = streamData.stream_url || '';
+            const youtubeId = getYoutubeId(sourceUrl);
+            const twitchChannel = getTwitchChannel(sourceUrl);
+
+            if (youtubeId) {
+                let params = 'autoplay=1&mute=1&modestbranding=1&rel=0';
+                if (!isAdmin) params += '&controls=0&disablekb=1&fs=0';
+                embedUrl = `https://www.youtube.com/embed/${youtubeId}?${params}`;
+            } else if (twitchChannel) {
+                const parentDomain = window.location.hostname || 'localhost';
+                embedUrl = `https://player.twitch.tv/?channel=${twitchChannel}&parent=${parentDomain}&autoplay=true&muted=true`;
+            } else if (sourceUrl && !/youtube\.com|youtu\.be|twitch\.tv/.test(sourceUrl)) {
+                embedUrl = sourceUrl;
+            }
+
+            // 2. Initial Setup (Run only once per page view)
+            if (!document.getElementById('stream-video-stage')) {
+                container.innerHTML = `
+                    <div id="stream-header-section" class="mb-6 flex justify-between items-end"></div>
+                    <div id="stream-admin-section"></div>
+                    <div class="stream-video-stage" id="stream-video-stage">
+                        <div id="stream-iframe-container" class="absolute inset-0 w-full h-full z-10"></div>
+                        <div id="stream-overlay-layer" class="absolute inset-0 z-20 hidden"></div>
+                        <div id="stream-marquee-container" class="absolute top-4 left-0 right-0 z-30 pointer-events-none hidden">
+                            <div class="bg-slate-900/80 text-white py-2 overflow-hidden relative shadow-lg transform -skew-x-6 mx-4 rounded-lg border border-orange-500/30 backdrop-blur-sm">
+                                <div class="animate-[marquee_15s_linear_infinite] whitespace-nowrap px-4 font-bold text-lg flex items-center gap-4" id="stream-marquee-text"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 3. Update Header
+            const headerHTML = `
+                <div>
+                    <h2 class="text-3xl text-white mb-1 font-bold tracking-tight">${streamData.title || t.streamTitle}</h2>
+                    <p class="text-gray-400 flex items-center gap-2 text-sm">
+                        <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                        ${t.streamSubtitle}
+                    </p>
+                </div>
+                ${!streamData.is_live ? 
+                    `<div class="px-4 py-2 bg-slate-800 text-gray-400 rounded-lg font-mono text-sm border border-slate-700">OFFLINE</div>` : 
+                    `<div class="flex items-center gap-3 bg-slate-900/50 px-4 py-2 rounded-lg border border-slate-800">
+                        <div class="flex items-center gap-2 bg-red-600/90 px-3 py-1 rounded text-white text-xs font-bold shadow-lg shadow-red-500/20">
+                            <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-white"></span></span>
+                            LIVE
+                        </div>
+                        <div class="text-gray-300 text-sm font-mono flex items-center gap-2">
+                            <i data-lucide="users" class="w-4 h-4 text-orange-500"></i>
+                            <span>${viewerCount.toLocaleString()}</span>
+                        </div>
+                    </div>`
+                }
+            `;
+            document.getElementById('stream-header-section').innerHTML = headerHTML;
+
+            // 4. Update Admin Controls
+            const adminSection = document.getElementById('stream-admin-section');
+            if (isAdmin) {
+                adminSection.innerHTML = `
+                <div class="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-orange-500/30 mb-6 shadow-xl">
+                    <div class="flex justify-between items-center mb-4 pb-4 border-b border-slate-700/50">
+                        <h3 class="text-lg text-white font-bold flex items-center gap-2">
+                            <i data-lucide="sliders-horizontal" class="w-5 h-5 text-orange-400"></i> 
+                            แผงควบคุมทีมงาน (Admin Controls)
+                        </h3>
+                        <div class="flex gap-2">
+                             <button onclick="handleStreamControl('is_chat_enabled', ${!streamData.is_chat_enabled})" class="px-4 py-2 ${streamData.is_chat_enabled ? 'bg-red-500/20 text-red-400 border-red-500/50' : 'bg-green-500/20 text-green-400 border-green-500/50'} border rounded-lg text-sm font-bold transition-all hover:scale-105">
+                                ${streamData.is_chat_enabled ? 'Disable Chat' : 'Enable Chat'}
+                            </button>
+                             <button onclick="handleStreamClearChat()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-bold transition-all hover:scale-105">
+                                <i data-lucide="trash-2" class="w-4 h-4 inline-block mr-1"></i> Clear Chat
+                            </button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-3">
+                            <p class="text-gray-400 text-xs uppercase font-bold tracking-wider">Stream Status</p>
+                            <div class="flex gap-3">
+                                <button onclick="handleStreamControl('is_paused', ${!streamData.is_paused})" class="flex-1 flex items-center justify-center gap-2 p-4 ${streamData.is_paused ? 'bg-green-600 hover:bg-green-500' : 'bg-yellow-600 hover:bg-yellow-500'} text-white rounded-xl font-bold transition-all hover:shadow-lg hover:scale-[1.02]">
+                                    <i data-lucide="${streamData.is_paused ? 'play' : 'pause'}" class="w-5 h-5"></i>
+                                    <span>${streamData.is_paused ? 'RESUME STREAM' : 'PAUSE STREAM'}</span>
+                                </button>
+                                <button onclick="handleStreamEndLive()" class="flex-1 flex items-center justify-center gap-2 p-4 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-all hover:shadow-lg shadow-red-500/20 hover:scale-[1.02]">
+                                    <i data-lucide="power" class="w-5 h-5"></i>
+                                    <span>END LIVE</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="space-y-3">
+                            <p class="text-gray-400 text-xs uppercase font-bold tracking-wider">Broadcast Announcement</p>
+                            <div class="flex gap-2">
+                                <input type="text" id="admin-announce-input" placeholder="พิมพ์ข้อความประกาศวิ่ง..." class="flex-1 bg-slate-950 border border-slate-700 text-white px-4 rounded-xl focus:border-orange-500 outline-none transition-all">
+                                <button onclick="handleStreamAnnounceCustom()" class="bg-orange-600 hover:bg-orange-500 text-white px-4 rounded-xl font-bold transition-all hover:shadow-lg shadow-orange-500/20 flex items-center justify-center">
+                                    <i data-lucide="megaphone" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            } else {
+                adminSection.innerHTML = '';
+            }
+
+            // 5. Update Iframe (Prevent Reload if URL same)
+            const iframeContainer = document.getElementById('stream-iframe-container');
+            const currentIframe = iframeContainer.querySelector('iframe');
+            
+            if (embedUrl) {
+                if (!currentIframe || currentIframe.src !== embedUrl) {
+                    iframeContainer.innerHTML = `<iframe src="${embedUrl}" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen class="absolute inset-0 w-full h-full"></iframe>`;
+                }
+                // Do not hide iframe container even if paused, to keep buffering/state if possible.
+                // We will cover it with overlay.
+                iframeContainer.classList.remove('hidden');
+            } else {
+                iframeContainer.innerHTML = '';
+                iframeContainer.classList.add('hidden');
+            }
+
+            // 6. Update Overlays
+            const overlayLayer = document.getElementById('stream-overlay-layer');
+            let overlayContent = '';
+            
+            if (!streamData.is_live) {
+                overlayLayer.classList.remove('hidden');
+                overlayContent = `
+                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-black text-center p-4">
+                       <h3 class="text-4xl text-white font-bold mb-4 animate-pulse">LIVE ENDED</h3>
+                       <p class="text-gray-300 text-xl">ขอบคุณที่รับชมการถ่ายทอดสด</p>
+                       <p class="text-gray-500 mt-2">Thank you for watching</p>
+                       <div class="mt-8">
+                            <i data-lucide="heart" class="w-16 h-16 text-red-500 mx-auto animate-bounce"></i>
+                       </div>
+                   </div>`;
+            } else if (streamData.is_paused) {
+                overlayLayer.classList.remove('hidden');
+                overlayContent = `
+                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 text-center p-4">
+                       <div class="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-4 border border-slate-700">
+                            <i data-lucide="pause" class="w-10 h-10 text-orange-500"></i>
+                       </div>
+                       <h3 class="text-2xl text-white font-bold">การถ่ายทอดสดถูกพักชั่วคราว</h3>
+                       <p class="text-gray-400 mt-2">Stream Paused by Admin</p>
+                       <p class="text-gray-500 text-sm mt-4 animate-pulse">โปรดรอสักครู่...</p>
+                   </div>`;
+            } else if (!embedUrl) {
+                 overlayLayer.classList.remove('hidden');
+                 overlayContent = `
+                   <div class="absolute inset-0 flex flex-col items-center justify-center bg-black text-center p-4">
+                       <i data-lucide="video-off" class="w-16 h-16 text-gray-600 mb-4"></i>
+                       <h3 class="text-xl text-white font-bold">วิดีโอไม่พร้อมใช้งาน</h3>
+                       <p class="text-gray-400 mt-2">ยังไม่มีการตั้งค่าลิงก์สตรีม</p>
+                       ${isAdmin ? '<p class="text-yellow-400 text-sm mt-2">กรุณาตรวจสอบ URL ในหน้า Admin</p>' : ''}
+                   </div>`;
+            } else {
+                overlayLayer.classList.add('hidden');
+            }
+            overlayLayer.innerHTML = overlayContent;
+
+            lucide.createIcons({ nodes: container.querySelectorAll('[data-lucide]') });
+        }
+
+        // New helper functions for the stream page
+        function updateStreamData(field, value) {
+            state.tempEditData[field] = value;
+        }
+
+        async function loadStreamChatHistory() {
+            if (!supabaseClient) return;
+            const messagesDiv = document.getElementById('stream-chat-messages');
+            if (!messagesDiv) return;
+
+            const { data, error } = await supabaseClient
+                .from('stream_chat_messages')
+                .select('*')
+                .order('created_at', { ascending: true })
+                .limit(100);
+
+            if (error) {
+                console.error('Error loading chat history:', error.message);
+                if (error.message.includes('relation "public.stream_chat_messages" does not exist')) {
+                     addSystemChatMessage('⚠️ ข้อผิดพลาด: ไม่พบตารางแชท (stream_chat_messages) ในฐานข้อมูล');
+                }
+                return;
+            }
+
+            messagesDiv.innerHTML = '<div class="system">👋 ยินดีต้อนรับสู่ Live Chat</div>';
+            data.forEach(msg => appendChatMessage(msg, false));
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        
+        function appendChatMessage(msg, shouldScroll = true) {
+            const messagesDiv = document.getElementById('stream-chat-messages');
+            if (!messagesDiv) return;
+
+            // Deduplicate consecutive announcements
+            if (msg.is_announcement) {
+                const lastMsg = messagesDiv.lastElementChild;
+                if (lastMsg && lastMsg.classList.contains('announcement') && lastMsg.textContent.includes(msg.message)) {
+                    // Skip duplicate
+                    return;
+                }
+            }
+        
+            const msgContainer = document.createElement('div');
+        
+            if (msg.is_system || msg.is_announcement) {
+                msgContainer.className = 'text-sm p-2 rounded-lg w-full';
+                if (msg.is_system) {
+                    msgContainer.classList.add('system');
+                    msgContainer.innerHTML = `⚡ ${msg.message}`;
+                } else { // announcement
+                    msgContainer.classList.add('announcement');
+                    msgContainer.innerHTML = `📢 <span class="text-red-400">ประกาศ:</span> ${msg.message}`;
+                }
+            } else {
+                // User message
+                msgContainer.className = 'flex items-start gap-2.5 mb-2.5';
+                const avatar = msg.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.username)}&background=232635&color=fff&size=64`;
+                const guestIcon = msg.is_guest ? '<i data-lucide="eye" class="w-3 h-3 text-gray-500 ml-1.5" title="ผู้เยี่ยมชม"></i>' : '';
+        
+                msgContainer.innerHTML = `
+                    <img src="${avatar}" class="w-8 h-8 rounded-full object-cover flex-shrink-0">
+                    <div class="flex-1 bg-slate-800/50 rounded-lg p-2.5">
+                        <div class="flex items-center mb-1">
+                            <span style="color: ${msg.user_color}; font-weight: bold;" class="text-sm">${msg.username}</span>
+                            ${guestIcon}
+                        </div>
+                        <p class="text-white text-sm break-words">${msg.message}</p>
+                    </div>
+                `;
+            }
+            messagesDiv.appendChild(msgContainer);
+            lucide.createIcons({ nodes: msgContainer.querySelectorAll('[data-lucide]') });
+        
+            if (shouldScroll) {
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }
+        }
+
+        function addSystemChatMessage(text) {
+            const msg = {
+                is_system: true,
+                message: text
+            };
+            appendChatMessage(msg);
+        }
+
         function setAdminSubPage(page) {
             state.adminSubPage = page;
             renderAdminPage();
@@ -2807,6 +3606,17 @@
                                 <button onclick="startEdit('clanData')" class="h-12 px-5 bg-slate-800 hover:bg-purple-600 text-white rounded-xl transition-all border border-slate-700 hover:border-purple-500 flex items-center gap-2 font-semibold"><i data-lucide="edit" class="w-4 h-4"></i><span>แก้ไข</span></button>
                             </div>
                         </div>
+                        <!-- Edit Stream -->
+                        <div class="group relative bg-slate-900/60 backdrop-blur-xl rounded-3xl p-6 border border-red-500/20 shadow-xl hover:shadow-red-500/10 transition-all duration-300 overflow-hidden">
+                            <div class="absolute top-0 right-0 w-40 h-40 bg-red-500/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                            <div class="relative flex items-center justify-between gap-4">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center border border-red-500/20"><i data-lucide="clapperboard" class="w-6 h-6 text-red-500"></i></div>
+                                    <div><h3 class="text-lg text-white font-bold">Live Stream</h3><p class="text-red-400/60 text-xs uppercase">Stream Management</p></div>
+                                </div>
+                                <button onclick="startEdit('streamData')" class="h-12 px-5 bg-slate-800 hover:bg-red-600 text-white rounded-xl transition-all border border-slate-700 hover:border-red-500 flex items-center gap-2 font-semibold"><i data-lucide="edit" class="w-4 h-4"></i><span>แก้ไข</span></button>
+                            </div>
+                        </div>
                     </div>
                 `;
             }
@@ -2861,7 +3671,11 @@
             localStorage.removeItem('loggedInMemberId');
             state.isMemberLoggedIn = false;
             state.currentMember = null;
+
             sessionStorage.setItem('showLoginAfterReload', 'true');
+            sessionStorage.setItem('reloadMessage', 'You have been logged out.');
+            sessionStorage.setItem('reloadMessageType', 'info');
+            sessionStorage.setItem('reloadMessageTitle', 'Logged Out');
             location.reload();
         }
 
@@ -2950,6 +3764,7 @@
                 section === 'announcements' ? announcements :
                 section === 'members' ? members :
                 section === 'events' ? events :
+                section === 'streamData' ? streamData :
                 clanData
             ));
             
@@ -2968,6 +3783,7 @@
                         ${state.editingSection === 'members' && 'แก้ไขสมาชิก'}
                         ${state.editingSection === 'events' && 'แก้ไขกิจกรรม'}
                         ${state.editingSection === 'clanData' && 'แก้ไขข้อมูลแคลน'}
+                        ${state.editingSection === 'streamData' && 'แก้ไข Live Stream'}
                     </h3>
                     <button onclick="handleAutoTranslate()" id="auto-translate-btn" class="mr-2 flex items-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm ml-auto">
                         <i data-lucide="sparkles" class="w-4 h-4"></i>
@@ -3514,6 +4330,31 @@
                         `).join('')}
                     </div>
                 `;
+            } else if (state.editingSection === 'streamData') {
+                html += `
+                    <div class="space-y-4 p-4 bg-slate-900 rounded-lg">
+                        <div>
+                            <label class="text-gray-400 text-sm">Stream Title:</label>
+                            <input type="text" value="${state.tempEditData.title}" onchange="updateStreamData('title', this.value)" class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:outline-none focus:border-orange-500" />
+                        </div>
+                        <div>
+                            <label class="text-gray-400 text-sm">Stream URL (YouTube Embed Link):</label>
+                            <input type="text" value="${state.tempEditData.stream_url}" onchange="updateStreamData('stream_url', this.value)" class="w-full mt-1 px-3 py-2 bg-slate-800 text-white rounded border border-slate-700 focus:outline-none focus:border-orange-500" placeholder="https://www.youtube.com/embed/..." />
+                        </div>
+                        <div class="flex items-center gap-4 pt-4 border-t border-slate-800">
+                            <label class="flex items-center gap-2 text-white text-lg cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    ${state.tempEditData.is_live ? 'checked' : ''}
+                                    onchange="updateStreamData('is_live', this.checked)"
+                                    class="w-6 h-6 rounded border-slate-700 bg-slate-800 text-green-500 focus:ring-green-500"
+                                />
+                                Go Live
+                            </label>
+                            <p class="text-gray-500 text-sm">When checked, the "Stream" button will appear for all users.</p>
+                        </div>
+                    </div>
+                `;
             }
             
             html += `
@@ -3850,7 +4691,6 @@
         async function loadData() {
             try {
                 if (!supabaseClient || typeof supabaseClient.from !== 'function') {
-                    console.log('Supabase client not initialized or invalid, skipping remote load.');
                     return;
                 }
 
@@ -3864,6 +4704,7 @@
                         if (row.section === 'members') members = row.data;
                         if (row.section === 'clanData') clanData = row.data;
                         if (row.section === 'events') events = row.data;
+                        if (row.section === 'streamData') streamData = row.data;
                     });
                 } else {
                     ['policies', 'announcements', 'members', 'clanData', 'events'].forEach(async (section) => {
@@ -3900,9 +4741,7 @@
                 if (data && data.data) {
                     // อัปเดตข้อมูล members ด้วยข้อมูลล่าสุดจาก Supabase
                     members = data.data;
-                    console.log('Fresh members data loaded from Supabase for login:', members);
                 } else {
-                    console.log('No members data found in Supabase, using defaults');
                     // ถ้าไม่มีข้อมูลใน Supabase ให้ใช้ข้อมูลเริ่มต้น
                     members = JSON.parse(JSON.stringify(defaultMembers));
                 }
@@ -3969,13 +4808,17 @@
             } else if (state.editingSection === 'clanData') {
                 success = await saveData('clanData', data);
                 if (success) clanData = JSON.parse(JSON.stringify(data));
+            } else if (state.editingSection === 'streamData') {
+                success = await saveData('streamData', data);
+                if (success) streamData = JSON.parse(JSON.stringify(data));
             }
             
             if (success) {
                 cancelEdit();
                 showAlert(state.language === 'th' ? 'บันทึกสำเร็จ!' : state.language === 'zh' ? '保存成功！' : 'Saved successfully!', 'success');
                 
-                // Re-render current page
+                // Update global UI elements and re-render current page content
+                updateUI();
                 renderContent();
                 // If we were on admin page, re-render it to update counts
                 if (state.currentPage === 'admin') {
@@ -3985,6 +4828,147 @@
                 // Restore button text if failed
                 if (saveBtn) saveBtn.innerHTML = originalBtnText;
             }
+        }
+
+        async function handleStreamControl(field, value) {
+            if (!state.isLoggedIn) return;
+            
+            const update = {};
+            update[field] = value;
+
+            // Optimistic update for admin UI
+            streamData[field] = value;
+            renderStreamVideoContent();
+
+            const { error } = await supabaseClient
+                .from('clan_content')
+                .update({ data: streamData })
+                .eq('section', 'streamData');
+            
+            if (error) {
+                console.error('Error updating stream control:', error);
+                showAlert('Failed to update stream state.', 'error');
+                // Revert optimistic update on error if needed
+            }
+        }
+
+        async function handleStreamEndLive() {
+            if (!state.isLoggedIn) return;
+            if (confirm('คุณแน่ใจหรือไม่ที่จะจบการถ่ายทอดสด? (End Live Stream)')) {
+                const { error } = await supabaseClient
+                    .from('clan_content')
+                    .update({ data: { ...streamData, is_live: false, is_paused: false } })
+                    .eq('section', 'streamData');
+                
+                if (error) {
+                    console.error('Error ending stream:', error);
+                    showAlert('Failed to end stream.', 'error');
+                } else {
+                    streamData.is_live = false;
+                    renderStreamVideoContent();
+                    showAlert('Live stream ended successfully.', 'success');
+                }
+            }
+        }
+
+        async function handleStreamAnnounceCustom() {
+            if (!state.isLoggedIn) return;
+            const input = document.getElementById('admin-announce-input');
+            const message = input.value.trim();
+            
+            if (message) {
+                const { error } = await supabaseClient
+                    .from('stream_chat_messages')
+                    .insert([{ message: message, is_announcement: true, username: 'Admin' }]);
+                
+                if (error) {
+                    console.error('Error sending announcement:', error);
+                    showAlert('Failed to send announcement.', 'error');
+                } else {
+                    input.value = '';
+                    showMarqueeText(message);
+                }
+            }
+        }
+
+        async function handleStreamClearChat() {
+            if (!state.isLoggedIn) return;
+            if (confirm('แน่ใจว่าต้องการล้างข้อความแชททั้งหมด?')) {
+                const { error } = await supabaseClient
+                    .from('stream_chat_messages')
+                    .delete()
+                    .neq('id', 0); // Dummy condition to delete all rows
+
+                if (error) {
+                    console.error('Error clearing chat:', error);
+                    showAlert('Failed to clear chat.', 'error');
+                }
+            }
+        }
+
+        function showMarqueeText(text) {
+            const marqueeContainer = document.getElementById('stream-marquee-container');
+            const marqueeText = document.getElementById('stream-marquee-text');
+            if (marqueeContainer && marqueeText) {
+                marqueeText.innerHTML = `
+                    <i data-lucide="megaphone" class="w-6 h-6"></i>
+                    <span>${text}</span>
+                    <span class="mx-8">•</span>
+                    <span>${text}</span>
+                    <span class="mx-8">•</span>
+                    <span>${text}</span>
+                `;
+                marqueeContainer.classList.remove('hidden');
+                lucide.createIcons({ nodes: marqueeContainer.querySelectorAll('[data-lucide]') });
+                
+                setTimeout(() => {
+                    marqueeContainer.classList.add('hidden');
+                }, 30000);
+            }
+        }
+
+        async function handleSendChatMessage(event) {
+            if (event.key !== 'Enter') return;
+            const input = event.target;
+            const message = input.value.trim();
+
+            if (!streamData.is_chat_enabled) {
+                showAlert('Chat is currently disabled by staff.', 'warning', 'Chat Disabled');
+                return;
+            }
+            if (message === '') return;
+
+            input.disabled = true; // Prevent spamming
+            input.value = ''; // Clear input immediately for better UX
+
+            // For non-members/guests, use a random name. For members, use their actual name.
+            let username = 'ผู้ชม';
+            let avatar_url = null;
+            let is_guest = true;
+            if (state.isMemberLoggedIn && state.currentMember) {
+                username = state.currentMember.name;
+                avatar_url = state.currentMember.profilePictureUrl;
+                is_guest = false;
+            } else if (state.streamGuestProfile) {
+                username = state.streamGuestProfile.name;
+                avatar_url = state.streamGuestProfile.avatar_url;
+                is_guest = true;
+            } 
+
+            const colors = ['#ff4655', '#4a9eff', '#00b894', '#f39c12', '#9b59b6'];
+            const user_color = colors[Math.floor(Math.random() * colors.length)];
+
+            const { error } = await supabaseClient
+                .from('stream_chat_messages')
+                .insert([{ username, message, user_color, avatar_url, is_guest }]);
+            if (error) {
+                console.error('Error sending message:', error);
+                showAlert('Failed to send message.', 'error');
+                input.value = message; // Restore message on failure
+            }
+
+            input.disabled = false;
+            input.focus();
         }
 
         function addMember() {
@@ -4118,8 +5102,14 @@
             state.pendingRequests = [];
             state.isLoggedIn = false;
             localStorage.removeItem('adminLoggedIn');
-            updateLoginUI();
-            setCurrentPage('home');
+
+            // Force a page reload to return to the main login overlay,
+            // ensuring a clean state for testing public-facing features.
+            sessionStorage.setItem('showLoginAfterReload', 'true');
+            sessionStorage.setItem('reloadMessage', 'คุณออกจากระบบผู้ดูแลแล้ว (Admin logout successful)');
+            sessionStorage.setItem('reloadMessageType', 'info');
+            sessionStorage.setItem('reloadMessageTitle', 'Admin Logout');
+            location.reload();
         }
 
         function updateLoginUI() {
@@ -4439,6 +5429,7 @@
             document.getElementById('nav-contact-text').textContent = t.navContact;
             
             // Update page title
+            // Update page title
             const pageTitles = {
                 home: t.officialPolicy,
                 announcements: t.navAnnouncements,
@@ -4446,7 +5437,9 @@
                 members: t.navMembers,
                 events: t.navEvents,
                 contact: t.navContact,
-                admin: 'Admin Dashboard'
+                stream: (state.isLoggedIn && !state.streamGuestProfile) ? t.navControlStream : t.navWatchStream,
+                admin: 'Admin Dashboard',
+                profile: 'User Profile'
             };
             
             document.getElementById('current-page-title').textContent = pageTitles[state.currentPage] || t.officialPolicy;
@@ -4476,6 +5469,47 @@
             } else {
                 document.getElementById('nav-profile').classList.add('hidden');
                 document.getElementById('nav-profile').classList.remove('flex');
+            }
+
+            // Show/hide stream button
+            const navStream = document.getElementById('nav-stream');
+            const navStreamText = document.getElementById('nav-stream-text');
+            if (navStream && navStreamText) {
+                if (streamData && streamData.is_live) {
+                    navStream.classList.remove('hidden');
+                    navStream.classList.add('flex');
+                    if (state.isLoggedIn && !state.streamGuestProfile) {
+                        navStreamText.textContent = t.navControlStream;
+                    } else {
+                        navStreamText.textContent = t.navWatchStream;
+                    }
+                } else {
+                    navStream.classList.add('hidden');
+                    navStream.classList.remove('flex');
+                }
+            }
+
+            // Stream Guest UI adjustments (Restrict Navigation)
+            if (state.streamGuestProfile) {
+                const hideIds = ['nav-home', 'nav-announcements', 'nav-about', 'nav-members', 'nav-events', 'nav-contact', 'nav-register', 'nav-profile', 'nav-login', 'nav-admin', 'nav-logout'];
+                hideIds.forEach(id => {
+                     const el = document.getElementById(id);
+                     if(el) el.style.display = 'none';
+                });
+                
+                // Ensure stream nav is visible
+                if (navStream) {
+                    navStream.classList.remove('hidden');
+                    navStream.classList.add('flex');
+                }
+            }
+
+            // Show/hide guest stream button on login page
+            const watchLiveGuestBtn = document.getElementById('watch-live-guest-btn');
+            if (watchLiveGuestBtn) {
+                // Use direct style manipulation for better real-time reliability
+                const shouldShow = (streamData && streamData.is_live === true) && !state.isMemberLoggedIn && !state.isGuest;
+                watchLiveGuestBtn.style.display = shouldShow ? 'block' : 'none';
             }
         }
     </script>
