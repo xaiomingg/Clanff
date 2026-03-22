@@ -7,20 +7,23 @@
     <meta name="description" content="安镜之锋 - Free Fire Clan แคลนรักสงบ ยินดีต้อนรับเข้าสู่ครอบครัวของเรา">
     <meta name="keywords" content="安镜之锋, Free Fire Clan, แคลนฟีฟาย, swplayer, ajpolity">
     <link rel="icon" href="assets/ALclan.png">
-    <script type="application/ld+json">
+
+ <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "WebSite",
   "name": "安镜之锋",
-  "url": "https://ajpolity.swplayer.online/"
+  "alternateName": "AJ Polity Free Fire Clan",
+  "url": "https://ajpolity.swplayer.online/",
+  "description": "เว็บไซต์อย่างเป็นทางการของแคลน 安镜之锋 (Free Fire Clan) รวบรวมนโยบาย สมาชิก และคอมมูนิตี้พูดคุย"
 }
 </script>
-
+   
     <!-- Tailwind CSS (CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://unpkg.com/lucide@0.378.0/dist/umd/lucide.min.js"></script>
     
     <!-- Supabase JS (CDN) - use UMD build for browser globals -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -835,6 +838,42 @@
         .voice-speaking {
             animation: speakingBlink 1s ease-in-out infinite;
         }
+
+        /* Ticket Widget Animation */
+        #ticket-widget-panel {
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: translateY(20px) scale(0.95);
+            opacity: 0;
+            pointer-events: none;
+            transform-origin: bottom right;
+        }
+        #ticket-widget-panel.open {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .ticket-chat-messages::-webkit-scrollbar { width: 6px; }
+        .ticket-chat-messages::-webkit-scrollbar-track { background: transparent; }
+        .ticket-chat-messages::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+
+        /* Call Center Animations */
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        .call-active-ring {
+            animation: pulse-ring 2s infinite;
+        }
+        .dial-btn {
+            transition: all 0.1s;
+            user-select: none;
+        }
+        .dial-btn:active {
+            transform: scale(0.9);
+            background-color: #334155 !important;
+        }
 </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -1471,6 +1510,29 @@
 
     <!-- Container for remote voice chat audio elements -->
     <div id="remote-audio-container" style="display: none;"></div>
+
+    <!-- Floating Ticket Button -->
+    <div id="ticket-floating-container" class="fixed bottom-6 right-6 z-[9000] hidden">
+        <!-- Ticket Panel -->
+        <div id="ticket-widget-panel" class="absolute bottom-[calc(100%+1rem)] right-0 w-[350px] max-w-[calc(100vw-3rem)] h-[500px] max-h-[85vh] bg-slate-900 border border-slate-700 rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden transition-all duration-500 origin-bottom-right">
+            <!-- Header -->
+            <div id="ticket-widget-header" class="bg-indigo-600 p-4 text-white flex justify-between items-center shadow-md z-10 shrink-0">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="headphones" class="w-5 h-5"></i>
+                    <span class="font-bold">ศูนย์ช่วยเหลือ (Support)</span>
+                </div>
+                <button onclick="toggleTicketWidget()" class="text-indigo-200 hover:text-white transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <!-- Dynamic Content Area -->
+            <div id="ticket-widget-content" class="flex-1 overflow-hidden flex flex-col bg-slate-950/50"></div>
+        </div>
+        
+        <!-- Toggle Button -->
+        <button onclick="toggleTicketWidget()" class="w-14 h-14 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full shadow-lg shadow-indigo-600/30 flex items-center justify-center transition-transform hover:scale-110 relative">
+            <i id="ticket-btn-icon" data-lucide="life-buoy" class="w-7 h-7"></i>
+            <span id="ticket-unread-badge" class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-slate-900 hidden"></span>
+        </button>
+    </div>
 
     <script>
         // Application State
@@ -2238,6 +2300,16 @@ let timeSyncInterval = null;
         let members = JSON.parse(JSON.stringify(defaultMembers));
         let events = JSON.parse(JSON.stringify(defaultEvents));
         let streamData = JSON.parse(JSON.stringify(defaultStreamData));
+        let supportTickets = [];
+        
+        // Ticket System Variables
+        let ticketView = 'list'; // 'list', 'create', 'chat'
+        let activeTicketId = null;
+        let localTicketUserId = localStorage.getItem('aj_ticket_user_id');
+        if (!localTicketUserId) {
+            localTicketUserId = 'guest_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('aj_ticket_user_id', localTicketUserId);
+        }
 
         // เพิ่มฟังก์ชันสำหรับตรวจสอบโครงสร้างข้อมูล members
         function validateMembersData() {
@@ -2327,6 +2399,32 @@ let timeSyncInterval = null;
                                 state.chat.messages[msg.channel_id].push(adaptedMsg);
                                 chat_renderMessages();
                             }
+                        } else if (payload.eventType === 'UPDATE') {
+                             const msg = payload.new;
+                             if (state.chat.messages[msg.channel_id]) {
+                                 const idx = state.chat.messages[msg.channel_id].findIndex(m => m.id === msg.id);
+                                 if (idx !== -1) {
+                                     state.chat.messages[msg.channel_id][idx] = {
+                                         ...msg,
+                                         time: state.chat.messages[msg.channel_id][idx].time
+                                     };
+                                     if (state.currentPage === 'chat' && state.chat.currentChannelId == msg.channel_id) {
+                                         chat_renderMessages();
+                                     }
+                                 }
+                             }
+                        } else if (payload.eventType === 'DELETE') {
+                             const oldMsg = payload.old;
+                             for (const chId in state.chat.messages) {
+                                 const idx = state.chat.messages[chId].findIndex(m => m.id === oldMsg.id);
+                                 if (idx !== -1) {
+                                     state.chat.messages[chId].splice(idx, 1);
+                                     if (state.currentPage === 'chat' && state.chat.currentChannelId == chId) {
+                                         chat_renderMessages();
+                                     }
+                                     break;
+                                 }
+                             }
                         }
                         break;
 
@@ -2386,6 +2484,14 @@ let timeSyncInterval = null;
                                     renderSpecialPage();
                                 }
                             }
+                            
+                            if (section === 'tickets') {
+                                supportTickets = payload.new.data || [];
+                                renderTicketWidget();
+                                if (state.currentPage === 'admin' && state.adminSubPage === 'tickets') {
+                                    renderAdminPage();
+                                }
+                            }
                         }
                         break;
 
@@ -2426,6 +2532,85 @@ let timeSyncInterval = null;
             channel.on('broadcast', { event: 'reaction' }, (payload) => {
                 if (payload.payload?.type === 'heart') {
                     triggerReactionAnimation();
+                }
+            });
+            
+            // Listen for Member Role Updates
+            channel.on('broadcast', { event: 'members_update' }, async () => {
+                if (state.currentPage === 'chat') {
+                    await loadMembersData();
+                    chat_renderMembers();
+                }
+            });
+
+            // Listen for Ticket Broadcasts (Notifications)
+            channel.on('broadcast', { event: 'new_ticket' }, (payload) => {
+                if (state.isLoggedIn) {
+                    if (payload.payload && payload.payload.isVoiceCall) {
+                        showAlert('📞 มีสายเรียกเข้า (Incoming Support Call)', 'info', 'Support Call');
+                        playVoiceChatSound('join');
+                    } else {
+                        showAlert('มีการแจ้งเรื่องใหม่ (New Support Ticket)', 'info', 'Ticket Notification');
+                        playVoiceChatSound('join');
+                    }
+                }
+            });
+
+            channel.on('broadcast', { event: 'ticket_reply' }, (payload) => {
+                if (payload.payload) {
+                    const { id, isAdmin } = payload.payload;
+                    if (!isAdmin && state.isLoggedIn) {
+                        showAlert('มีข้อความใหม่ในระบบแจ้งเรื่อง', 'info', 'Ticket Reply');
+                        playVoiceChatSound('join');
+                    } else if (isAdmin) {
+                        const ticket = supportTickets.find(t => t.id === id);
+                        if (ticket && ticket.creatorId === getMyUserId()) {
+                            showAlert('แอดมินได้ตอบกลับเรื่องที่คุณแจ้งไว้แล้ว', 'success', 'Admin Reply');
+                            playVoiceChatSound('join');
+                            const unreadBadge = document.getElementById('ticket-unread-badge');
+                            if (unreadBadge) unreadBadge.classList.remove('hidden');
+                        }
+                    }
+                }
+            });
+
+            channel.on('broadcast', { event: 'support_call_accepted' }, (payload) => {
+                const { ticketId } = payload.payload;
+                const ticket = supportTickets.find(t => t.id === ticketId);
+                if (ticket) {
+                    ticket.callStatus = 'connected';
+                    if (ticket.creatorId === getMyUserId()) {
+                        stopWaitingMusic();
+                        if (supportSynth.speaking) supportSynth.cancel();
+                        if (callIdleTimeout) clearTimeout(callIdleTimeout);
+                        playCallConnectedSound();
+                    }
+                    if (ticketView === 'chat' && activeTicketId === ticketId) renderTicketWidget();
+                    else if (ticketView === 'call' && activeTicketId === ticketId) setTicketView('chat', ticketId);
+                }
+            });
+
+            channel.on('broadcast', { event: 'support_call_ended' }, (payload) => {
+                const { ticketId } = payload.payload;
+                const ticket = supportTickets.find(t => t.id === ticketId);
+                if (ticket) {
+                    ticket.callStatus = 'ended';
+                    
+                    if (state.currentPage === 'admin' && activeTicketId === ticketId) {
+                        adminOpenTicket(ticketId, true);
+                    } else if (ticket.creatorId === getMyUserId() && ticketView === 'chat' && activeTicketId === ticketId) {
+                         // When call ends, ask user for review
+                         setTicketView('call');
+                         callCenterState.step = 'review';
+                         const statusEl = document.getElementById('call-status-text');
+                         if(statusEl) statusEl.textContent = "ให้คะแนนการบริการ";
+                         speakCallBot("กรุณาประเมินความพึงพอใจ | กด 1 พอคุย | กด 2 สุภาพดี | กด 3 เป็นกันเองดี | กด 4 ดีมาก | หรือ กด 5 สุดยอดให้เต็ม ครับ");
+                    } else {
+                        renderTicketWidget();
+                    }
+                }
+                if (supportVoice.channel && supportVoice.channel.topic.includes(ticketId)) {
+                    endSupportVoiceCall(true);
                 }
             });
 
@@ -2498,14 +2683,253 @@ let timeSyncInterval = null;
         // --- Chat App Logic ---
         // REMOVED chat_app_state variable to avoid confusion. Using state.chat directly.
 
-        async function initChatApp() {
+        // Autocomplete State
+        let autocompleteState = {
+            active: false,
+            type: null, // '@', '#', '+'
+            query: '',
+            startIndex: -1,
+            items: [],
+            selectedIndex: 0
+        };
 
-            document.getElementById('chat-main-input').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter' && this.value.trim() !== '') {
-                    chat_sendUserMessage(this.value);
-                    this.value = '';
+        function setupAutocomplete(inputId, popupId) {
+            const input = document.getElementById(inputId);
+            const popup = document.getElementById(popupId);
+            if (!input || !popup) return;
+
+            input.addEventListener('input', (e) => {
+                handleAutocompleteInput(input, popup);
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (!autocompleteState.active || popup.classList.contains('hidden')) return;
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    autocompleteState.selectedIndex = (autocompleteState.selectedIndex + 1) % autocompleteState.items.length;
+                    renderAutocomplete(popup, input);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    autocompleteState.selectedIndex = (autocompleteState.selectedIndex - 1 + autocompleteState.items.length) % autocompleteState.items.length;
+                    renderAutocomplete(popup, input);
+                } else if (e.key === 'Enter' || e.key === 'Tab') {
+                    e.preventDefault();
+                    selectAutocompleteItem(input, popup, autocompleteState.items[autocompleteState.selectedIndex]);
+                } else if (e.key === 'Escape') {
+                    closeAutocomplete(popup);
                 }
             });
+            
+            document.addEventListener('click', (e) => {
+                if (e.target !== input && !popup.contains(e.target)) {
+                    closeAutocomplete(popup);
+                }
+            });
+        }
+
+        function handleAutocompleteInput(input, popup) {
+            const value = input.value;
+            const cursorPos = input.selectionStart;
+            const textBeforeCursor = value.substring(0, cursorPos);
+
+            // Match @, #, + followed by word characters up to the cursor
+            const match = textBeforeCursor.match(/([@#\+])([^\s@#\+]*)$/);
+
+            if (match) {
+                autocompleteState.active = true;
+                autocompleteState.type = match[1];
+                autocompleteState.query = match[2].toLowerCase();
+                autocompleteState.startIndex = match.index;
+                autocompleteState.selectedIndex = 0;
+                fetchAutocompleteItems();
+                renderAutocomplete(popup, input);
+            } else {
+                closeAutocomplete(popup);
+            }
+        }
+
+        function fetchAutocompleteItems() {
+            let items = [];
+            if (autocompleteState.type === '@') {
+                const memberList = (members.regular || []).concat(members.management || []).concat(members.leader ? [members.leader] : []).concat(members.supporters || []);
+                if (state.chatGuestProfile) memberList.push(state.chatGuestProfile);
+                items = memberList.map(m => ({ text: m.name, icon: 'user', display: m.name }));
+            } else if (autocompleteState.type === '#') {
+                items = state.chat.servers.map(s => ({ text: s.name, icon: 'server', display: s.name }));
+            } else if (autocompleteState.type === '+') {
+                items = state.chat.channels.filter(c => c.type === 'text').map(c => {
+                    const server = state.chat.servers.find(s => s.id == c.server_id);
+                    return { text: c.name, icon: 'hash', display: c.name, sub: server ? server.name : '' };
+                });
+            }
+
+            // Remove duplicates by text
+            items = items.filter((item, index, self) => index === self.findIndex((t) => t.text === item.text));
+
+            if (autocompleteState.query) {
+                items = items.filter(i => i.text.toLowerCase().includes(autocompleteState.query));
+            }
+            autocompleteState.items = items.slice(0, 10); // max 10 items
+        }
+
+        function renderAutocomplete(popup, input) {
+            if (!autocompleteState.active || autocompleteState.items.length === 0) {
+                popup.classList.add('hidden');
+                return;
+            }
+
+            let html = '';
+            autocompleteState.items.forEach((item, index) => {
+                const isSelected = index === autocompleteState.selectedIndex;
+                const iconColor = autocompleteState.type === '@' ? 'text-indigo-400' : autocompleteState.type === '#' ? 'text-orange-400' : 'text-gray-400';
+                html += `
+                    <div class="px-3 py-2 cursor-pointer flex items-center gap-3 ${isSelected ? 'bg-slate-700/80 text-white rounded-md mx-1 my-0.5' : 'text-gray-300 hover:bg-slate-700/50 hover:text-white rounded-md mx-1 my-0.5 transition-colors'}" 
+                         onmousedown="event.preventDefault(); selectAutocompleteItemById('${input.id}', '${popup.id}', ${index})">
+                        <i data-lucide="${item.icon}" class="w-4 h-4 ${iconColor}"></i>
+                        <span class="truncate font-medium">${item.display}</span>
+                        ${item.sub ? `<span class="text-[10px] text-gray-500 ml-auto truncate max-w-[80px] border border-gray-600/50 px-1.5 py-0.5 rounded">${item.sub}</span>` : ''}
+                    </div>
+                `;
+            });
+
+            popup.innerHTML = html;
+            popup.classList.remove('hidden');
+            lucide.createIcons({ nodes: popup.querySelectorAll('[data-lucide]') });
+            
+            // Scroll to selected item
+            const selectedEl = popup.children[autocompleteState.selectedIndex];
+            if (selectedEl) {
+                const offsetBottom = selectedEl.offsetTop + selectedEl.offsetHeight;
+                if (offsetBottom > popup.scrollTop + popup.offsetHeight) {
+                    popup.scrollTop = offsetBottom - popup.offsetHeight;
+                } else if (selectedEl.offsetTop < popup.scrollTop) {
+                    popup.scrollTop = selectedEl.offsetTop;
+                }
+            }
+        }
+
+        window.selectAutocompleteItemById = function(inputId, popupId, index) {
+            const input = document.getElementById(inputId);
+            const popup = document.getElementById(popupId);
+            selectAutocompleteItem(input, popup, autocompleteState.items[index]);
+        }
+
+        function selectAutocompleteItem(input, popup, item) {
+            if (!item) return;
+            const value = input.value;
+            const prefix = value.substring(0, autocompleteState.startIndex);
+            const suffix = value.substring(input.selectionStart);
+            
+            let insertText = item.text;
+            
+            input.value = prefix + autocompleteState.type + insertText + ' ' + suffix;
+            const newCursorPos = autocompleteState.startIndex + autocompleteState.type.length + insertText.length + 1;
+            input.setSelectionRange(newCursorPos, newCursorPos);
+            
+            closeAutocomplete(popup);
+            input.focus();
+            
+            input.dispatchEvent(new Event('input'));
+        }
+
+        function closeAutocomplete(popup) {
+            autocompleteState.active = false;
+            popup.classList.add('hidden');
+        }
+
+        function chat_handleAttachmentSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.size > 20 * 1024 * 1024) {
+                showAlert('ขนาดไฟล์ต้องไม่เกิน 20MB', 'warning');
+                chat_clearAttachment();
+                return;
+            }
+
+            state.chat.pendingAttachment = file;
+            
+            const preview = document.getElementById('chat-attachment-preview');
+            const thumb = document.getElementById('chat-attachment-thumbnail');
+            const name = document.getElementById('chat-attachment-name');
+            const size = document.getElementById('chat-attachment-size');
+            const sendBtn = document.getElementById('chat-send-btn');
+            
+            name.textContent = file.name;
+            size.textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+            
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    thumb.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
+                };
+                reader.readAsDataURL(file);
+            } else if (file.type.startsWith('video/')) {
+                thumb.innerHTML = `<i data-lucide="video" class="w-6 h-6 text-indigo-400"></i>`;
+                lucide.createIcons({nodes: [thumb.firstElementChild]});
+            } else {
+                thumb.innerHTML = `<i data-lucide="file" class="w-6 h-6 text-gray-400"></i>`;
+                lucide.createIcons({nodes: [thumb.firstElementChild]});
+            }
+            
+            preview.classList.remove('hidden');
+            preview.classList.add('flex');
+            if (sendBtn) sendBtn.classList.remove('hidden');
+            
+            event.target.value = ''; // Reset input to allow picking same file again
+        }
+
+        function chat_clearAttachment() {
+            state.chat.pendingAttachment = null;
+            const preview = document.getElementById('chat-attachment-preview');
+            if (preview) {
+                preview.classList.add('hidden');
+                preview.classList.remove('flex');
+            }
+            const chatInput = document.getElementById('chat-main-input');
+            const chatSendBtn = document.getElementById('chat-send-btn');
+            if (chatInput && chatInput.value.trim() === '') {
+                chatSendBtn.classList.add('hidden');
+            }
+        }
+
+        async function initChatApp() {
+            const chatInput = document.getElementById('chat-main-input');
+            const chatSendBtn = document.getElementById('chat-send-btn');
+            const chatForm = document.getElementById('chat-form');
+
+            if (chatInput && chatSendBtn && chatForm) {
+                chatInput.addEventListener('input', () => {
+                    if (chatInput.value.trim() !== '' || state.chat.pendingAttachment) {
+                        chatSendBtn.classList.remove('hidden');
+                    } else {
+                        chatSendBtn.classList.add('hidden');
+                    }
+                });
+
+                chatForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const text = chatInput.value.trim();
+                    if (text !== '' || state.chat.pendingAttachment) {
+                        chatInput.disabled = true;
+                        chatSendBtn.disabled = true;
+                        chatSendBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>';
+                        lucide.createIcons({nodes: [chatSendBtn]});
+
+                        await chat_sendUserMessage(text);
+                        
+                        chatInput.value = '';
+                        chatInput.disabled = false;
+                        chatSendBtn.disabled = false;
+                        chatSendBtn.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i>';
+                        chat_clearAttachment();
+                        lucide.createIcons({nodes: [chatSendBtn]});
+                        chatInput.focus();
+                    }
+                });
+            }
+            setupAutocomplete('chat-main-input', 'chat-autocomplete-popup');
 
             if (state.chat.servers.length === 0) {
                 await loadChatData();
@@ -2784,6 +3208,45 @@ let timeSyncInterval = null;
                 }
             }
 
+        // --- Chat Guest Initialization ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const inviteCode = urlParams.get('invite');
+        
+        // Check if there's an active Chat Guest session
+        const activeChatGuest = sessionStorage.getItem('chatGuestSession');
+        if (activeChatGuest) {
+            const guestData = JSON.parse(activeChatGuest);
+            if (Date.now() > guestData.expiresAt) {
+                sessionStorage.removeItem('chatGuestSession');
+                showAlert('ลิงก์เชิญหมดอายุแล้ว คุณถูกเตะออกจากห้อง', 'warning', 'Session Expired');
+                window.location.href = window.location.pathname; // Remove query params
+            } else {
+                state.chatGuestProfile = guestData;
+                // Auto start timer for guest expiration kick
+                setInterval(() => {
+                    if (Date.now() > guestData.expiresAt) {
+                        sessionStorage.removeItem('chatGuestSession');
+                        alert('เซสชั่นผ่านลิงก์ของคุณหมดอายุแล้ว ระบบจะพากลับหน้าหลัก');
+                        window.location.href = window.location.pathname;
+                    }
+                }, 60000); // Check every minute
+            }
+        }
+        
+        // Process new invite link
+        if (inviteCode && !state.chatGuestProfile && !state.isMemberLoggedIn && !state.isLoggedIn) {
+            if (clanData.chatInvites && clanData.chatInvites[inviteCode]) {
+                const inviteData = clanData.chatInvites[inviteCode];
+                if (Date.now() < inviteData.expiresAt) {
+                    showChatGuestSetupModal(inviteCode, inviteData.serverId);
+                } else {
+                    showAlert('ลิงก์เชิญนี้หมดอายุแล้ว (Invite Link Expired)', 'error');
+                }
+            } else {
+                showAlert('ไม่พบลิงก์เชิญนี้ในระบบ หรือถูกลบไปแล้ว', 'error');
+            }
+        }
+
             if (supabaseClient) {
                 setupRealtimeSubscription();
             }
@@ -2799,6 +3262,9 @@ let timeSyncInterval = null;
                 document.getElementById('member-login-overlay').classList.remove('hidden');
                 showAlert('You have been logged out.', 'info', 'Logged Out');
             }
+            
+            // Show Floating Ticket Button
+            document.getElementById('ticket-floating-container').classList.remove('hidden');
         });
 
         function checkMaintenanceMode() {
@@ -2837,6 +3303,11 @@ let timeSyncInterval = null;
             // Stream Guest Restriction: Force stay on stream page
             if (state.streamGuestProfile) {
                 page = 'stream';
+            }
+            
+            // Chat Guest Restriction: Force stay on chat page
+            if (state.chatGuestProfile) {
+                page = 'chat';
             }
 
             // Guest Restriction
@@ -4053,8 +4524,34 @@ let timeSyncInterval = null;
                         
                         <div id="chat-videoArea" class="chat-video-grid" style="display: none;"></div>
                         
-                        <div class="chat-input-area">
-                            <input type="text" class="chat-input" id="chat-main-input" placeholder="">
+                        <div class="chat-input-area relative flex flex-col">
+                            <!-- Attachment Preview Area -->
+                            <div id="chat-attachment-preview" class="hidden mb-2 p-2 bg-slate-800 rounded-lg border border-slate-700 items-center gap-3">
+                                <div id="chat-attachment-thumbnail" class="w-12 h-12 bg-slate-900 rounded overflow-hidden flex items-center justify-center flex-shrink-0"></div>
+                                <div class="flex-1 min-w-0">
+                                    <p id="chat-attachment-name" class="text-sm text-white truncate"></p>
+                                    <p id="chat-attachment-size" class="text-xs text-gray-400"></p>
+                                </div>
+                                <button onclick="chat_clearAttachment()" type="button" class="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                                    <i data-lucide="x" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+
+                            <form id="chat-form" class="relative flex items-center gap-2">
+                                <div id="chat-autocomplete-popup" class="hidden absolute bottom-[110%] left-0 w-64 max-h-48 overflow-y-auto bg-slate-800/95 backdrop-blur-md border border-slate-600 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] z-[100] chat-messages py-1"></div>
+                                
+                                <label for="chat-attachment-input" class="p-2.5 bg-slate-800 hover:bg-slate-700 text-gray-400 hover:text-white rounded-full cursor-pointer transition-colors flex-shrink-0 border border-slate-700/50 shadow-sm" title="แนบรูปภาพหรือวิดีโอ">
+                                    <i data-lucide="plus" class="w-5 h-5"></i>
+                                </label>
+                                <input type="file" id="chat-attachment-input" class="hidden" accept="image/*,video/mp4,video/webm,video/quicktime" onchange="chat_handleAttachmentSelect(event)">
+
+                                <div class="relative flex-1">
+                                    <input id="chat-main-input" type="text" class="chat-input pr-12" placeholder="" autocomplete="off">
+                                    <button id="chat-send-btn" type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md bg-orange-600 hover:bg-orange-500 text-white hidden transition-colors">
+                                        <i data-lucide="send" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                     
@@ -4159,6 +4656,107 @@ let timeSyncInterval = null;
                         <div class="chat-modal-actions">
                             <button class="chat-modal-btn secondary" onclick="document.getElementById('chat-serverPasswordModal').classList.remove('active')">Cancel</button>
                             <button class="chat-modal-btn bg-pink-600 hover:bg-pink-500 text-white" onclick="chat_submitServerPassword()">Enter</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Role Management Modal -->
+                <div class="chat-modal" id="chat-roleModal">
+                    <div class="chat-modal-content">
+                        <div class="chat-modal-header text-orange-400"><i data-lucide="shield" class="w-6 h-6 inline-block mr-2"></i>จัดการยศและตำแหน่ง</div>
+                        <div class="chat-modal-body space-y-4">
+                            <div>
+                                <label class="text-xs text-gray-400 uppercase font-bold">สมาชิก</label>
+                                <div id="chat-role-memberName" class="text-white font-semibold mt-1"></div>
+                                <input type="hidden" id="chat-role-memberId">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-400 uppercase font-bold">กลุ่มยศหลัก (Main Role)</label>
+                                <select id="chat-role-mainGroup" class="chat-modal-input mt-1">
+                                    <option value="regular">สมาชิกทั่วไป (Member)</option>
+                                    <option value="management">แอดมิน / ทีมบริหาร (Admin/Management)</option>
+                                    <option value="supporters">ผู้สนับสนุน (Supporter)</option>
+                                    <option value="leader">หัวหน้าแคลน (Leader)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-400 uppercase font-bold">ตำแหน่ง/ฝ่าย (Department)</label>
+                                <select id="chat-role-department" class="chat-modal-input mt-1 text-sm">
+                                    <option value="">-- ไม่มีฝ่าย --</option>
+                                    <optgroup label="ฝ่ายทั่วไป">
+                                        <option value="ฝ่ายรับเรื่อง">ฝ่ายรับเรื่อง</option>
+                                        <option value="ฝ่ายประชาสัมพันธ์">ฝ่ายประชาสัมพันธ์</option>
+                                        <option value="ฝ่ายควบคุมไลฟ์สด">ฝ่ายควบคุมไลฟ์สด</option>
+                                        <option value="ฝ่ายบริหาร">ฝ่ายบริหาร</option>
+                                        <option value="ฝ่ายกิจกรรม">ฝ่ายกิจกรรม</option>
+                                        <option value="ฝ่ายบุคคล">ฝ่ายบุคคล</option>
+                                        <option value="ฝ่ายลงโทษ">ฝ่ายลงโทษ</option>
+                                        <option value="ฝ่ายเลขา">ฝ่ายเลขา</option>
+                                    </optgroup>
+                                    <optgroup label="ฝ่ายจัดแข่งอีสปอร์ต">
+                                        <option value="ฝ่ายจัดแข่ง - ควบคุม">ควบคุม (การกระทำนักแข่ง)</option>
+                                        <option value="ฝ่ายจัดแข่ง - ผู้จัดการ">ผู้จัดการ (แจ้งตารางการแข่ง)</option>
+                                        <option value="ฝ่ายจัดแข่ง - เดินทาง">เดินทาง (ดูแลนักแข่งต่างประเทศ)</option>
+                                    </optgroup>
+                                    <optgroup label="สายนักแข่ง (เด็กฝึก)">
+                                        <option value="เด็กฝึก ขั้น 1" title="ระยะเวลา: 0-1 เดือน | ผลงาน: เข้าร่วมซ้อมสม่ำเสมอ | เงื่อนไข: เพิ่งเข้าทีม กำลังทดสอบทัศนคติและฝีมือพื้นฐาน">เด็กฝึก ขั้น 1</option>
+                                        <option value="เด็กฝึก ขั้น 2" title="ระยะเวลา: 1-3 เดือน | ผลงาน: มีพัฒนาการในการซ้อม | เงื่อนไข: ผ่านเกณฑ์พื้นฐาน เตรียมพร้อมเป็นตัวสำรองในการแข่งจริง">เด็กฝึก ขั้น 2</option>
+                                    </optgroup>
+                                    <optgroup label="สายนักแข่ง (ชำนาญ)">
+                                        <option value="นักแข่งชำนาญ ขั้น 1" title="ระยะเวลา: 3+ เดือน | ผลงาน: ลงแข่งรายการย่อย | เงื่อนไข: เป็นตัวสำรองหรือตัวหลักรายการเล็ก">นักแข่งชำนาญ ขั้น 1</option>
+                                        <option value="นักแข่งชำนาญ ขั้น 2" title="ระยะเวลา: 4+ เดือน | ผลงาน: เริ่มเก็บคะแนนหรือรางวัลเล็ก | เงื่อนไข: เล่นเข้าขากับทีมหลัก">นักแข่งชำนาญ ขั้น 2</option>
+                                        <option value="นักแข่งชำนาญ ขั้น 3" title="ระยะเวลา: 5+ เดือน | ผลงาน: ผ่านเข้ารอบลึกรายการระดับกลาง | เงื่อนไข: เป็นตัวหลักที่ขาดไม่ได้ในแผนบางแผน">นักแข่งชำนาญ ขั้น 3</option>
+                                        <option value="นักแข่งชำนาญ ขั้น 4" title="ระยะเวลา: 6+ เดือน | ผลงาน: คว้าแชมป์รายการระดับกลาง | เงื่อนไข: มีความนิ่งและแก้ไขปัญหาเฉพาะหน้าได้ดี">นักแข่งชำนาญ ขั้น 4</option>
+                                        <option value="นักแข่งชำนาญ ขั้น 5" title="ระยะเวลา: 8+ เดือน | ผลงาน: มีสถิติ K/D โดดเด่น | เงื่อนไข: เตรียมเลื่อนขั้นเป็นมืออาชีพ มีความเป็นผู้นำ">นักแข่งชำนาญ ขั้น 5</option>
+                                    </optgroup>
+                                    <optgroup label="สายนักแข่ง (มืออาชีพ)">
+                                        <option value="มืออาชีพ ขั้น 1" title="ระยะเวลา: 10+ เดือน | ผลงาน: ลงแข่งรายการใหญ่ระดับประเทศ | เงื่อนไข: เป็นตัวหลักในการแข่งระดับสูง ทำตามแผน 100%">มืออาชีพ ขั้น 1</option>
+                                        <option value="มืออาชีพ ขั้น 2" title="ระยะเวลา: 1 ปี+ | ผลงาน: ติด Top 10 ระดับประเทศ | เงื่อนไข: สามารถ Call เกมหรือชี้ขาดจังหวะสำคัญได้">มืออาชีพ ขั้น 2</option>
+                                        <option value="มืออาชีพ ขั้น 3" title="ระยะเวลา: 1.5 ปี+ | ผลงาน: แชมป์ระดับประเทศ | เงื่อนไข: มีประสบการณ์สูง นิ่ง เป็นเสาหลักของทีม">มืออาชีพ ขั้น 3</option>
+                                    </optgroup>
+                                    <optgroup label="สายนักแข่ง (ระดับสูงสุด)">
+                                        <option value="ระดับ Proplayer" title="ระยะเวลา: 2 ปี+ หรือผลงานเทียบเท่า | ผลงาน: ตัวแทนระดับภูมิภาค/นานาชาติ | เงื่อนไข: แบกทีมได้ เป็นภาพลักษณ์ของแคลน เป็นที่รู้จักในวงการ">ระดับ Proplayer</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="chat-modal-actions">
+                            <button class="chat-modal-btn secondary" onclick="document.getElementById('chat-roleModal').classList.remove('active')">ยกเลิก</button>
+                            <button class="chat-modal-btn primary" onclick="chat_saveMemberRole()">บันทึกข้อมูล</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Invite Link Modal -->
+                <div class="chat-modal" id="chat-inviteModal">
+                    <div class="chat-modal-content">
+                        <div class="chat-modal-header text-blue-400"><i data-lucide="link" class="w-6 h-6 inline-block mr-2"></i>สร้างลิงก์เชิญ (Invite Link)</div>
+                        <div class="chat-modal-body space-y-4">
+                            <p class="text-sm text-gray-400">สร้างลิงก์เชิญเพื่อให้บุคคลภายนอกเข้ามาคุยในเซิร์ฟเวอร์นี้</p>
+                            <div>
+                                <label class="text-xs text-gray-400 uppercase font-bold">หมดอายุใน (Expires In)</label>
+                                <select id="chat-invite-expiry" class="chat-modal-input mt-1 text-sm">
+                                    <option value="1">1 ชั่วโมง (1 Hour)</option>
+                                    <option value="24">1 วัน (1 Day)</option>
+                                    <option value="168">7 วัน (7 Days)</option>
+                                    <option value="312" selected>13 วัน (13 Days - สูงสุด)</option>
+                                </select>
+                            </div>
+                            <div id="chat-invite-result" class="hidden">
+                                <label class="text-xs text-gray-400 uppercase font-bold">ลิงก์เชิญของคุณ</label>
+                                <div class="flex mt-1">
+                                    <input type="text" id="chat-invite-link-input" class="chat-modal-input mb-0 rounded-r-none" readonly>
+                                    <button onclick="chat_copyInviteLink()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 rounded-r flex items-center justify-center transition-colors">
+                                        <i data-lucide="copy" class="w-5 h-5"></i>
+                                    </button>
+                                </div>
+                                <p class="text-xs text-green-400 mt-2">✔️ สร้างลิงก์สำเร็จ ส่งให้เพื่อนได้เลย!</p>
+                            </div>
+                            <input type="hidden" id="chat-invite-targetServerId">
+                        </div>
+                        <div class="chat-modal-actions">
+                            <button class="chat-modal-btn secondary" onclick="document.getElementById('chat-inviteModal').classList.remove('active'); document.getElementById('chat-invite-result').classList.add('hidden');">ปิด</button>
+                            <button class="chat-modal-btn bg-blue-600 hover:bg-blue-500 text-white" onclick="chat_generateInviteLink()">สร้างลิงก์</button>
                         </div>
                     </div>
                 </div>
@@ -4276,6 +4874,7 @@ let timeSyncInterval = null;
         }
 
         function findMemberRoleById(gameId) {
+            if (state.chatGuestProfile && state.chatGuestProfile.id === gameId) return 'LinkGuest';
             if (members.leader && members.leader.gameId === gameId) return 'Leader';
             if (members.management && members.management.some(m => m.gameId === gameId)) return 'Staff';
             return 'Member';
@@ -4295,6 +4894,11 @@ let timeSyncInterval = null;
             const isLeader = state.currentMember && findMemberRoleById(state.currentMember.gameId) === 'Leader';
 
             state.chat.servers.forEach((server, index) => {
+                // Chat Guest Restriction
+                if (state.chatGuestProfile && state.chatGuestProfile.serverId != server.id) {
+                    return; // Skip rendering servers the guest is not invited to
+                }
+
                 const icon = document.createElement('div');
                 icon.className = 'chat-server-icon'; 
                 if (server.id === state.chat.currentServerId) icon.classList.add('active');
@@ -4319,8 +4923,8 @@ let timeSyncInterval = null;
             const divider = document.createElement('div');
             divider.className = 'chat-server-divider';
             container.appendChild(divider);
-            // Show 'Add Server' button to all logged-in members
-            if (state.isMemberLoggedIn) {
+            // Show 'Add Server' button to all logged-in members (not guests)
+            if (state.isMemberLoggedIn && !state.chatGuestProfile) {
                 const addIcon = document.createElement('div');
                 addIcon.className = 'chat-server-icon';
                 addIcon.innerHTML = '➕';
@@ -4331,7 +4935,7 @@ let timeSyncInterval = null;
 
         function chat_renderChannels() {
             const t = translations[state.language];
-            const isLeader = state.currentMember && findMemberRoleById(state.currentMember.gameId) === 'Leader';
+            const isLeaderOrAdmin = state.currentMember && (findMemberRoleById(state.currentMember.gameId) === 'Leader' || findMemberRoleById(state.currentMember.gameId) === 'Staff');
             
             // Update Server Header with Settings/Delete button for Leader
             const serverHeader = document.querySelector('.chat-server-header');
@@ -4340,14 +4944,19 @@ let timeSyncInterval = null;
                 const serverName = server ? server.name : 'Select Server';
                 
                 let headerContent = `<span id="chat-current-server-name" class="truncate flex-1">${serverName}</span>`;
-                if (isLeader && server) {
+                if (isLeaderOrAdmin && server) {
                      headerContent += `
                         <div class="flex items-center gap-2">
                             <i data-lucide="settings" class="w-4 h-4 text-gray-400 hover:text-white cursor-pointer" onclick="event.stopPropagation(); chat_showServerSettings('${server.id}')" title="Server Settings"></i>
                             <span>▼</span>
                         </div>`;
                 } else {
-                    headerContent += `<span>▼</span>`;
+                    // Add Invite button for members inside the server header area
+                    if (state.isMemberLoggedIn && !state.chatGuestProfile) {
+                        headerContent += `
+                            <i data-lucide="user-plus" class="w-4 h-4 text-blue-400 hover:text-blue-300 cursor-pointer" onclick="event.stopPropagation(); chat_showInviteModal('${server.id}')" title="สร้างลิงก์เชิญ"></i>
+                        `;
+                    }
                 }
                 serverHeader.innerHTML = headerContent;
             }
@@ -4365,8 +4974,19 @@ let timeSyncInterval = null;
 
             serverChannels.forEach((channel) => {
                 const item = document.createElement('div');
-                item.className = 'chat-channel-item ' + channel.type;
-                item.textContent = channel.name;
+                item.className = 'chat-channel-item group relative flex justify-between items-center ' + channel.type;
+                
+                let innerHtml = `<div class="flex items-center gap-1.5 flex-1 min-w-0"><span class="truncate">${channel.name}</span></div>`;
+                
+                // Add delete button for Leader/Admin
+                if (isLeaderOrAdmin && channel.name !== 'general' && channel.name !== 'notifications') {
+                    innerHtml += `
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5 text-gray-500 opacity-0 group-hover:opacity-100 hover:text-red-400 transition-opacity cursor-pointer z-10" 
+                           onclick="event.stopPropagation(); chat_deleteChannel('${channel.id}', '${channel.name}')"></i>
+                    `;
+                }
+                
+                item.innerHTML = innerHtml;
                 if (channel.id == state.chat.currentChannelId) item.classList.add('active');
 
                 if (channel.type === 'text') {
@@ -4415,7 +5035,8 @@ let timeSyncInterval = null;
 
         function chat_renderMembers() {
             const t = translations[state.language];
-            const memberList = (members.regular || []).concat(members.management || []).concat(members.leader ? [members.leader] : []);
+            const memberList = (members.regular || []).concat(members.management || []).concat(members.leader ? [members.leader] : []).concat(members.supporters || []);
+            if (state.chatGuestProfile) memberList.push(state.chatGuestProfile);
 
             // Sort by online status (Online/DND first, then Offline)
             memberList.sort((a, b) => {
@@ -4430,7 +5051,7 @@ let timeSyncInterval = null;
             const list = document.getElementById('chat-members-list');
             list.innerHTML = '';
 
-            if (state.isMemberLoggedIn && state.currentMember) {
+            if (state.isMemberLoggedIn && state.currentMember && !state.chatGuestProfile) {
                 const currentStatus = localStorage.getItem('my_custom_status') || 'online';
                 list.innerHTML += `
                     <div class="px-2 py-2 mb-2 border-b border-slate-700/50">
@@ -4443,7 +5064,8 @@ let timeSyncInterval = null;
                 `;
             }
 
-            const roleHierarchy = ['Leader', 'Staff', 'Member'];
+            const roleHierarchy = ['Leader', 'Staff', 'Member', 'LinkGuest'];
+            const isLeaderOrAdmin = state.currentMember && (findMemberRoleById(state.currentMember.gameId) === 'Leader' || findMemberRoleById(state.currentMember.gameId) === 'Staff');
 
             roleHierarchy.forEach(role => {
                 const membersInRole = memberList.filter(m => findMemberRoleById(m.gameId) === role);
@@ -4454,18 +5076,25 @@ let timeSyncInterval = null;
                         
                         let statusColor = '#747f8d'; // Offline
                         const userPresence = state.onlineUsers[member.gameId];
-                        if (userPresence === 'online') statusColor = '#23a55a'; // Green
+                        if (userPresence === 'online' || role === 'LinkGuest') statusColor = '#23a55a'; // Green (Guests always show green when active)
                         else if (userPresence === 'dnd') statusColor = '#f23f42'; // Red
 
                         const opacity = userPresence ? '1' : '0.5';
+                        
+                        const deptHtml = member.department ? `<div class="text-[10px] text-orange-400 mt-0.5 truncate">${member.department}</div>` : '';
+                        const cursorClass = isLeaderOrAdmin && role !== 'LinkGuest' ? 'cursor-pointer hover:bg-slate-700' : '';
+                        const onclickAttr = isLeaderOrAdmin && role !== 'LinkGuest' ? `onclick="chat_showRoleModal('${member.gameId}')"` : '';
 
                         list.innerHTML += `
-                            <div class="chat-member-item" style="opacity: ${opacity};">
+                            <div class="chat-member-item ${cursorClass}" style="opacity: ${opacity};" ${onclickAttr}>
                                 <div class="relative">
                                     <img src="${avatarUrl}" class="w-8 h-8 rounded-full object-cover">
                                     <div class="chat-member-status" style="background: ${statusColor}; border-color: #1e293b;"></div>
                                 </div>
-                                <span class="chat-member-name ${!userPresence ? 'text-gray-500' : ''}">${member.name}</span>
+                                <div class="flex-1 min-w-0">
+                                    <div class="chat-member-name ${!userPresence ? 'text-gray-500' : ''} truncate">${member.name}</div>
+                                    ${deptHtml}
+                                </div>
                             </div>
                         `;
                     });
@@ -4498,23 +5127,61 @@ let timeSyncInterval = null;
             msgs.forEach(msg => {
                 const msgDiv = document.createElement('div');
                 msgDiv.className = 'chat-message';
-                // Use msg.username / msg.content assuming DB columns or adapted objects
+                msgDiv.dataset.messageId = msg.id; // Store message ID
+
                 const role = msg.user_role || '';
                 let roleBadge = '';
                 if (role === 'Leader') {
                     roleBadge = `<span class="ml-1.5 px-1.5 py-0.5 text-[9px] font-bold bg-red-500/20 text-red-400 rounded border border-red-500/30">LEADER</span>`;
                 } else if (role === 'Staff') {
                     roleBadge = `<span class="ml-1.5 px-1.5 py-0.5 text-[9px] font-bold bg-orange-500/20 text-orange-400 rounded border border-orange-500/30">STAFF</span>`;
+                } else if (role === 'LinkGuest') {
+                    roleBadge = `<span class="ml-1.5 px-1.5 py-0.5 text-[9px] font-bold bg-blue-500/20 text-blue-400 rounded border border-blue-500/30 cursor-help" title="บุคคลผ่านลิ้ง">GUEST</span>`;
                 }
 
                 const author = msg.username || 'User';
-                const content = msg.content || msg.message || msg.text;
+                let content = msg.content || msg.message || msg.text || '';
+
+                // HTML Escaping to prevent XSS before parsing mentions
+                content = content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+                // Parse @mentions
+                content = content.replace(/@([^\s]+)/g, (match, name) => {
+                    return `<span class="bg-indigo-500/30 text-indigo-300 font-semibold px-1 rounded cursor-pointer hover:underline transition-colors">@${name}</span>`;
+                });
+
+                // Parse #ServerName+ChannelName mentions
+                content = content.replace(/#([^\+]+)\+([^\s]+)/g, (match, serverName, channelName) => {
+                    return `<span class="bg-orange-500/30 text-orange-300 font-semibold px-1 rounded cursor-pointer hover:underline transition-colors" onclick="chat_jumpToChannelByName('${serverName}', '${channelName}')">#${serverName}+${channelName}</span>`;
+                });
                 
-                // Use real avatar if available. 
-                // Priority: Current Member Data > Message Data > Generated Avatar
+                let extractAttachmentUrl = msg.attachment_url;
+                let extractAttachmentType = msg.attachment_type;
+                
+                // Fallback for reading attachments embedded in content string if column doesn't exist
+                const fallbackMatch = content.match(/\[Attachment:\s*(https?:\/\/[^\]]+)\]/);
+                if (fallbackMatch) {
+                    extractAttachmentUrl = fallbackMatch[1];
+                    extractAttachmentType = extractAttachmentUrl.match(/\.(mp4|webm|mov|ogg)$/i) ? 'video' : 'image';
+                    content = content.replace(fallbackMatch[0], '').trim();
+                }
+                
+                let attachmentHtml = '';
+                if (extractAttachmentUrl) {
+                    if (extractAttachmentType === 'video') {
+                        attachmentHtml = `
+                            <div class="mt-2 rounded-lg overflow-hidden border border-slate-700 max-w-[240px]">
+                                <video src="${extractAttachmentUrl}" controls class="w-full object-contain bg-black max-h-64"></video>
+                            </div>`;
+                    } else {
+                        attachmentHtml = `
+                            <div class="mt-2 rounded-lg overflow-hidden border border-slate-700 max-w-[240px] cursor-pointer" onclick="showImagePreview('${extractAttachmentUrl}')">
+                                <img src="${extractAttachmentUrl}" class="w-full object-cover hover:opacity-90 transition-opacity max-h-64" loading="lazy">
+                            </div>`;
+                    }
+                }
+                
                 let avatarSrc = msg.avatar_url;
-                
-                // Try to find current member data for up-to-date avatar (in case they changed it recently)
                 if (msg.user_id) {
                     const memberData = findMemberById(msg.user_id);
                     if (memberData && memberData.profilePictureUrl) {
@@ -4526,12 +5193,302 @@ let timeSyncInterval = null;
                     avatarSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(author)}&background=ea580c&color=fff&size=64`;
                 }
                 
-                msgDiv.innerHTML = `<img src="${avatarSrc}" class="chat-message-avatar object-cover"><div><div class="flex items-center gap-1 mb-1"><span class="chat-message-author">${author}</span> ${roleBadge} <span class="chat-message-time">${msg.time}</span></div><div class="chat-message-text">${content}</div></div>`;
+                msgDiv.innerHTML = `<img src="${avatarSrc}" class="chat-message-avatar object-cover"><div><div class="flex items-center gap-1 mb-1"><span class="chat-message-author">${author}</span> ${roleBadge} <span class="chat-message-time">${msg.time}</span></div><div class="chat-message-text">${content}${attachmentHtml}</div></div>`;
                 container.appendChild(msgDiv);
+
+                // Add long-press event listener
+                let pressTimer;
+                let lastEvent = null;
+                const startPress = (e) => {
+                    // Only for left-click or touch
+                    if (e.button && e.button !== 0) return;
+                    lastEvent = e;
+                    pressTimer = window.setTimeout(() => {
+                        showActionPopover(lastEvent, msg);
+                    }, 500);
+                };
+                const updateEvent = (e) => {
+                    lastEvent = e;
+                };
+                const cancelPress = () => {
+                    clearTimeout(pressTimer);
+                };
+
+                msgDiv.addEventListener('mousedown', startPress);
+                msgDiv.addEventListener('mousemove', updateEvent);
+                msgDiv.addEventListener('mouseup', cancelPress);
+                msgDiv.addEventListener('mouseleave', cancelPress);
+                msgDiv.addEventListener('touchstart', startPress, { passive: true });
+                msgDiv.addEventListener('touchmove', (e) => {
+                    updateEvent(e);
+                    cancelPress();
+                });
+                msgDiv.addEventListener('touchend', cancelPress);
+                
+                msgDiv.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    cancelPress(); // Cancel long press timer
+                    showActionPopover(e, msg);
+                });
             });
             
             // Auto scroll
             container.scrollTop = container.scrollHeight;
+        }
+
+        function showActionPopover(e, msg) {
+            const popover = document.getElementById('message-action-popover');
+            if (!popover) return;
+            
+            if (e && e.preventDefault && e.type !== 'touchstart') {
+                e.preventDefault();
+            }
+
+            state.chat.selectedMessageId = msg.id; // Store message ID
+
+            const editBtn = document.getElementById('popover-edit-btn');
+            const deleteBtn = document.getElementById('popover-delete-btn');
+            const reportBtn = document.getElementById('popover-report-btn');
+
+            // Store message data on buttons
+            popover.dataset.messageId = msg.id;
+
+            // Reset buttons
+            editBtn.style.display = 'none';
+            deleteBtn.style.display = 'none';
+            reportBtn.style.display = 'none';
+
+            // Check ownership
+            const currentId = state.currentMember ? state.currentMember.gameId : (state.chatGuestProfile ? state.chatGuestProfile.id : null);
+            const isOwner = currentId == msg.user_id;
+            const isAdmin = state.currentMember && (findMemberRoleById(state.currentMember.gameId) === 'Leader' || findMemberRoleById(state.currentMember.gameId) === 'Staff');
+
+            // Admins can delete any message. Owner can edit/delete their own.
+            if (isOwner) {
+                editBtn.style.display = 'flex';
+                deleteBtn.style.display = 'flex';
+            } else if (isAdmin) {
+                deleteBtn.style.display = 'flex';
+                reportBtn.style.display = 'flex';
+            } else {
+                reportBtn.style.display = 'flex';
+            }
+
+            // Position and show popover
+            popover.style.display = 'block';
+            
+            let clientX = window.innerWidth / 2;
+            let clientY = window.innerHeight / 2;
+            
+            if (e) {
+                if (e.touches && e.touches.length > 0) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else if (e.clientX !== undefined) {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                } else if (e.target) {
+                    const rect = e.target.getBoundingClientRect();
+                    clientX = rect.left + rect.width / 2;
+                    clientY = rect.top + rect.height / 2;
+                }
+            }
+
+            // Adjust for page scroll
+            let left = clientX + window.scrollX;
+            let top = clientY + window.scrollY;
+
+            popover.style.left = `${left}px`;
+            popover.style.top = `${top}px`;
+
+            requestAnimationFrame(() => {
+                const popoverRect = popover.getBoundingClientRect();
+                if ((left + popoverRect.width) > window.innerWidth + window.scrollX) {
+                    popover.style.left = `${window.innerWidth + window.scrollX - popoverRect.width - 10}px`;
+                }
+                if ((top + popoverRect.height) > window.innerHeight + window.scrollY) {
+                    popover.style.top = `${window.innerHeight + window.scrollY - popoverRect.height - 10}px`;
+                }
+                
+                popover.style.transformOrigin = (left > window.innerWidth / 2) ? 'top right' : 'top left';
+                popover.classList.remove('scale-95', 'opacity-0');
+                popover.classList.add('scale-100', 'opacity-100');
+                lucide.createIcons({ nodes: popover.querySelectorAll('[data-lucide]') });
+            });
+
+            // Add a global click listener to hide it
+            setTimeout(() => {
+                document.addEventListener('click', hideActionPopover, { once: true });
+                document.addEventListener('scroll', hideActionPopover, { once: true, capture: true });
+                document.addEventListener('touchstart', hideActionPopover, { once: true });
+            }, 100);
+        }
+
+        function hideActionPopover(e) {
+            const popover = document.getElementById('message-action-popover');
+            
+            if (e && popover && popover.contains(e.target) && !e.target.closest('button')) {
+                return; // Prevent hiding if clicking directly on popover space
+            }
+
+            if (popover) {
+                popover.classList.remove('scale-100', 'opacity-100');
+                popover.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    if (popover.classList.contains('opacity-0')) {
+                        popover.style.display = 'none';
+                    }
+                }, 200);
+            }
+            document.removeEventListener('click', hideActionPopover);
+            document.removeEventListener('scroll', hideActionPopover, { capture: true });
+            document.removeEventListener('touchstart', hideActionPopover);
+        }
+        
+        async function chat_handleEditMessage(e) {
+            if (e) e.stopPropagation();
+            hideActionPopover(e);
+            const msgId = state.chat.selectedMessageId;
+            if (!msgId) return;
+            const channelMsgs = state.chat.messages[state.chat.currentChannelId];
+            const msg = channelMsgs.find(m => m.id === msgId);
+            if (!msg) return;
+            const newText = prompt('แก้ไขข้อความ:', msg.content || msg.message);
+            if (newText !== null && newText.trim() !== '' && newText !== msg.content) {
+                // อัปเดตเฉพาะฟิลด์ content (เนื่องจากฐานข้อมูลมีแค่ content ตาม error message)
+                const { error } = await supabaseClient.from('chat_messages').update({ content: newText }).eq('id', msgId);
+                if (error) showAlert('Failed to edit message: ' + error.message, 'error');
+            }
+        }
+        
+        async function chat_handleDeleteMessage(e) {
+            if (e) e.stopPropagation();
+            hideActionPopover(e);
+            const msgId = state.chat.selectedMessageId;
+            if (!msgId) return;
+            showConfirmationModal('ลบข้อความ', 'คุณแน่ใจหรือไม่ที่จะลบข้อความนี้?', async () => {
+                
+                // --- Optimistic Delete (ซ่อนข้อความทันทีเพื่อความรวดเร็ว) ---
+                for (const chId in state.chat.messages) {
+                    const idx = state.chat.messages[chId].findIndex(m => m.id === msgId);
+                    if (idx !== -1) {
+                        state.chat.messages[chId].splice(idx, 1);
+                        if (state.currentPage === 'chat' && state.chat.currentChannelId == chId) {
+                            chat_renderMessages();
+                        }
+                        break;
+                    }
+                }
+
+                const { error } = await supabaseClient.from('chat_messages').delete().eq('id', msgId);
+                if (error) {
+                    showAlert('Failed to delete message: ' + error.message, 'error');
+                    // รีโหลดข้อความใหม่หากลบไม่สำเร็จ
+                    if (state.chat.currentChannelId) {
+                        loadChatMessages(state.chat.currentChannelId);
+                    }
+                }
+            }, 'trash-2', 'bg-red-600');
+        }
+        
+        function chat_handleReportMessage(e) {
+            if (e) e.stopPropagation();
+            hideActionPopover(e);
+            const msgId = state.chat.selectedMessageId;
+            if (!msgId) return;
+            showAlert('ได้รับรายงานข้อความนี้แล้ว ทีมงานจะทำการตรวจสอบต่อไป', 'success', 'Reported');
+        }
+
+        async function chat_deleteChannel(channelId, channelName) {
+            if (!confirm(`คุณแน่ใจหรือไม่ที่จะลบช่อง "${channelName}"?\n(ข้อความทั้งหมดในช่องนี้จะถูกลบด้วย)`)) return;
+            await supabaseClient.from('chat_messages').delete().eq('channel_id', channelId);
+            const { error } = await supabaseClient.from('chat_channels').delete().eq('id', channelId);
+            if (error) {
+                showAlert('Error deleting channel: ' + error.message, 'error');
+            } else {
+                state.chat.channels = state.chat.channels.filter(c => c.id != channelId);
+                if (state.chat.currentChannelId == channelId) {
+                    state.chat.currentChannelId = null;
+                    document.getElementById('chat-messages-container').innerHTML = '';
+                }
+                chat_renderChannels();
+                showAlert('ลบช่องสำเร็จ', 'success');
+            }
+        }
+
+        function chat_showRoleModal(gameId) {
+            const member = findMemberById(gameId);
+            if (!member) return;
+        
+            document.getElementById('chat-role-memberId').value = gameId;
+            document.getElementById('chat-role-memberName').textContent = member.name;
+        
+            let currentGroup = 'regular';
+            if (members.leader && members.leader.gameId === gameId) currentGroup = 'leader';
+            else if (members.management && members.management.some(m => m.gameId === gameId)) currentGroup = 'management';
+            else if (members.supporters && members.supporters.some(m => m.gameId === gameId)) currentGroup = 'supporters';
+            
+            document.getElementById('chat-role-mainGroup').value = currentGroup;
+            document.getElementById('chat-role-department').value = member.department || '';
+        
+            document.getElementById('chat-roleModal').classList.add('active');
+        }
+        
+        async function chat_saveMemberRole() {
+            const gameId = document.getElementById('chat-role-memberId').value;
+            const newGroup = document.getElementById('chat-role-mainGroup').value;
+            const newDept = document.getElementById('chat-role-department').value;
+        
+            const member = findMemberById(gameId);
+            if (!member) return;
+        
+            if (member.type === 'leader' && state.currentMember.gameId !== members.leader.gameId) {
+                showAlert('คุณไม่มีสิทธิ์เปลี่ยนยศของหัวหน้าแคลน', 'error');
+                return;
+            }
+        
+            const memberData = { ...member };
+            delete memberData.type;
+            memberData.department = newDept;
+            
+            if (newGroup === 'management' && (!memberData.role || typeof memberData.role !== 'object')) {
+                memberData.role = { th: newDept || 'แอดมิน', zh: '管理员', en: 'Admin' };
+            } else if (newGroup === 'leader' && (!memberData.role || typeof memberData.role !== 'object')) {
+                memberData.role = { th: 'หัวหน้าแคลน', zh: '创始人', en: 'Leader' };
+            }
+        
+            if (member.type === 'management') members.management = members.management.filter(m => m.gameId !== gameId);
+            else if (member.type === 'supporters') members.supporters = members.supporters.filter(m => m.gameId !== gameId);
+            else if (member.type === 'regular') members.regular = members.regular.filter(m => m.gameId !== gameId);
+        
+            if (newGroup === 'leader') members.leader = memberData;
+            else if (newGroup === 'management') members.management.push(memberData);
+            else if (newGroup === 'supporters') members.supporters.push(memberData);
+            else if (newGroup === 'regular') members.regular.push(memberData);
+        
+            const success = await saveData('members', members);
+            if (success) {
+                document.getElementById('chat-roleModal').classList.remove('active');
+                chat_renderMembers();
+                showAlert('อัพเดทยศและตำแหน่งสำเร็จ', 'success');
+                if (state.globalChannel) {
+                    state.globalChannel.send({ type: 'broadcast', event: 'members_update', payload: { updated: true } });
+                }
+            }
+        }
+
+        function chat_jumpToChannelByName(serverName, channelName) {
+            const srvNameClean = serverName.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+            const chNameClean = channelName.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+            
+            const server = state.chat.servers.find(s => s.name.toLowerCase() === srvNameClean.toLowerCase());
+            if (server) {
+                chat_selectServer(server.id);
+                const channel = state.chat.channels.find(c => c.server_id === server.id && c.name.toLowerCase() === chNameClean.toLowerCase());
+                if (channel) {
+                    chat_selectChannel(channel.id);
+                }
+            }
         }
 
         function chat_selectServer(serverId) {
@@ -4646,25 +5603,76 @@ let timeSyncInterval = null;
             if (!state.chat.currentChannelId) return;
 
             // Check user
-            const username = state.currentMember?.name || 'Guest';
-            const user_id = state.currentMember?.gameId || 'guest';
-            const user_role = findMemberRoleById(user_id);
-            const avatar_url = state.currentMember?.profilePictureUrl || '';
+            let username = 'Guest';
+            let user_id = 'guest';
+            let user_role = 'Member';
+            let avatar_url = '';
 
-            const { error } = await supabaseClient
-                .from('chat_messages')
-                .insert([{
-                    channel_id: state.chat.currentChannelId,
-                    user_role: user_role,
-                    content: text,
-                    username: username,
-                    user_id: user_id,
-                    avatar_url: avatar_url
-                }]);
+            if (state.chatGuestProfile) {
+                username = state.chatGuestProfile.name;
+                user_id = state.chatGuestProfile.id;
+                user_role = 'LinkGuest';
+                avatar_url = state.chatGuestProfile.profilePictureUrl || '';
+            } else if (state.currentMember) {
+                username = state.currentMember.name;
+                user_id = state.currentMember.gameId;
+                user_role = findMemberRoleById(user_id);
+                avatar_url = state.currentMember.profilePictureUrl || '';
+            }
+
+            let attachmentUrl = null;
+            let attachmentType = null;
+
+            if (state.chat.pendingAttachment) {
+                const file = state.chat.pendingAttachment;
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}_${Math.random().toString(36).substring(2,7)}.${fileExt}`;
+                const filePath = `chat_attachments/${state.chat.currentChannelId}/${fileName}`;
+
+                const { data, error: uploadError } = await supabaseClient.storage.from('chat_attachments').upload(filePath, file);
+
+                if (uploadError) {
+                    console.error('Error uploading file:', uploadError);
+                    showAlert('ไม่สามารถอัปโหลดไฟล์ได้ (กรุณาให้ Admin สร้าง Bucket ชื่อ chat_attachments ใน Supabase ก่อน)', 'error');
+                    return;
+                }
+
+                const { data: urlData } = supabaseClient.storage.from('chat_attachments').getPublicUrl(filePath);
+                attachmentUrl = urlData.publicUrl;
+                attachmentType = file.type.startsWith('video/') ? 'video' : 'image';
+            }
+
+            const payload = {
+                channel_id: state.chat.currentChannelId,
+                user_role: user_role,
+                content: text,
+                username: username,
+                user_id: user_id,
+                avatar_url: avatar_url
+            };
+            
+            if (attachmentUrl) {
+                payload.attachment_url = attachmentUrl;
+                payload.attachment_type = attachmentType;
+            }
+
+            const { error } = await supabaseClient.from('chat_messages').insert([payload]);
 
             if (error) {
                 console.error('Error sending chat message:', error);
-                chat_addSystemMessage('Error sending message');
+                
+                // Fallback: If attachment columns do not exist in DB yet, embed link in text content
+                if ((error.message.includes('attachment_url') || error.message.includes('attachment_type') || error.code === 'PGRST204') && attachmentUrl) {
+                    const fallbackText = (text ? text + '\n\n' : '') + `[Attachment: ${attachmentUrl}]`;
+                    const fallbackPayload = { ...payload };
+                    delete fallbackPayload.attachment_url;
+                    delete fallbackPayload.attachment_type;
+                    fallbackPayload.content = fallbackText;
+                    
+                    await supabaseClient.from('chat_messages').insert([fallbackPayload]);
+                } else {
+                    chat_addSystemMessage('Error sending message: ' + error.message);
+                }
             }
             // Realtime subscription will handle updating the UI
         }
@@ -4676,6 +5684,56 @@ let timeSyncInterval = null;
             msgDiv.innerHTML = `⚡ ${text}`;
             container.appendChild(msgDiv);
             container.scrollTop = container.scrollHeight;
+        }
+
+        // --- Invite Link Logic ---
+        function chat_showInviteModal(serverId) {
+            document.getElementById('chat-invite-targetServerId').value = serverId;
+            document.getElementById('chat-invite-result').classList.add('hidden');
+            document.getElementById('chat-inviteModal').classList.add('active');
+            lucide.createIcons();
+        }
+
+        async function chat_generateInviteLink() {
+            const serverId = document.getElementById('chat-invite-targetServerId').value;
+            const hours = parseInt(document.getElementById('chat-invite-expiry').value);
+            
+            // Create unique code
+            const inviteCode = 'inv_' + Math.random().toString(36).substr(2, 9);
+            const expiresAt = Date.now() + (hours * 60 * 60 * 1000);
+            
+            if (!clanData.chatInvites) clanData.chatInvites = {};
+            
+            // Clean up old expired invites
+            for (const code in clanData.chatInvites) {
+                if (Date.now() > clanData.chatInvites[code].expiresAt) {
+                    delete clanData.chatInvites[code];
+                }
+            }
+            
+            // Save new invite
+            clanData.chatInvites[inviteCode] = {
+                serverId: serverId,
+                expiresAt: expiresAt,
+                createdBy: state.currentMember.gameId
+            };
+            
+            const success = await saveData('clanData', clanData);
+            if (success) {
+                // Build URL
+                const baseUrl = window.location.origin + window.location.pathname;
+                const fullLink = `${baseUrl}?invite=${inviteCode}`;
+                
+                document.getElementById('chat-invite-link-input').value = fullLink;
+                document.getElementById('chat-invite-result').classList.remove('hidden');
+            }
+        }
+
+        function chat_copyInviteLink() {
+            const input = document.getElementById('chat-invite-link-input');
+            input.select();
+            document.execCommand('copy');
+            showAlert('คัดลอกลิงก์เรียบร้อยแล้ว!', 'success');
         }
 
         function chat_showCreateServerModal() { 
@@ -5110,6 +6168,7 @@ let timeSyncInterval = null;
         };
 
         async function createPeerConnection(targetUserId, isInitiator) {
+            const activeUser = state.chatGuestProfile || state.currentMember;
             if (state.chat.peerConnections[targetUserId] || !state.chat.localStream) return;
 
             const pc = new RTCPeerConnection(rtcConfig);
@@ -5140,7 +6199,7 @@ let timeSyncInterval = null;
                     state.chat.supabaseVoiceChannel.send({
                         type: 'broadcast',
                         event: 'webrtc-signal',
-                        payload: { type: 'candidate', candidate: event.candidate, from: state.currentMember.gameId, target: targetUserId }
+                        payload: { type: 'candidate', candidate: event.candidate, from: activeUser.gameId, target: targetUserId }
                     });
                 }
             };
@@ -5151,12 +6210,13 @@ let timeSyncInterval = null;
                 state.chat.supabaseVoiceChannel.send({
                     type: 'broadcast',
                     event: 'webrtc-signal',
-                    payload: { type: 'offer', offer, from: state.currentMember.gameId, target: targetUserId }
+                    payload: { type: 'offer', offer, from: activeUser.gameId, target: targetUserId }
                 });
             }
         }
 
         async function handleRtcSignal(payload) {
+            const activeUser = state.chatGuestProfile || state.currentMember;
             const fromUserId = payload.from;
             let pc = state.chat.peerConnections[fromUserId];
 
@@ -5174,7 +6234,7 @@ let timeSyncInterval = null;
                             state.chat.supabaseVoiceChannel.send({
                                 type: 'broadcast',
                                 event: 'webrtc-signal',
-                                payload: { type: 'answer', answer, from: state.currentMember.gameId, target: fromUserId }
+                                payload: { type: 'answer', answer, from: activeUser.gameId, target: fromUserId }
                             });
                             if (pc.candidateQueue) {
                                 for (const c of pc.candidateQueue) await pc.addIceCandidate(new RTCIceCandidate(c));
@@ -5208,6 +6268,7 @@ let timeSyncInterval = null;
         }
 
         async function chat_toggleMute() {
+            const activeUser = state.chatGuestProfile || state.currentMember;
             if (!state.chat.localStream) return;
             
             state.chat.isMuted = !state.chat.isMuted;
@@ -5220,18 +6281,19 @@ let timeSyncInterval = null;
             }
             if (state.chat.supabaseVoiceChannel) {
                 await state.chat.supabaseVoiceChannel.track({
-                    username: state.currentMember.name,
-                    user_id: state.currentMember.gameId,
-                    avatar_url: state.currentMember.profilePictureUrl || '',
+                    username: activeUser.name,
+                    user_id: activeUser.gameId,
+                    avatar_url: activeUser.profilePictureUrl || '',
                     is_muted: state.chat.isMuted, // Fixed from chat_app_state
                     is_deafened: state.chat.isDeafened // Fixed from chat_app_state
                 });
             }
-            if (state.chat.isMuted) updateSpeakingStatus(state.currentMember.gameId, false);
+            if (state.chat.isMuted && activeUser) updateSpeakingStatus(activeUser.gameId, false);
             chat_renderVoicePanel();
         }
 
         function chat_toggleDeafen() {
+            const activeUser = state.chatGuestProfile || state.currentMember;
             if (!state.chat.localStream) return;
             state.chat.isDeafened = !state.chat.isDeafened;
             state.chat.isMuted = state.chat.isDeafened;
@@ -5242,9 +6304,9 @@ let timeSyncInterval = null;
 
             if (state.chat.supabaseVoiceChannel) {
                 state.chat.supabaseVoiceChannel.track({
-                    username: state.currentMember.name,
-                    user_id: state.currentMember.gameId,
-                    avatar_url: state.currentMember.profilePictureUrl || '',
+                    username: activeUser.name,
+                    user_id: activeUser.gameId,
+                    avatar_url: activeUser.profilePictureUrl || '',
                     is_muted: state.chat.isMuted, // Fixed from chat_app_state
                     is_deafened: state.chat.isDeafened // Fixed from chat_app_state
                 });
@@ -5253,7 +6315,8 @@ let timeSyncInterval = null;
         }
 
         async function chat_joinVoiceChannel(channelId) {
-            if (!state.isMemberLoggedIn || !state.currentMember) {
+            const activeUser = state.chatGuestProfile || state.currentMember;
+            if (!activeUser) {
                 showAlert('Only members can join voice channels.', 'warning');
                 return;
             }
@@ -5281,7 +6344,7 @@ let timeSyncInterval = null;
             }
             // เปิดเช็คเสียงไมค์ของตัวเอง
             state.chat.localAudioMeterCleanup = createAudioMeter(state.chat.localStream, (isSpeaking) => {
-                updateSpeakingStatus(state.currentMember.gameId, isSpeaking && !state.chat.isMuted);
+                updateSpeakingStatus(activeUser.gameId, isSpeaking && !state.chat.isMuted);
             });
 
             state.chat.currentVoiceChannelId = channelId;
@@ -5289,7 +6352,7 @@ let timeSyncInterval = null;
 
             const voiceChannel = supabaseClient.channel(`voice:${channelId}`, {
                 config: {
-                    presence: { key: state.currentMember.gameId },
+                    presence: { key: activeUser.gameId },
                 },
             });
 
@@ -5301,8 +6364,8 @@ let timeSyncInterval = null;
                 for (const id in presenceState) {
                     const pres = presenceState[id][0];
                     users.push({ user_id: pres.user_id, username: pres.username, avatar_url: pres.avatar_url, is_muted: pres.is_muted, is_deafened: pres.is_deafened });
-                    if (pres.user_id !== state.currentMember.gameId) {
-                        const isInitiator = String(state.currentMember.gameId).localeCompare(String(pres.user_id)) > 0;
+                    if (pres.user_id !== activeUser.gameId) {
+                        const isInitiator = String(activeUser.gameId).localeCompare(String(pres.user_id)) > 0;
                         createPeerConnection(pres.user_id, isInitiator);
                     }
                 }
@@ -5311,14 +6374,14 @@ let timeSyncInterval = null;
             });
 
             voiceChannel.on('presence', { event: 'join' }, ({ newPresences }) => {
-                const isLocal = newPresences.some(p => p.user_id === state.currentMember.gameId);
+                const isLocal = newPresences.some(p => p.user_id === activeUser.gameId);
                 if (!isLocal) {
                     playVoiceChatSound('join');
                 }
             });
 
             voiceChannel.on('presence', { event: 'leave' }, ({ leftPresences }) => {
-                const isLocal = leftPresences.some(p => p.user_id === state.currentMember.gameId);
+                const isLocal = leftPresences.some(p => p.user_id === activeUser.gameId);
                 if (!isLocal) {
                     playVoiceChatSound('leave');
                 }
@@ -5338,7 +6401,7 @@ let timeSyncInterval = null;
             });
 
             voiceChannel.on('broadcast', { event: 'webrtc-signal' }, ({ payload }) => {
-                if (payload.target === state.currentMember.gameId) handleRtcSignal(payload); 
+                if (payload.target === activeUser.gameId) handleRtcSignal(payload); 
             });
 
             voiceChannel.subscribe(async (status) => {
@@ -5348,15 +6411,15 @@ let timeSyncInterval = null;
                     playVoiceChatSound('join');
                     chat_renderVoicePanel();
                     await voiceChannel.track({ 
-                        username: state.currentMember.name,
-                        user_id: state.currentMember.gameId,
-                        avatar_url: state.currentMember.profilePictureUrl || '',
+                        username: activeUser.name,
+                        user_id: activeUser.gameId,
+                        avatar_url: activeUser.profilePictureUrl || '',
                         is_muted: state.chat.isMuted,
                         is_deafened: state.chat.isDeafened
                     });
                     
                     // Log to notifications channel
-                    chat_logToNotificationChannel(channel.server_id, `${state.currentMember.name} joined Voice Channel: ${channel.name}`);
+                    chat_logToNotificationChannel(channel.server_id, `${activeUser.name} joined Voice Channel: ${channel.name}`);
                     startPingMonitor(); // เริ่มเช็ค Ping
                 } else if (status === 'CLOSED') {
                     console.log('Voice channel subscription closed.');
@@ -5368,6 +6431,7 @@ let timeSyncInterval = null;
             });
         }
         async function chat_leaveVoiceChannel() {
+            const activeUser = state.chatGuestProfile || state.currentMember;
             const channelToLeave = state.chat.supabaseVoiceChannel;
             if (!channelToLeave) return;
             
@@ -5393,7 +6457,7 @@ let timeSyncInterval = null;
             }
             state.chat.activeAudioMeters = {};
             stopPingMonitor();
-            updateSpeakingStatus(state.currentMember.gameId, false);
+            if (activeUser) updateSpeakingStatus(activeUser.gameId, false);
 
             if (state.chat.localStream) {
                 state.chat.localStream.getTracks().forEach(track => track.stop());
@@ -5758,15 +6822,41 @@ let timeSyncInterval = null;
                         <div id="reply-to-container" class="hidden p-2 mx-3 border-b border-slate-700 text-xs">
                             <!-- Reply info will be injected here -->
                         </div>
-                        <div class="relative flex items-center p-3">
-                            <input type="text" id="stream-chat-input" placeholder="พิมพ์ข้อความ..." class="stream-chat-input pr-12" onkeypress="handleSendChatMessage(event)">
-                            <button onclick="sendReaction()" title="Send Reaction" class="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-red-500 transition-colors rounded-full hover:bg-red-500/10">
-                                <i data-lucide="heart" class="w-6 h-6"></i>
-                            </button>
-                        </div>
+                        <form id="stream-chat-form" class="relative flex items-center p-3">
+                            <input type="text" id="stream-chat-input" placeholder="พิมพ์ข้อความ..." class="stream-chat-input pr-24">
+                            <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center">
+                                <button onclick="sendReaction()" type="button" title="Send Reaction" class="p-2 text-gray-400 hover:text-red-500 transition-colors rounded-full hover:bg-red-500/10">
+                                    <i data-lucide="heart" class="w-6 h-6"></i>
+                                </button>
+                                <button id="stream-chat-send-btn" type="submit" class="p-2 rounded-full bg-red-600 text-white hidden ml-2">
+                                    <i data-lucide="send" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             `;
+
+            const streamChatInput = document.getElementById('stream-chat-input');
+            const streamChatSendBtn = document.getElementById('stream-chat-send-btn');
+            const streamChatForm = document.getElementById('stream-chat-form');
+
+            if (streamChatInput && streamChatSendBtn && streamChatForm) {
+                streamChatInput.addEventListener('input', () => {
+                    if (streamChatInput.value.trim() !== '') {
+                        streamChatSendBtn.classList.remove('hidden');
+                    } else {
+                        streamChatSendBtn.classList.add('hidden');
+                    }
+                });
+
+                streamChatForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    if (streamChatInput.value.trim() !== '') {
+                        handleSendChatMessage({ key: 'Enter', target: streamChatInput });
+                    }
+                });
+            }
         }
 
         function clearStreamGuestSession(showExpiryMessage = false) {
@@ -6375,6 +7465,8 @@ let timeSyncInterval = null;
         function renderAdminPage() {
             const t = translations[state.language];
             const subPage = state.adminSubPage;
+            
+            const openTicketsCount = supportTickets.filter(t => t.status === 'open').length;
 
             const getTabClass = (pageName) => {
                 return subPage === pageName 
@@ -6534,6 +7626,45 @@ let timeSyncInterval = null;
                         </div>
                     </div>
                 `;
+            } else if (subPage === 'tickets') {
+                contentHtml = `
+                    <div class="mb-6 relative pl-6">
+                        <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-indigo-500 to-purple-600 rounded-full"></div>
+                        <h2 class="text-3xl text-white font-bold tracking-tight">ระบบแจ้งเรื่อง (Support Tickets)</h2>
+                        <p class="text-gray-400">Manage Member & Guest Tickets</p>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Ticket List (Left) -->
+                        <div class="lg:col-span-1 bg-slate-900/80 backdrop-blur-xl border border-slate-800 rounded-2xl overflow-hidden flex flex-col h-[600px]">
+                            <div class="p-4 border-b border-slate-800 bg-slate-900 font-bold text-white flex justify-between items-center">
+                                <span>รายการทิกเก็ต</span>
+                                <span class="text-xs bg-indigo-500/20 text-indigo-400 px-2 py-1 rounded">${openTicketsCount} Open</span>
+                            </div>
+                            <div class="flex-1 overflow-y-auto p-2 space-y-2 ticket-chat-messages">
+                                ${supportTickets.length === 0 ? '<p class="text-center text-gray-500 mt-10 text-sm">ไม่มีข้อมูลทิกเก็ต</p>' : ''}
+                                ${[...supportTickets].sort((a,b) => (a.status==='open'?-1:1) || new Date(b.createdAt)-new Date(a.createdAt)).map(ticket => `
+                                    <div onclick="adminOpenTicket('${ticket.id}')" class="p-3 rounded-xl cursor-pointer transition-all border ${activeTicketId === ticket.id ? 'bg-indigo-600/20 border-indigo-500/50' : 'bg-slate-950 border-slate-800 hover:border-slate-600'}">
+                                        <div class="flex justify-between items-start mb-1">
+                                            <span class="text-sm font-bold text-white truncate pr-2">${ticket.subject}</span>
+                                            <span class="w-2 h-2 rounded-full flex-shrink-0 mt-1 ${ticket.status === 'open' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-gray-600'}"></span>
+                                        </div>
+                                        <div class="flex justify-between items-center text-xs text-gray-400">
+                                            <span class="truncate max-w-[120px]">${ticket.creatorName}</span>
+                                            <span>${new Date(ticket.createdAt).toLocaleDateString('en-GB')}</span>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <!-- Ticket Content (Right) -->
+                        <div class="lg:col-span-2 bg-slate-900/80 backdrop-blur-xl border border-slate-800 rounded-2xl overflow-hidden h-[600px] flex flex-col" id="admin-ticket-view">
+                            <div class="flex-1 flex flex-col items-center justify-center text-gray-500">
+                                <i data-lucide="inbox" class="w-16 h-16 mb-4 opacity-50"></i>
+                                <p>เลือกทิกเก็ตจากเมนูด้านซ้ายเพื่อดูรายละเอียด</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
             }
 
             const html = `
@@ -6553,6 +7684,11 @@ let timeSyncInterval = null;
                         <i data-lucide="settings" class="w-5 h-5"></i>
                         <span>จัดการเว็บไซต์</span>
                     </button>
+                    <button onclick="setAdminSubPage('tickets')" class="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl transition-all ${getTabClass('tickets')}">
+                        <i data-lucide="headphones" class="w-5 h-5"></i>
+                        <span>ระบบแจ้งเรื่อง</span>
+                        ${openTicketsCount > 0 ? `<span class="absolute -top-2 -right-2 w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-xs ring-2 ring-slate-900">${openTicketsCount}</span>` : ''}
+                    </button>
                 </div>
 
                 <div id="admin-subpage-content">
@@ -6562,6 +7698,138 @@ let timeSyncInterval = null;
             
             document.getElementById('content-container').innerHTML = html;
             lucide.createIcons();
+            
+            // Auto-render selected ticket if active
+            if (subPage === 'tickets' && activeTicketId) {
+                adminOpenTicket(activeTicketId, true);
+            }
+        }
+
+        function adminOpenTicket(ticketId, skipRender = false) {
+            activeTicketId = ticketId;
+            const ticket = supportTickets.find(t => t.id === ticketId);
+            
+            if (!skipRender) {
+                renderAdminPage();
+                return;
+            }
+            
+            const rightContainer = document.getElementById('admin-ticket-view');
+            if (!ticket || !rightContainer) return;
+            
+            let callBannerHtml = '';
+            if (ticket.isVoiceCall && ticket.callStatus !== 'ended') {
+                if (ticket.callStatus === 'ringing') {
+                    callBannerHtml = `
+                        <div class="bg-indigo-600 border-b border-indigo-500 p-4 flex justify-between items-center shadow-lg animate-pulse">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"><i data-lucide="phone-incoming" class="w-5 h-5 text-white"></i></div>
+                                <div>
+                                    <p class="text-white font-bold text-sm">สายเรียกเข้าจาก: ${ticket.creatorName}</p>
+                                    <p class="text-indigo-200 text-xs">หมวดหมู่: ${ticket.category}</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="acceptSupportVoiceCall('${ticket.id}')" class="px-4 py-2 bg-green-500 hover:bg-green-400 text-white rounded-lg font-bold flex items-center gap-2 shadow-lg transition-transform hover:scale-105 text-sm">
+                                    <i data-lucide="phone" class="w-4 h-4"></i> รับสาย
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else if (ticket.callStatus === 'callback_ringing') {
+                    callBannerHtml = `
+                        <div class="bg-indigo-600/50 border-b border-indigo-500 p-4 flex justify-between items-center shadow-lg animate-pulse">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"><i data-lucide="phone-outgoing" class="w-5 h-5 text-white"></i></div>
+                                <div>
+                                    <p class="text-white font-bold text-sm">กำลังติดต่อกลับ: ${ticket.creatorName}</p>
+                                </div>
+                            </div>
+                            <button onclick="endSupportVoiceCall()" class="px-4 py-2 bg-red-500 hover:bg-red-400 text-white rounded-lg font-bold flex items-center gap-2 shadow-lg transition-transform hover:scale-105 text-sm">
+                                วางสาย
+                            </button>
+                        </div>
+                    `;
+                } else if (ticket.callStatus === 'connected') {
+                    callBannerHtml = `
+                        <div class="bg-emerald-600/20 border-b border-emerald-500/30 p-4 flex justify-between items-center shadow-lg">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/50">
+                                    <i data-lucide="phone-call" class="w-5 h-5 text-emerald-400 animate-pulse"></i>
+                                </div>
+                                <div>
+                                    <p class="text-emerald-400 font-bold text-sm">กำลังสนทนากับ: ${ticket.creatorName}</p>
+                                    <p class="text-gray-400 text-xs">ใช้กล่องข้อความด้านล่างเพื่อพิมพ์บันทึกข้อมูล (Notes)</p>
+                                </div>
+                            </div>
+                            <button onclick="endSupportVoiceCall()" class="px-4 py-2 bg-red-500 hover:bg-red-400 text-white rounded-lg font-bold flex items-center gap-2 shadow-lg transition-transform hover:scale-105 text-sm">
+                                <i data-lucide="phone-off" class="w-4 h-4"></i> วางสาย
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+
+            const messagesHtml = ticket.messages.map(msg => {
+                const isMe = msg.isAdmin;
+                return `
+                    <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-4">
+                        <div class="flex items-baseline gap-2 ${isMe ? 'flex-row-reverse' : ''}">
+                            <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold ${isMe ? 'text-indigo-400 border border-indigo-500/30' : 'text-gray-300'} flex-shrink-0">
+                                ${isMe ? 'A' : msg.senderName.charAt(0).toUpperCase()}
+                            </div>
+                            <div class="max-w-[80%] rounded-2xl px-4 py-2 ${isMe ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-slate-800 text-gray-200 rounded-tl-none'}">
+                                <p class="text-sm whitespace-pre-wrap">${msg.message}</p>
+                            </div>
+                        </div>
+                        <span class="text-[10px] text-gray-500 mt-1 mx-10">${new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                    </div>
+                `;
+            }).join('');
+            
+            let adminActionsHtml = '';
+            if (ticket.status === 'open') {
+                if (!ticket.isVoiceCall || ticket.callStatus === 'ended') {
+                    adminActionsHtml = `
+                        <button onclick="adminInitiateCallback('${ticket.id}')" class="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white border border-emerald-500/30 rounded-lg text-xs font-bold transition-colors mr-2">
+                            <i data-lucide="phone-outgoing" class="w-3 h-3 inline-block"></i> ติดต่อกลับ
+                        </button>
+                        <button onclick="closeSupportTicket('${ticket.id}')" class="px-3 py-1.5 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/30 rounded-lg text-xs font-bold transition-colors">Close Ticket</button>
+                    `;
+                } else {
+                    adminActionsHtml = `<button onclick="closeSupportTicket('${ticket.id}')" class="px-3 py-1.5 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/30 rounded-lg text-xs font-bold transition-colors">Close Ticket</button>`;
+                }
+            } else {
+                adminActionsHtml = `<span class="px-3 py-1 bg-gray-800 text-gray-400 rounded-lg text-xs font-bold">Closed</span>`;
+            }
+
+            rightContainer.innerHTML = `
+                <div class="p-4 border-b border-slate-800 bg-slate-900 flex justify-between items-center z-10">
+                    <div>
+                        <h3 class="text-white font-bold">${ticket.subject}</h3>
+                        <p class="text-xs text-gray-400">By ${ticket.creatorName} • Category: ${ticket.category}</p>
+                    </div>
+                    <div class="flex items-center">
+                        ${adminActionsHtml}
+                    </div>
+                </div>
+                ${callBannerHtml}
+                <div class="flex-1 overflow-y-auto p-4 bg-slate-950/50 ticket-chat-messages" id="admin-ticket-chat-box">
+                    ${messagesHtml}
+                </div>
+                ${ticket.status === 'open' ? `
+                <div class="p-3 bg-slate-900 border-t border-slate-800">
+                    <form onsubmit="handleSendTicketReply(event, '${ticket.id}', true)" class="flex gap-2">
+                        <input type="text" id="admin-ticket-reply-input" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 text-white text-sm outline-none focus:border-indigo-500 transition-colors" placeholder="พิมพ์ข้อความตอบกลับ...">
+                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl flex items-center justify-center transition-colors"><i data-lucide="send" class="w-4 h-4"></i></button>
+                    </form>
+                </div>
+                ` : `<div class="p-3 bg-slate-900 border-t border-slate-800 text-center text-xs text-gray-500">ทิกเก็ตนี้ถูกปิดแล้ว ไม่สามารถตอบกลับได้</div>`}
+            `;
+            
+            lucide.createIcons();
+            const chatBox = document.getElementById('admin-ticket-chat-box');
+            if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
         }
 
         function findMemberById(id) {
@@ -7527,6 +8795,986 @@ let timeSyncInterval = null;
             lucide.createIcons();
         }
 
+        // --- Ticket System Functions (Widget) ---
+        let isTicketWidgetOpen = false;
+        
+        function toggleTicketWidget() {
+            const panel = document.getElementById('ticket-widget-panel');
+            const icon = document.getElementById('ticket-btn-icon');
+            
+            isTicketWidgetOpen = !isTicketWidgetOpen;
+            
+            if (isTicketWidgetOpen) {
+                panel.classList.add('open');
+                icon.setAttribute('data-lucide', 'chevron-down');
+                document.getElementById('ticket-unread-badge').classList.add('hidden');
+                renderTicketWidget();
+            } else {
+                panel.classList.remove('open');
+                icon.setAttribute('data-lucide', 'life-buoy');
+                endSupportCall(); // ตัดสายถ้าปิดหน้าต่าง
+            }
+            lucide.createIcons();
+        }
+        
+        function setTicketView(view, id = null) {
+            ticketView = view;
+            activeTicketId = id;
+            
+            const panel = document.getElementById('ticket-widget-panel');
+            const header = document.getElementById('ticket-widget-header');
+            
+            if (panel && header) {
+                if (view === 'call') {
+                    panel.classList.remove('h-[500px]', 'w-[350px]', 'rounded-2xl', 'border', 'border-slate-700');
+                    panel.classList.add('h-[650px]', 'w-[320px]', 'rounded-[40px]', 'border-[8px]', 'border-slate-800', 'bg-black');
+                    header.classList.add('hidden');
+                } else {
+                    panel.classList.add('h-[500px]', 'w-[350px]', 'rounded-2xl', 'border', 'border-slate-700');
+                    panel.classList.remove('h-[650px]', 'w-[320px]', 'rounded-[40px]', 'border-[8px]', 'border-slate-800', 'bg-black');
+                    header.classList.remove('hidden');
+                }
+            }
+
+            renderTicketWidget();
+        }
+        
+        function getMyUserId() {
+            return state.currentMember ? state.currentMember.gameId : localTicketUserId;
+        }
+        function getMyUserName() {
+            return state.currentMember ? state.currentMember.name : (state.streamGuestProfile ? state.streamGuestProfile.name : 'Guest User');
+        }
+        
+        function renderTicketWidget() {
+            const content = document.getElementById('ticket-widget-content');
+            if (!content || !isTicketWidgetOpen) return;
+            
+            const myId = getMyUserId();
+            const myTickets = supportTickets.filter(t => t.creatorId === myId);
+            
+            if (ticketView === 'list') {
+                content.innerHTML = `
+                    <div class="p-4 flex-1 overflow-y-auto ticket-chat-messages space-y-3">
+                        ${myTickets.length === 0 ? `
+                            <div class="text-center mt-10 text-gray-500">
+                                <i data-lucide="message-square-dashed" class="w-12 h-12 mx-auto mb-2 opacity-50"></i>
+                                <p class="text-sm">คุณยังไม่มีประวัติการแจ้งเรื่อง</p>
+                            </div>
+                        ` : myTickets.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).map(t => `
+                            <div onclick="setTicketView('chat', '${t.id}')" class="bg-slate-800 p-3 rounded-xl border border-slate-700 cursor-pointer hover:border-indigo-500 transition-colors">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h4 class="text-white text-sm font-bold truncate pr-2">${t.subject}</h4>
+                                    <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${t.status === 'open' ? 'bg-green-500/20 text-green-400' : 'bg-gray-700 text-gray-400'}">${t.status.toUpperCase()}</span>
+                                </div>
+                                <div class="flex justify-between items-center text-xs text-gray-400">
+                                    <span>${t.category}</span>
+                                    <span>${new Date(t.createdAt).toLocaleDateString()}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="p-3 border-t border-slate-800 bg-slate-900 grid grid-cols-2 gap-2">
+                        <button onclick="setTicketView('create')" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-indigo-500/20 flex flex-col items-center justify-center text-xs gap-1">
+                            <i data-lucide="edit" class="w-4 h-4"></i>
+                            <span>เขียนแจ้งเรื่อง</span>
+                        </button>
+                        <button onclick="startSupportCall()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-emerald-500/20 flex flex-col items-center justify-center text-xs gap-1 relative">
+                            <i data-lucide="phone" class="w-4 h-4"></i>
+                            <span>โทรหาเจ้าหน้าที่</span>
+                        </button>
+                    </div>
+                `;
+            } else if (ticketView === 'create') {
+                content.innerHTML = `
+                    <div class="p-2 border-b border-slate-800 bg-slate-900 flex items-center gap-2">
+                        <button onclick="setTicketView('list')" class="p-2 text-gray-400 hover:text-white"><i data-lucide="arrow-left" class="w-4 h-4"></i></button>
+                        <span class="text-white text-sm font-bold">แจ้งปัญหา / รายงาน</span>
+                    </div>
+                    <div class="p-4 flex-1 overflow-y-auto ticket-chat-messages">
+                        <form onsubmit="handleCreateTicket(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">หมวดหมู่ (Category)</label>
+                                <select id="ticket-category" class="w-full bg-slate-950 border border-slate-700 text-white text-sm rounded-lg p-2.5 outline-none focus:border-indigo-500">
+                                    <option value="รายงานผู้เล่น (Report Player)">รายงานผู้เล่น (Report Player)</option>
+                                    <option value="แจ้งปัญหาบัค (Bug Report)">แจ้งปัญหาเว็บ/บัค (Bug Report)</option>
+                                    <option value="สอบถามทั่วไป (General Question)">สอบถามทั่วไป (General Question)</option>
+                                    <option value="อื่นๆ (Others)">อื่นๆ (Others)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">หัวข้อ (Subject)</label>
+                                <input required id="ticket-subject" type="text" class="w-full bg-slate-950 border border-slate-700 text-white text-sm rounded-lg p-2.5 outline-none focus:border-indigo-500" placeholder="ระบุเรื่องที่ต้องการแจ้งสั้นๆ">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">รายละเอียด (Description)</label>
+                                <textarea required id="ticket-desc" rows="4" class="w-full bg-slate-950 border border-slate-700 text-white text-sm rounded-lg p-2.5 outline-none focus:border-indigo-500" placeholder="อธิบายรายละเอียด..."></textarea>
+                            </div>
+                            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-all mt-2">
+                                ส่งข้อมูล
+                            </button>
+                        </form>
+                    </div>
+                `;
+            } else if (ticketView === 'chat') {
+                const ticket = myTickets.find(t => t.id === activeTicketId);
+                if (!ticket) { setTicketView('list'); return; }
+                
+                let callBannerHtml = '';
+                if (ticket.isVoiceCall && ticket.callStatus !== 'ended') {
+                    if (ticket.callStatus === 'ringing') {
+                        callBannerHtml = `
+                            <div class="bg-slate-900 border-b border-slate-800 p-3 flex justify-between items-center z-20 shadow-md">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
+                                        <i data-lucide="phone-call" class="w-4 h-4 text-yellow-400 animate-pulse"></i>
+                                    </div>
+                                    <div class="text-xs">
+                                        <p class="text-white font-bold">AJ Support Call</p>
+                                        <p class="text-yellow-400">กำลังรอเจ้าหน้าที่รับสาย (Ringing...)</p>
+                                    </div>
+                                </div>
+                                <button onclick="endSupportVoiceCall()" class="w-8 h-8 bg-red-500 hover:bg-red-400 rounded-full flex items-center justify-center text-white transition-transform hover:scale-105 shadow-lg">
+                                    <i data-lucide="phone-off" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        `;
+                    } else if (ticket.callStatus === 'callback_ringing') {
+                        callBannerHtml = `
+                            <div class="bg-indigo-600 border-b border-indigo-500 p-3 flex justify-between items-center z-20 shadow-md animate-pulse">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                                        <i data-lucide="phone-incoming" class="w-4 h-4 text-white"></i>
+                                    </div>
+                                    <div class="text-xs">
+                                        <p class="text-white font-bold">Admin Calling...</p>
+                                        <p class="text-indigo-200">สายเรียกเข้าจากเจ้าหน้าที่</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-1">
+                                    <button onclick="acceptSupportVoiceCall('${ticket.id}')" class="px-3 py-1.5 bg-green-500 hover:bg-green-400 rounded-lg text-white font-bold text-xs shadow-lg transition-transform hover:scale-105">รับสาย</button>
+                                    <button onclick="endSupportVoiceCall()" class="px-3 py-1.5 bg-red-500 hover:bg-red-400 rounded-lg text-white font-bold text-xs shadow-lg transition-transform hover:scale-105">ตัดสาย</button>
+                                </div>
+                            </div>
+                        `;
+                    } else if (ticket.callStatus === 'connected') {
+                        callBannerHtml = `
+                            <div class="bg-slate-900 border-b border-slate-800 p-3 flex justify-between items-center z-20 shadow-md">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/50">
+                                        <i data-lucide="phone-call" class="w-4 h-4 text-emerald-400"></i>
+                                    </div>
+                                    <div class="text-xs">
+                                        <p class="text-white font-bold">AJ Support Call</p>
+                                        <p class="text-emerald-400">เชื่อมต่อสายสนทนาแล้ว</p>
+                                    </div>
+                                </div>
+                                <button onclick="endSupportVoiceCall()" class="w-8 h-8 bg-red-500 hover:bg-red-400 rounded-full flex items-center justify-center text-white transition-transform hover:scale-105 shadow-lg">
+                                    <i data-lucide="phone-off" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        `;
+                    }
+                }
+
+                const messagesHtml = ticket.messages.map(msg => {
+                    const isMe = !msg.isAdmin; // In widget, admin is the "other"
+                    return `
+                        <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-3">
+                            <div class="flex items-baseline gap-1.5 ${isMe ? 'flex-row-reverse' : ''}">
+                                <div class="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold ${!isMe ? 'text-indigo-400 border border-indigo-500/30' : 'text-gray-300'} flex-shrink-0">
+                                    ${!isMe ? 'A' : 'U'}
+                                </div>
+                                <div class="max-w-[85%] rounded-2xl px-3 py-2 ${isMe ? 'bg-slate-700 text-white rounded-tr-none' : 'bg-indigo-600 text-white rounded-tl-none'}">
+                                    <p class="text-xs whitespace-pre-wrap">${msg.message}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                content.innerHTML = `
+                    <div class="p-2 border-b border-slate-800 bg-slate-900 flex items-center justify-between z-10 shadow-sm">
+                        <div class="flex items-center gap-2 overflow-hidden">
+                            <button onclick="setTicketView('list')" class="p-1.5 text-gray-400 hover:text-white flex-shrink-0"><i data-lucide="arrow-left" class="w-4 h-4"></i></button>
+                            <div class="truncate">
+                                <p class="text-white text-sm font-bold truncate">${ticket.subject}</p>
+                                <p class="text-[10px] text-gray-400">Status: ${ticket.status}</p>
+                            </div>
+                        </div>
+                    </div>
+                    ${callBannerHtml}
+                    <div class="flex-1 overflow-y-auto p-3 ticket-chat-messages bg-slate-950/80" id="widget-ticket-chat-box">
+                        <!-- First Message is always the initial description -->
+                        <div class="bg-slate-800/80 p-3 rounded-lg border border-slate-700 mb-4 text-xs">
+                            <p class="text-indigo-400 font-bold mb-1 border-b border-slate-700 pb-1">${ticket.category}</p>
+                            <p class="text-gray-300 whitespace-pre-wrap">${ticket.description}</p>
+                        </div>
+                        ${messagesHtml}
+                    </div>
+                    ${ticket.status === 'open' ? `
+                    <div class="p-2 bg-slate-900 border-t border-slate-800">
+                        <form onsubmit="handleSendTicketReply(event, '${ticket.id}', false)" class="flex gap-2">
+                            <input type="text" id="widget-ticket-reply-input" autocomplete="off" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs outline-none focus:border-indigo-500 transition-colors" placeholder="พิมพ์ข้อความ...">
+                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2 rounded-xl flex items-center justify-center transition-colors"><i data-lucide="send" class="w-4 h-4"></i></button>
+                        </form>
+                    </div>
+                    ` : `<div class="p-2 bg-slate-900 border-t border-slate-800 text-center text-[10px] text-gray-500">ทิกเก็ตนี้ถูกปิดการสนทนาแล้ว</div>`}
+                `;
+                
+                setTimeout(() => {
+                    const box = document.getElementById('widget-ticket-chat-box');
+                    if(box) box.scrollTop = box.scrollHeight;
+                }, 50);
+            } else if (ticketView === 'call') {
+                content.innerHTML = `
+                    <!-- iPhone Dynamic Island -->
+                    <div class="absolute top-3 left-1/2 -translate-x-1/2 w-28 h-7 bg-black rounded-full z-50 flex items-center justify-between px-3 shadow-sm border border-slate-800/50">
+                        <div class="w-2.5 h-2.5 rounded-full bg-slate-800/80 shadow-[inset_0_0_2px_rgba(0,0,0,1)]"></div>
+                        <div class="w-1.5 h-1.5 rounded-full bg-green-500 opacity-80 blur-[1px]"></div>
+                    </div>
+                    
+                    <div class="flex-1 flex flex-col items-center justify-start bg-slate-950 pt-10 pb-6 px-6 relative overflow-hidden rounded-[32px]">
+                        <!-- Sound Wave Animation Background -->
+                        <div class="absolute top-32 flex items-center justify-center opacity-20 pointer-events-none">
+                            <div class="w-64 h-64 rounded-full border-[3px] border-emerald-500 call-active-ring"></div>
+                        </div>
+                        
+                        <div class="relative z-10 flex flex-col items-center mt-4 mb-4">
+                            <div class="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-3 drop-shadow-[0_0_15px_rgba(16,185,129,0.3)] border border-slate-700">
+                                <i data-lucide="headphones" class="w-10 h-10 text-emerald-500"></i>
+                            </div>
+                            <h3 class="text-2xl text-white font-medium tracking-tight">AJ SUPPORT</h3>
+                            <p id="call-status-text" class="text-emerald-400 text-sm mt-1 h-5 transition-all">เชื่อมต่อแล้ว...</p>
+                        </div>
+                        
+                        <div class="grid grid-cols-3 gap-x-5 gap-y-3 w-full max-w-[260px] mx-auto z-10 mt-auto mb-6" id="call-dialpad">
+                            ${[
+                                {num: 1, text: ''}, {num: 2, text: ''}, {num: 3, text: ''},
+                                {num: 4, text: ''}, {num: 5, text: ''}, {num: 6, text: ''},
+                                {num: 7, text: ''}, {num: 8, text: ''}, {num: 9, text: ''},
+                                {num: '*', text: ''}, {num: 0, text: ''}, {num: '#', text: ''}
+                            ].map(btn => `
+                                <div onclick="handleCallKeypad('${btn.num}')" class="dial-btn w-16 h-16 bg-slate-800/80 rounded-full flex flex-col items-center justify-center cursor-pointer border border-slate-700/50 hover:bg-slate-700 mx-auto backdrop-blur-md">
+                                    <span class="text-2xl text-white font-medium leading-none ${btn.text ? 'mb-1' : ''}">${btn.num}</span>
+                                    ${btn.text ? `<span class="text-[9px] text-gray-400 font-medium tracking-wider truncate w-full text-center px-1">${btn.text}</span>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <div class="z-10 mt-auto w-full flex justify-center pb-2">
+                            <button onclick="endSupportCall()" class="w-16 h-16 bg-red-500 hover:bg-red-400 rounded-full flex items-center justify-center text-white shadow-lg shadow-red-500/40 transition-transform hover:scale-105 active:scale-95">
+                                <i data-lucide="phone-off" class="w-7 h-7 fill-current"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- iPhone Home Indicator -->
+                        <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-1/3 h-1.5 bg-white/20 rounded-full z-50"></div>
+                    </div>
+                `;
+            }
+            
+            lucide.createIcons();
+        }
+        
+        async function handleCreateTicket(e) {
+            e.preventDefault();
+            const category = document.getElementById('ticket-category').value;
+            const subject = document.getElementById('ticket-subject').value;
+            const description = document.getElementById('ticket-desc').value;
+            
+            const newTicket = {
+                id: 'tkt_' + Date.now() + Math.random().toString(36).substr(2, 5),
+                creatorId: getMyUserId(),
+                creatorName: getMyUserName(),
+                category: category,
+                subject: subject,
+                description: description,
+                status: 'open',
+                createdAt: new Date().toISOString(),
+                messages: []
+            };
+            
+            supportTickets.push(newTicket);
+            await saveData('tickets', supportTickets);
+            setTicketView('chat', newTicket.id);
+            
+            // Send notification to global channel for admins
+            if (state.globalChannel) {
+                state.globalChannel.send({ type: 'broadcast', event: 'new_ticket', payload: { id: newTicket.id } });
+            }
+        }
+        
+        async function handleSendTicketReply(e, ticketId, isAdmin) {
+            e.preventDefault();
+            const inputId = isAdmin ? 'admin-ticket-reply-input' : 'widget-ticket-reply-input';
+            const input = document.getElementById(inputId);
+            const message = input.value.trim();
+            
+            if (!message) return;
+            input.value = '';
+            
+            const ticketIndex = supportTickets.findIndex(t => t.id === ticketId);
+            if (ticketIndex === -1) return;
+            
+            supportTickets[ticketIndex].messages.push({
+                id: 'msg_' + Date.now(),
+                senderName: isAdmin ? 'Admin' : getMyUserName(),
+                isAdmin: isAdmin,
+                message: message,
+                createdAt: new Date().toISOString()
+            });
+            
+            await saveData('tickets', supportTickets);
+            
+            if (state.globalChannel) {
+                state.globalChannel.send({ type: 'broadcast', event: 'ticket_reply', payload: { id: ticketId, isAdmin: isAdmin } });
+            }
+
+            // Re-render UI
+            if (isAdmin) {
+                adminOpenTicket(ticketId);
+            } else {
+                renderTicketWidget();
+            }
+        }
+        
+        async function closeSupportTicket(ticketId) {
+            if (!confirm('คุณแน่ใจหรือไม่ที่จะปิดทิกเก็ตนี้?')) return;
+            
+            const ticketIndex = supportTickets.findIndex(t => t.id === ticketId);
+            if (ticketIndex === -1) return;
+            
+            supportTickets[ticketIndex].status = 'closed';
+            await saveData('tickets', supportTickets);
+            
+            adminOpenTicket(ticketId); // refresh admin view
+            renderTicketWidget(); // refresh widget if open
+            showAlert('ปิดทิกเก็ตเรียบร้อยแล้ว', 'success');
+        }
+
+        async function saveTicketRating(ticketId, ratingScore, ratingText) {
+            const tIndex = supportTickets.findIndex(t => t.id === ticketId);
+            if (tIndex !== -1) {
+                supportTickets[tIndex].rating = { score: ratingScore, text: ratingText };
+                supportTickets[tIndex].messages.push({
+                    id: 'msg_' + Date.now(),
+                    senderName: 'System',
+                    isAdmin: true,
+                    message: `[System] ผู้ใช้ให้คะแนนการบริการ: ${ratingScore} ดาว (${ratingText})`,
+                    createdAt: new Date().toISOString()
+                });
+                await saveData('tickets', supportTickets);
+            }
+        }
+
+        async function createCallTicket(category) {
+            const newTicket = {
+                id: 'tkt_' + Date.now() + Math.random().toString(36).substr(2, 5),
+                creatorId: getMyUserId(),
+                creatorName: getMyUserName(),
+                category: category,
+                subject: `สายด่วนโอนสาย: ${category.split(' ')[0]}`,
+                description: `[ระบบอัตโนมัติ]: ผู้ใช้ได้โอนสายจากระบบตอบรับอัตโนมัติเข้าสู่หมวดหมู่ "${category}"\nยินยอมการบันทึกสนทนา: ${callCenterState.consent ? 'ใช่' : 'ไม่ใช่'}\n\n(เริ่มการสนทนาด้วยเสียง - สามารถพิมพ์ในช่องแชทเพื่อเก็บบันทึกข้อมูลเพิ่มเติม)`,
+                status: 'open',
+                isVoiceCall: true,
+                callStatus: 'ringing',
+                createdAt: new Date().toISOString(),
+                messages: []
+            };
+            
+            supportTickets.push(newTicket);
+            await saveData('tickets', supportTickets);
+            
+            // Switch view to chat automatically
+            setTicketView('chat', newTicket.id);
+            
+            if (state.globalChannel) {
+                state.globalChannel.send({ type: 'broadcast', event: 'new_ticket', payload: { id: newTicket.id, isVoiceCall: true } });
+            }
+
+            // Start sending voice immediately waiting for admin
+            startTicketVoiceCall(newTicket.id, true);
+        }
+
+        // --- WebRTC Voice Call for Support Tickets ---
+        let supportVoice = {
+            channel: null,
+            localStream: null,
+            peerConnections: {},
+            audioElements: {}
+        };
+
+        async function startTicketVoiceCall(ticketId, isUser) {
+            try {
+                supportVoice.localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            } catch (err) {
+                console.error("Mic access denied", err);
+                showAlert("ต้องอนุญาตการใช้ไมโครโฟนเพื่อคุยสาย", "error");
+                return;
+            }
+            
+            const channelName = `support_call:${ticketId}`;
+            supportVoice.channel = supabaseClient.channel(channelName, {
+                config: { presence: { key: getMyUserId() } }
+            });
+            
+            supportVoice.channel.on('presence', { event: 'sync' }, () => {
+                const presences = supportVoice.channel.presenceState();
+                for (const id in presences) {
+                    const userId = presences[id][0].user_id;
+                    if (userId !== getMyUserId()) {
+                        const isInitiator = String(getMyUserId()).localeCompare(String(userId)) > 0;
+                        createSupportPeerConnection(userId, isInitiator);
+                    }
+                }
+            });
+
+            supportVoice.channel.on('broadcast', { event: 'webrtc-signal' }, ({ payload }) => {
+                if (payload.target === getMyUserId()) {
+                    handleSupportRtcSignal(payload);
+                }
+            });
+            
+            supportVoice.channel.subscribe(async (status) => {
+                if (status === 'SUBSCRIBED') {
+                    await supportVoice.channel.track({ user_id: getMyUserId() });
+                }
+            });
+        }
+
+        async function createSupportPeerConnection(targetUserId, isInitiator) {
+            if (supportVoice.peerConnections[targetUserId]) return;
+            const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+            supportVoice.peerConnections[targetUserId] = pc;
+            pc.candidateQueue = [];
+            
+            supportVoice.localStream.getTracks().forEach(track => pc.addTrack(track, supportVoice.localStream));
+            
+            pc.ontrack = (event) => {
+                let audioEl = document.getElementById(`support-audio-${targetUserId}`);
+                if (!audioEl) {
+                    audioEl = document.createElement('audio');
+                    audioEl.id = `support-audio-${targetUserId}`;
+                    audioEl.autoplay = true;
+                    document.body.appendChild(audioEl);
+                    supportVoice.audioElements[targetUserId] = audioEl;
+                }
+                audioEl.srcObject = event.streams[0];
+            };
+            
+            pc.onicecandidate = (event) => {
+                if (event.candidate) {
+                    supportVoice.channel.send({
+                        type: 'broadcast', event: 'webrtc-signal',
+                        payload: { type: 'candidate', candidate: event.candidate, from: getMyUserId(), target: targetUserId }
+                    });
+                }
+            };
+            
+            if (isInitiator) {
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+                supportVoice.channel.send({
+                    type: 'broadcast', event: 'webrtc-signal',
+                    payload: { type: 'offer', offer, from: getMyUserId(), target: targetUserId }
+                });
+            }
+        }
+
+        async function handleSupportRtcSignal(payload) {
+            const fromUserId = payload.from;
+            let pc = supportVoice.peerConnections[fromUserId];
+            try {
+                switch (payload.type) {
+                    case 'offer':
+                        if (!pc) {
+                            await createSupportPeerConnection(fromUserId, false);
+                            pc = supportVoice.peerConnections[fromUserId];
+                        }
+                        if (pc && (pc.signalingState === 'stable' || pc.signalingState === 'have-local-offer')) {
+                            await pc.setRemoteDescription(new RTCSessionDescription(payload.offer));
+                            const answer = await pc.createAnswer();
+                            await pc.setLocalDescription(answer);
+                            supportVoice.channel.send({
+                                type: 'broadcast', event: 'webrtc-signal',
+                                payload: { type: 'answer', answer, from: getMyUserId(), target: fromUserId }
+                            });
+                            if (pc.candidateQueue) {
+                                for (const c of pc.candidateQueue) await pc.addIceCandidate(new RTCIceCandidate(c));
+                                pc.candidateQueue = [];
+                            }
+                        }
+                        break;
+                    case 'answer':
+                        if (pc && pc.signalingState === 'have-local-offer') {
+                            await pc.setRemoteDescription(new RTCSessionDescription(payload.answer));
+                            if (pc.candidateQueue) {
+                                for (const c of pc.candidateQueue) await pc.addIceCandidate(new RTCIceCandidate(c));
+                                pc.candidateQueue = [];
+                            }
+                        }
+                        break;
+                    case 'candidate':
+                        if (pc) {
+                            if (pc.remoteDescription && pc.remoteDescription.type) {
+                                await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));
+                            } else {
+                                if (!pc.candidateQueue) pc.candidateQueue = [];
+                                pc.candidateQueue.push(payload.candidate);
+                            }
+                        }
+                        break;
+                }
+            } catch (err) {}
+        }
+
+        async function acceptSupportVoiceCall(ticketId) {
+            const tIndex = supportTickets.findIndex(t => t.id === ticketId);
+            if (tIndex !== -1) {
+                supportTickets[tIndex].callStatus = 'connected';
+                await saveData('tickets', supportTickets);
+                if (state.globalChannel) {
+                    state.globalChannel.send({ type: 'broadcast', event: 'support_call_accepted', payload: { ticketId } });
+                }
+                startTicketVoiceCall(ticketId, false);
+                adminOpenTicket(ticketId, true);
+            }
+        }
+
+        function endSupportVoiceCall(fromBroadcast = false) {
+            if (supportVoice.channel) {
+                supportVoice.channel.unsubscribe();
+                supportVoice.channel = null;
+            }
+            if (supportVoice.localStream) {
+                supportVoice.localStream.getTracks().forEach(t => t.stop());
+                supportVoice.localStream = null;
+            }
+            for (const id in supportVoice.peerConnections) supportVoice.peerConnections[id].close();
+            supportVoice.peerConnections = {};
+            for (const id in supportVoice.audioElements) supportVoice.audioElements[id].remove();
+            supportVoice.audioElements = {};
+            stopCallTimer();
+            
+            if (!fromBroadcast) {
+                const ticketId = activeTicketId;
+                if (ticketId) {
+                    const tIndex = supportTickets.findIndex(t => t.id === ticketId);
+                    if (tIndex !== -1 && supportTickets[tIndex].isVoiceCall && supportTickets[tIndex].callStatus !== 'ended') {
+                        supportTickets[tIndex].callStatus = 'ended';
+                        
+                        if (!fromBroadcast) {
+                            saveData('tickets', supportTickets);
+                            if (state.globalChannel) state.globalChannel.send({ type: 'broadcast', event: 'support_call_ended', payload: { ticketId } });
+                        }
+                        
+                        if (state.currentPage === 'admin') {
+                            adminOpenTicket(ticketId, true);
+                        } else {
+                            if (ticketView === 'chat' && supportTickets[tIndex].creatorId === getMyUserId()) {
+                                 setTicketView('call');
+                                 callCenterState.step = 'review';
+                                 const statusEl = document.getElementById('call-status-text');
+                                 if(statusEl) statusEl.textContent = "ให้คะแนนการบริการ";
+                                 speakCallBot("กรุณาประเมินความพึงพอใจ | กด 1 พอคุย | กด 2 สุภาพดี | กด 3 เป็นกันเองดี | กด 4 ดีมาก | หรือ กด 5 สุดยอดให้เต็ม ครับ");
+                            } else {
+                                 renderTicketWidget();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        async function adminInitiateCallback(ticketId) {
+            const tIndex = supportTickets.findIndex(t => t.id === ticketId);
+            if (tIndex !== -1) {
+                supportTickets[tIndex].isVoiceCall = true;
+                supportTickets[tIndex].callStatus = 'callback_ringing';
+                await saveData('tickets', supportTickets);
+                
+                if (state.globalChannel) {
+                    state.globalChannel.send({ type: 'broadcast', event: 'admin_callback', payload: { ticketId } });
+                }
+                
+                startTicketVoiceCall(ticketId, false); // Admin joins as host
+                adminOpenTicket(ticketId, true);
+            }
+        }
+
+        // --- Call Center Voice & Interaction System ---
+        let supportSynth = window.speechSynthesis;
+        let supportCallTimeout = null;
+        let callIdleTimeout = null;
+        let callTimerInterval = null;
+        let callSeconds = 0;
+
+        function startCallTimer() {
+            if (callTimerInterval) clearInterval(callTimerInterval);
+            callSeconds = 0;
+            callTimerInterval = setInterval(() => {
+                callSeconds++;
+                const mins = Math.floor(callSeconds / 60).toString().padStart(2, '0');
+                const secs = (callSeconds % 60).toString().padStart(2, '0');
+                const statusEl = document.getElementById('call-status-text');
+                if (statusEl && /^\d{2}:\d{2}$/.test(statusEl.textContent)) {
+                    statusEl.textContent = `${mins}:${secs}`;
+                }
+            }, 1000);
+        }
+
+        function stopCallTimer() {
+            if (callTimerInterval) {
+                clearInterval(callTimerInterval);
+                callTimerInterval = null;
+            }
+        }
+        
+        let callCenterState = {
+            step: 'menu', 
+            category: '',
+            consent: null,
+            queueInterval: null
+        };
+        let callWaitingMusic = new Audio('Vdeo/songaj.mp3');
+        callWaitingMusic.loop = false; // We handle loop manually
+        
+        callWaitingMusic.addEventListener('ended', () => {
+            const ticket = supportTickets.find(t => t.id === activeTicketId);
+            const isRinging = ticket && ticket.callStatus === 'ringing';
+            const isQueueing = callCenterState.step === 'queue';
+
+            if (isRinging || isQueueing) {
+                callCenterState.step = 'wait_or_leave_msg';
+                
+                if (ticketView === 'chat') {
+                    setTicketView('call', activeTicketId);
+                }
+                
+                const statusEl = document.getElementById('call-status-text');
+                if (statusEl) statusEl.textContent = "สายไม่ว่าง (Busy)...";
+                
+                const pad = document.getElementById('call-dialpad');
+                if (pad) {
+                    pad.style.opacity = '1';
+                    pad.style.pointerEvents = 'auto';
+                }
+                
+                speakCallBot("ขณะนี้สายไม่ว่าง กรุณารอสักครู่ หรือฝากข้อความไว้ก่อนได้ครับ เดี๋ยวทีมงานจะติดต่อไป | ฝากข้อความ กด 8 | รอ กด 9", () => {
+                     callIdleTimeout = setTimeout(handleCallIdle, 10000);
+                });
+            }
+        });
+        
+        function playWaitingMusic() {
+            callWaitingMusic.currentTime = 0;
+            callWaitingMusic.play().catch(e => console.log('Audio play blocked:', e));
+        }
+        function stopWaitingMusic() {
+            callWaitingMusic.pause();
+        }
+        
+        function playCallConnectedSound() {
+            try {
+                const ctx = getVoiceAudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, ctx.currentTime);
+                
+                // Beep 1
+                gain.gain.setValueAtTime(0, ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + 0.05);
+                gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.15);
+                
+                // Beep 2
+                gain.gain.setValueAtTime(0, ctx.currentTime + 0.2);
+                gain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + 0.25);
+                gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.35);
+
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.4);
+            } catch (e) {}
+        }
+
+        function playDialTone() {
+            try {
+                const ctx = getVoiceAudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(425, ctx.currentTime); // Standard dial tone freq
+                
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.1);
+            } catch(e) {}
+        }
+
+        function speakCallBot(text, onEndCallback = null) {
+            if (supportSynth.speaking) supportSynth.cancel();
+            
+            // แบ่งข้อความเพื่อสร้างจังหวะพักหายใจ
+            const phrases = text.split('|').map(p => p.trim()).filter(p => p);
+            let currentIdx = 0;
+            
+            const createUtterances = (voiceList) => {
+                const thaiVoices = voiceList.filter(v => v.lang.includes('th'));
+                let selectedVoice = thaiVoices.find(v => ['male', 'ชาย', 'niwat', 'pattara'].some(name => v.name.toLowerCase().includes(name)));
+                if (!selectedVoice && thaiVoices.length > 0) selectedVoice = thaiVoices[0];
+                
+                const speakNext = () => {
+                    if (currentIdx >= phrases.length) {
+                        if (onEndCallback) onEndCallback();
+                        return;
+                    }
+                    
+                    const utterance = new SpeechSynthesisUtterance(phrases[currentIdx]);
+                    utterance.lang = 'th-TH'; 
+                    utterance.rate = 0.9; // ความเร็วที่ฟังเป็นธรรมชาติขึ้น
+                    utterance.pitch = 1.05; 
+                    if (selectedVoice) utterance.voice = selectedVoice;
+
+                    utterance.onend = () => {
+                        currentIdx++;
+                        setTimeout(speakNext, 400); // พักหายใจ 400ms ต่อท่อน
+                    };
+                    
+                    supportSynth.speak(utterance);
+                };
+                speakNext();
+            };
+
+            let voices = supportSynth.getVoices();
+            if (voices.length > 0) {
+                createUtterances(voices);
+            } else {
+                speechSynthesis.onvoiceschanged = () => createUtterances(supportSynth.getVoices());
+            }
+        }
+
+        function startSupportCall() {
+            setTicketView('call');
+            callCenterState.step = 'menu';
+            callCenterState.category = '';
+            callCenterState.consent = null;
+            
+            document.getElementById('call-status-text').textContent = "กำลังเชื่อมต่อ...";
+            
+            // Simulate Ringing delay
+            supportCallTimeout = setTimeout(() => {
+                const statusEl = document.getElementById('call-status-text');
+                if (statusEl) {
+                    statusEl.textContent = "00:00"; // Starts timer visual
+                    startCallTimer();
+                }
+                
+                if (callIdleTimeout) clearTimeout(callIdleTimeout);
+                speakCallBot("สวัสดีครับ | ยินดีต้อนรับสู่ ศูนย์บริการแคลน อันจิ้งจือเฟิง | หากต้องการแจ้งรายงานผู้เล่น กด 1 | แจ้งปัญหาเว็บไซต์ กด 2 | สอบถามข้อมูลทั่วไป กด 3 | ติดต่อทีมงานโดยตรง กด 0 | ฟังซ้ำ กดเครื่องหมายดอกจัน | หรือกลับสู่เมนูหลัก กดสี่เหลี่ยม ครับ", () => {
+                    callIdleTimeout = setTimeout(handleCallIdle, 8000);
+                });
+            }, 1500);
+        }
+
+        function handleCallKeypad(num) {
+            if (callIdleTimeout) clearTimeout(callIdleTimeout);
+            playDialTone();
+            if (supportSynth.speaking) supportSynth.cancel();
+            if (supportCallTimeout) clearTimeout(supportCallTimeout);
+
+            if (callCenterState.step === 'menu') {
+                if (num === '*') {
+                    speakCallBot("ฟังซ้ำอีกครั้งนะครับ | แจ้งรายงานผู้เล่น กด 1 | แจ้งปัญหาเว็บไซต์ กด 2 | สอบถามข้อมูลทั่วไป กด 3 | ติดต่อทีมงานโดยตรง กด 0 | หรือกลับสู่เมนูหลัก กดสี่เหลี่ยม ครับ", () => {
+                        callIdleTimeout = setTimeout(handleCallIdle, 8000);
+                    });
+                    return;
+                } else if (num === '#') {
+                    speakCallBot("กลับสู่เมนูหลักครับ | แจ้งรายงานผู้เล่น กด 1 | แจ้งปัญหาเว็บไซต์ กด 2 | สอบถามข้อมูลทั่วไป กด 3 | ติดต่อทีมงานโดยตรง กด 0 | ฟังซ้ำ กดเครื่องหมายดอกจัน ครับ", () => {
+                        callIdleTimeout = setTimeout(handleCallIdle, 8000);
+                    });
+                    return;
+                }
+                let category = '';
+                if (num === '1') category = 'รายงานผู้เล่น (Report Player)';
+                else if (num === '2') category = 'แจ้งปัญหาเว็บ/บัค (Bug Report)';
+                else if (num === '3') category = 'สอบถามทั่วไป (General Question)';
+                else if (num === '0') category = 'ติดต่อทีมงาน (Direct Contact)';
+                else {
+                    speakCallBot("หมายเลขที่คุณกดไม่ถูกต้อง | กรุณากดใหม่อีกครั้งครับ", () => {
+                        callIdleTimeout = setTimeout(handleCallIdle, 8000);
+                    });
+                    return;
+                }
+        
+                callCenterState.category = category;
+                callCenterState.step = 'consent';
+                
+                speakCallBot("ทุกการสนทนาจะถูกบันทึกไว้ เพื่อปรับปรุงระบบให้ทันสมัยขึ้น | หากยินดี กด 5 | หากไม่ยินดี กด 7 | ฟังซ้ำ กดเครื่องหมายดอกจัน | หรือกลับสู่เมนูหลัก กดสี่เหลี่ยม ครับ", () => {
+                     callIdleTimeout = setTimeout(handleCallIdle, 8000);
+                });
+                
+            } else if (callCenterState.step === 'consent') {
+                if (num === '*') {
+                    speakCallBot("ทุกการสนทนาจะถูกบันทึกไว้ เพื่อปรับปรุงระบบให้ทันสมัยขึ้น | หากยินดี กด 5 | หากไม่ยินดี กด 7 | หรือกลับสู่เมนูหลัก กดสี่เหลี่ยม ครับ", () => {
+                        callIdleTimeout = setTimeout(handleCallIdle, 8000);
+                    });
+                    return;
+                } else if (num === '#') {
+                    callCenterState.step = 'menu';
+                    callCenterState.category = '';
+                    speakCallBot("กลับสู่เมนูหลักครับ | แจ้งรายงานผู้เล่น กด 1 | แจ้งปัญหาเว็บไซต์ กด 2 | สอบถามข้อมูลทั่วไป กด 3 | ติดต่อทีมงานโดยตรง กด 0 ครับ", () => {
+                        callIdleTimeout = setTimeout(handleCallIdle, 8000);
+                    });
+                    return;
+                }
+                if (num === '5') {
+                    callCenterState.consent = true;
+                    speakCallBot("ขอบคุณที่ยินยอม เพื่อการปรับปรุงในอนาคตครับ", proceedToQueue);
+                } else if (num === '7') {
+                    callCenterState.consent = false;
+                    speakCallBot("ทุกสิทธิ์คือของท่าน | หากไว้ใจทางเราในครั้งหน้า กดยินยอมได้ครับ", proceedToQueue);
+                } else {
+                    speakCallBot("หมายเลขที่คุณกดไม่ถูกต้อง | ยินดี กด 5 | ไม่ยินดี กด 7 | หรือกลับสู่เมนูหลัก กดสี่เหลี่ยม ครับ", () => {
+                        callIdleTimeout = setTimeout(handleCallIdle, 8000);
+                    });
+                }
+            } else if (callCenterState.step === 'wait_or_leave_msg') {
+                if (num === '8') {
+                    speakCallBot("กรุณาพิมพ์ข้อความทิ้งไว้ในช่องแชทได้เลยครับ", () => {
+                        const ticket = supportTickets.find(t => t.id === activeTicketId);
+                        if (ticket) ticket.callStatus = 'ended';
+                        saveData('tickets', supportTickets);
+                        if (state.globalChannel) state.globalChannel.send({ type: 'broadcast', event: 'support_call_ended', payload: { ticketId: activeTicketId } });
+                        
+                        if (supportVoice.channel) {
+                            supportVoice.channel.unsubscribe();
+                            supportVoice.channel = null;
+                        }
+                        if (supportVoice.localStream) {
+                            supportVoice.localStream.getTracks().forEach(t => t.stop());
+                            supportVoice.localStream = null;
+                        }
+                        for (const id in supportVoice.peerConnections) supportVoice.peerConnections[id].close();
+                        supportVoice.peerConnections = {};
+                        
+                        callCenterState.step = 'menu';
+                        setTicketView('chat', activeTicketId);
+                    });
+                } else if (num === '9') {
+                    callCenterState.step = activeTicketId && supportTickets.find(t => t.id === activeTicketId)?.callStatus === 'ringing' ? 'ringing' : 'queue';
+                    const statusEl = document.getElementById('call-status-text');
+                    if(statusEl) statusEl.textContent = "กำลังโอนสาย...";
+                    
+                    const pad = document.getElementById('call-dialpad');
+                    if(pad) { pad.style.opacity = '0.5'; pad.style.pointerEvents = 'none'; }
+
+                    speakCallBot("กำลังโอนสายหาเจ้าหน้าที่อีกครั้งครับ", () => {
+                        playWaitingMusic();
+                        if (callCenterState.step === 'ringing') {
+                            setTicketView('chat', activeTicketId);
+                        }
+                    });
+                } else {
+                    speakCallBot("หมายเลขที่คุณกดไม่ถูกต้อง | ฝากข้อความ กด 8 | รอ กด 9 ครับ", () => {
+                        callIdleTimeout = setTimeout(handleCallIdle, 8000);
+                    });
+                }
+            } else if (callCenterState.step === 'review') {
+                if (['1','2','3','4','5'].includes(num)) {
+                    let ratingText = '';
+                    if(num === '1') ratingText = 'พอคุย';
+                    if(num === '2') ratingText = 'สุภาพดี';
+                    if(num === '3') ratingText = 'เป็นกันเองดี';
+                    if(num === '4') ratingText = 'ดีมาก';
+                    if(num === '5') ratingText = 'สุดยอดให้เต็ม';
+                    
+                    saveTicketRating(activeTicketId, num, ratingText);
+                    
+                    const statusEl = document.getElementById('call-status-text');
+                    if(statusEl) statusEl.textContent = "ขอบคุณที่ใช้บริการ";
+                    
+                    speakCallBot("ขอบคุณที่ใช้บริการครับ", () => {
+                        endSupportCall();
+                    });
+                } else {
+                    speakCallBot("กรุณากดหมายเลข 1 ถึง 5 เพื่อประเมินความพึงพอใจครับ", () => {
+                        callIdleTimeout = setTimeout(handleCallIdle, 8000);
+                    });
+                }
+            }
+        }
+        
+        function proceedToQueue() {
+            callCenterState.step = 'queue';
+            const pad = document.getElementById('call-dialpad');
+            if(pad) { pad.style.opacity = '0.5'; pad.style.pointerEvents = 'none'; }
+            
+            const activeCalls = supportTickets.filter(t => t.isVoiceCall && (t.callStatus === 'ringing' || t.callStatus === 'connected')).length;
+            
+            if (activeCalls >= 4) {
+                speakCallBot("กรุณารอสักครู่ ระบบกำลังโอนสายครับ...", () => {
+                    playWaitingMusic();
+                    const statusEl = document.getElementById('call-status-text');
+                    if(statusEl) statusEl.textContent = "รอสาย (Queue Full)...";
+        
+                    callCenterState.queueInterval = setInterval(() => {
+                        if (callCenterState.step !== 'queue') return;
+                        const currentActive = supportTickets.filter(t => t.isVoiceCall && (t.callStatus === 'ringing' || t.callStatus === 'connected')).length;
+                        if (currentActive < 4) {
+                            clearInterval(callCenterState.queueInterval);
+                            stopWaitingMusic();
+                            if (supportSynth.speaking) supportSynth.cancel();
+                            speakCallBot("ขณะนี้คู่สายว่างแล้ว | กำลังต่อสายไปหาเจ้าหน้าที่ครับ", async () => {
+                                playWaitingMusic();
+                                await createCallTicket(callCenterState.category);
+                            });
+                        }
+                    }, 5000);
+                });
+            } else {
+                const statusEl = document.getElementById('call-status-text');
+                if(statusEl) statusEl.textContent = "กำลังโอนสาย...";
+                speakCallBot("กรุณารอสักครู่ | ระบบกำลังโอนสาย | ไปยังเจ้าหน้าที่ครับ", async () => {
+                    playWaitingMusic();
+                    await createCallTicket(callCenterState.category);
+                });
+            }
+        }
+
+        function handleCallIdle() {
+            const pad = document.getElementById('call-dialpad');
+            if(pad) { pad.style.opacity = '0.5'; pad.style.pointerEvents = 'none'; }
+            const statusEl = document.getElementById('call-status-text');
+            if(statusEl) statusEl.textContent = "หมดเวลาทำรายการ";
+            
+           speakCallBot("คุณทำรายการช้าเกินไป | กรุณาติดต่อมาใหม่ เมื่อพร้อมครับ", () => {
+                endSupportCall();
+            });
+        }
+
+        function endSupportCall() {
+            if (supportSynth.speaking) supportSynth.cancel();
+            if (supportCallTimeout) clearTimeout(supportCallTimeout);
+            if (callIdleTimeout) clearTimeout(callIdleTimeout);
+            if (callCenterState.queueInterval) clearInterval(callCenterState.queueInterval);
+            stopCallTimer();
+            stopWaitingMusic();
+            endSupportVoiceCall(); 
+            
+            callCenterState.step = 'menu';
+            if (ticketView === 'call') {
+                setTicketView('list');
+            }
+        }
+
         // Update functions for edit dialog
         function updatePolicyTitle(lang, index, value) {
             state.tempEditData[lang][index].title = value;
@@ -7806,12 +10054,14 @@ let timeSyncInterval = null;
                             ['th', 'zh', 'en'].forEach(lang => {
                                 if (clanData[lang]) clanData[lang] = { ...defaultClanData[lang], ...clanData[lang] };
                             });
+                if (!clanData.chatInvites) clanData.chatInvites = {};
                         }
                         if (row.section === 'events') events = row.data;
                         if (row.section === 'streamData') streamData = row.data;
+                        if (row.section === 'tickets') supportTickets = row.data || [];
                     });
                 } else {
-                    ['policies', 'announcements', 'members', 'clanData', 'events'].forEach(async (section) => {
+                    ['policies', 'announcements', 'members', 'clanData', 'events', 'tickets'].forEach(async (section) => {
                         await saveData(section, eval(`default${section.charAt(0).toUpperCase() + section.slice(1)}`));
                     });
                 }
@@ -8324,6 +10574,20 @@ let timeSyncInterval = null;
                 duration: 'ถาวร (Permanent)',
                 ruleBroken: ''
             });
+            
+            // Listen for Admin Callback
+            channel.on('broadcast', { event: 'admin_callback' }, (payload) => {
+                const { ticketId } = payload.payload;
+                const ticket = supportTickets.find(t => t.id === ticketId);
+                if (ticket && ticket.creatorId === getMyUserId()) {
+                    showAlert('📞 แอดมินกำลังติดต่อกลับ (Admin Calling...)', 'info', 'Incoming Call');
+                    playVoiceChatSound('join');
+                    
+                    ticket.callStatus = 'callback_ringing';
+                    if (!isTicketWidgetOpen) toggleTicketWidget();
+                    setTicketView('chat', ticketId);
+                }
+            });
             renderEditDialog();
         }
         function removeBanned(index) {
@@ -8540,7 +10804,7 @@ let timeSyncInterval = null;
                 title = 'ข้อความปฏิเสธ (Rejection Message)';
                 borderColor = 'border-red-500/50';
                 const reasonText = reason || 'เหตุผลทั่วไป';
-                message = `สวัสดีครับ/ค่ะ คุณ ${req.name},\n\nทีมงาน 安镜之锋 ขอขอบคุณสำหรับความสนใจในการสมัครเข้าร่วมแคลนของเราครับ/ค่ะ\n\nหลังจากพิจารณาใบสมัครของคุณแล้ว เราเสียใจที่ต้องแจ้งให้ทราบว่าในขณะนี้ **คุณยังไม่ผ่านการคัดเลือก** เนื่องจาก: ${reasonText}\n\nอย่างไรก็ตาม เราขอขอบคุณสำหรับความสนใจและหวังว่าจะมีโอกาสได้ร่วมงานกับคุณในอนาคตครับ/ค่ะ\n\nขอแสดงความนับถือ,\nทีมงาน 安镜之锋`;
+                message = `สวัสดีครับคุณ ${req.name},\n\nทีมงาน 安镜之锋 ขอขอบคุณสำหรับความสนใจในการสมัครเข้าร่วมแคลนของเราครับ\n\nหลังจากพิจารณาใบสมัครของคุณแล้ว เราเสียใจที่ต้องแจ้งให้ทราบว่าในขณะนี้ **คุณยังไม่ผ่านการคัดเลือก** เนื่องจาก: ${reasonText}\n\nอย่างไรก็ตาม เราขอขอบคุณสำหรับความสนใจและหวังว่าจะมีโอกาสได้ร่วมงานกับคุณในอนาคตครับ/ค่ะ\n\nขอแสดงความนับถือ,\nทีมงาน 安镜之锋`;
             }
 
             const modal = document.getElementById('action-message-modal');
@@ -8806,6 +11070,21 @@ let timeSyncInterval = null;
                     navStream.classList.remove('flex');
                 }
             }
+            
+            // Chat Guest UI adjustments (Restrict Navigation)
+            if (state.chatGuestProfile) {
+                const hideIds = ['nav-home', 'nav-announcements', 'nav-about', 'nav-members', 'nav-events', 'nav-contact', 'nav-register', 'nav-profile', 'nav-admin', 'nav-logout', 'nav-stream', 'nav-special'];
+                hideIds.forEach(id => {
+                     const el = document.getElementById(id);
+                     if(el) el.style.display = 'none';
+                });
+                
+                // Ensure chat nav is visible
+                if (navChat) {
+                    navChat.classList.remove('hidden');
+                    navChat.classList.add('flex');
+                }
+            }
 
             // Stream Guest UI adjustments (Restrict Navigation)
             if (state.streamGuestProfile) {
@@ -8830,7 +11109,92 @@ let timeSyncInterval = null;
                 watchLiveGuestBtn.style.display = shouldShow ? 'block' : 'none';
             }
         }
+
+        // --- Chat Guest Setup UI ---
+        function showChatGuestSetupModal(inviteCode, serverId) {
+            // Inject Modal to Body
+            const modalHtml = `
+                <div id="chat-guest-setup-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[200] flex items-center justify-center p-4">
+                    <div class="bg-slate-900 p-8 rounded-3xl max-w-md w-full border border-blue-500/30 shadow-2xl modal-enter relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-cyan-500"></div>
+                        <div class="text-center mb-6">
+                            <i data-lucide="link" class="w-12 h-12 text-blue-400 mx-auto mb-2"></i>
+                            <h3 class="text-2xl text-white font-bold">เข้าร่วมผ่านลิงก์เชิญ</h3>
+                            <p class="text-gray-400 text-sm mt-1">กรุณากรอกข้อมูลของคุณเพื่อเข้าสู่ห้องสนทนา</p>
+                        </div>
+                        <div class="space-y-5">
+                            <div>
+                                <label class="text-xs text-gray-400 uppercase font-bold ml-1">ชื่อของคุณ (Name)</label>
+                                <input type="text" id="chat-guest-name" class="w-full px-4 py-3 bg-slate-950 text-white rounded-xl border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all mt-1" placeholder="กรอกชื่อที่ต้องการให้แสดง">
+                            </div>
+                            <button onclick="handleChatGuestEntry('${inviteCode}', '${serverId}')" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-bold mt-4 shadow-lg shadow-blue-500/20 transition-all hover:scale-[1.02]">
+                                เข้าสู่ห้องสนทนา (Enter Chat)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            lucide.createIcons();
+        }
+
+        function handleChatGuestEntry(inviteCode, serverId) {
+            const name = document.getElementById('chat-guest-name').value.trim();
+            if (!name) return showAlert('กรุณากรอกชื่อ', 'warning');
+            
+            const inviteData = clanData.chatInvites[inviteCode];
+            
+            const guestSession = {
+                id: 'guest_' + Date.now(),
+                name: name,
+                gameId: 'guest_' + Date.now(),
+                profilePictureUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3b82f6&color=fff&size=128`,
+                serverId: serverId,
+                expiresAt: inviteData.expiresAt,
+                department: 'บุคคลผ่านลิ้ง'
+            };
+            
+            sessionStorage.setItem('chatGuestSession', JSON.stringify(guestSession));
+            state.chatGuestProfile = guestSession;
+            
+            document.getElementById('chat-guest-setup-modal').remove();
+            
+            // ซ่อนหน้าล็อกอิน (ข้ามขั้นตอนการเข้าสู่ระบบ)
+            const loginOverlay = document.getElementById('member-login-overlay');
+            if (loginOverlay) loginOverlay.classList.add('hidden');
+            
+            // Auto switch to chat page and specific server
+            updateUI();
+            setCurrentPage('chat');
+            setTimeout(() => chat_selectServer(serverId), 500);
+
+            // เริ่มตัวจับเวลาเพื่อเตะออกเมื่อหมดอายุ (เช็คทุกๆ 1 นาที)
+            setInterval(() => {
+                if (Date.now() > guestSession.expiresAt) {
+                    sessionStorage.removeItem('chatGuestSession');
+                    alert('เซสชั่นผ่านลิงก์ของคุณหมดอายุแล้ว ระบบจะพากลับหน้าหลัก');
+                    window.location.href = window.location.pathname;
+                }
+            }, 60000);
+        }
     </script>
+
+    <!-- Message Action Popover -->
+    <div id="message-action-popover" style="display: none;" class="absolute z-[100] bg-slate-800/95 backdrop-blur-xl border border-slate-600/50 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] p-2 min-w-[180px] overflow-hidden transform transition-all duration-200 scale-95 opacity-0 origin-top-left">
+        <button id="popover-edit-btn" onclick="chat_handleEditMessage(event)" class="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-200 hover:text-white hover:bg-slate-700/50 rounded-lg transition-all group">
+            <i data-lucide="edit-2" class="w-4 h-4 text-gray-400 group-hover:text-blue-400"></i>
+            <span class="font-medium">แก้ไขข้อความ</span>
+        </button>
+        <button id="popover-delete-btn" onclick="chat_handleDeleteMessage(event)" class="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-200 hover:text-white hover:bg-red-500/10 rounded-lg transition-all group mt-1">
+            <i data-lucide="trash-2" class="w-4 h-4 text-gray-400 group-hover:text-red-400"></i>
+            <span class="font-medium group-hover:text-red-400">ลบข้อความ</span>
+        </button>
+        <div class="h-px bg-slate-700/50 my-1 mx-2"></div>
+        <button id="popover-report-btn" onclick="chat_handleReportMessage(event)" class="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-200 hover:text-white hover:bg-yellow-500/10 rounded-lg transition-all group">
+            <i data-lucide="flag" class="w-4 h-4 text-gray-400 group-hover:text-yellow-400"></i>
+            <span class="font-medium group-hover:text-yellow-400">รายงานปัญหา</span>
+        </button>
+    </div>
 </body>
 
 </html>
