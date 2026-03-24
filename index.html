@@ -19,18 +19,14 @@
 }
 </script>
    
-    <!-- Tailwind CSS (CDN) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@0.378.0/dist/umd/lucide.min.js"></script>
-    
-    <!-- Supabase JS (CDN) - use UMD build for browser globals -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://unpkg.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://fiinjbrtxokjoulhccgi.supabase.co">
 
-    <!-- Driver.js for Website Tour -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
-    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
+    <!-- Non-render-blocking CSS loading -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"></noscript>
 
     <!-- Custom CSS -->
     <style>
@@ -879,7 +875,7 @@
 <body class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
     <!-- Intro Video -->
     <div id="intro-overlay">
-        <video id="intro-video" autoplay playsinline muted preload="auto">
+        <video id="intro-video" autoplay playsinline muted preload="metadata" aria-hidden="true">
             <source src="Vdeo/intror.mp4" type="video/mp4">
         </video>
         <!-- ปุ่มกดเข้าเว็บ -->
@@ -900,7 +896,7 @@
                 <div class="flex justify-end mb-6">
                     <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg p-1 border border-white/20">
                         <i data-lucide="languages" class="w-4 h-4 text-white ml-2"></i>
-                        <button onclick="setLanguage('th')" id="lang-th" class="px-4 py-2 rounded-md transition-all bg-white text-orange-600 shadow-lg">
+                        <button onclick="setLanguage('th')" id="lang-th" class="px-4 py-2 rounded-md transition-all bg-white text-orange-800 shadow-lg">
                             ไทย
                         </button>
                         <button onclick="setLanguage('zh')" id="lang-zh" class="px-4 py-2 rounded-md transition-all text-white hover:bg-white/10">
@@ -930,7 +926,7 @@
                     <i data-lucide="home" class="w-4 h-4"></i>
                     <span id="nav-home-text">Home</span>
                 </button>
-                <button onclick="setCurrentPage('announcements')" id="nav-announcements" class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all bg-white text-orange-600 shadow-lg">
+                <button onclick="setCurrentPage('announcements')" id="nav-announcements" class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all bg-white text-orange-800 shadow-lg">
                     <i data-lucide="megaphone" class="w-4 h-4"></i>
                     <span id="nav-announcements-text">Announcements</span>
                 </button>
@@ -983,7 +979,7 @@
     </div>
 
     <!-- Main Content -->
-    <div id="content-container" class="max-w-5xl mx-auto px-4 py-12 sm:px-6 lg:px-8 fade-in">
+    <div id="content-container" class="max-w-5xl mx-auto px-4 py-12 sm:px-6 lg:px-8 fade-in min-h-[60vh]">
         <!-- Content will be dynamically loaded here -->
         <div id="loading" class="text-center">
             <div class="inline-block">
@@ -1521,19 +1517,23 @@
                     <i data-lucide="headphones" class="w-5 h-5"></i>
                     <span class="font-bold">ศูนย์ช่วยเหลือ (Support)</span>
                 </div>
-                <button onclick="toggleTicketWidget()" class="text-indigo-200 hover:text-white transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button onclick="toggleTicketWidget()" class="text-indigo-200 hover:text-white transition-colors" aria-label="Close support widget"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <!-- Dynamic Content Area -->
             <div id="ticket-widget-content" class="flex-1 overflow-hidden flex flex-col bg-slate-950/50"></div>
         </div>
         
         <!-- Toggle Button -->
-        <button onclick="toggleTicketWidget()" class="w-14 h-14 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full shadow-lg shadow-indigo-600/30 flex items-center justify-center transition-transform hover:scale-110 relative">
+        <button onclick="toggleTicketWidget()" class="w-14 h-14 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full shadow-lg shadow-indigo-600/30 flex items-center justify-center transition-transform hover:scale-110 relative" aria-label="Open support widget">
             <i id="ticket-btn-icon" data-lucide="life-buoy" class="w-7 h-7"></i>
             <span id="ticket-unread-badge" class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-slate-900 hidden"></span>
         </button>
     </div>
 
+    <script src="https://cdn.tailwindcss.com" defer></script>
+    <script src="https://unpkg.com/lucide@0.378.0/dist/umd/lucide.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js" defer></script>
     <script>
         // Application State
         const state = {
@@ -3286,11 +3286,11 @@ let timeSyncInterval = null;
             
             // Update language buttons
             document.querySelectorAll('[id^="lang-"]').forEach(btn => {
-                btn.classList.remove('bg-white', 'text-orange-600', 'shadow-lg');
+                btn.classList.remove('bg-white', 'text-orange-600', 'text-orange-700', 'text-orange-800', 'shadow-lg');
                 btn.classList.add('text-white', 'hover:bg-white/10');
             });
             
-            document.getElementById(`lang-${lang}`).classList.add('bg-white', 'text-orange-600', 'shadow-lg');
+            document.getElementById(`lang-${lang}`).classList.add('bg-white', 'text-orange-800', 'shadow-lg');
             document.getElementById(`lang-${lang}`).classList.remove('text-white', 'hover:bg-white/10');
             
             // Update UI
@@ -3337,13 +3337,13 @@ let timeSyncInterval = null;
             // Update navigation buttons
             document.querySelectorAll('button[id^="nav-"]').forEach(btn => {
                 if (!btn.id.includes('login') && !btn.id.includes('logout') && !btn.id.includes('admin')) {
-                    btn.classList.remove('bg-white', 'text-orange-600', 'shadow-lg');
+                    btn.classList.remove('bg-white', 'text-orange-600', 'text-orange-700', 'text-orange-800', 'shadow-lg');
                     btn.classList.add('bg-white/10', 'text-white', 'hover:bg-white/20');
                 }
             });
             
             if (document.getElementById(`nav-${page}`)) {
-                document.getElementById(`nav-${page}`).classList.add('bg-white', 'text-orange-600', 'shadow-lg');
+                document.getElementById(`nav-${page}`).classList.add('bg-white', 'text-orange-800', 'shadow-lg');
                 document.getElementById(`nav-${page}`).classList.remove('bg-white/10', 'text-white', 'hover:bg-white/20');
             }
             
@@ -4235,8 +4235,8 @@ let timeSyncInterval = null;
                                     <div class="flex items-center gap-1 text-xs text-gray-500">
                                         ${member.hasViolated ? `<i data-lucide="alert-triangle" class="w-3 h-3 text-yellow-500" title="เคยทำผิดกฎ"></i>` : ''}
                                         ${member.relationship === 'Not Single' ? `<i data-lucide="heart" class="w-3 h-3 text-pink-500" title="ไม่โสด"></i>` : ''}
-                                        ${member.gender === 'Female' ? `<i data-lucide="venus" class="w-3 h-3 text-pink-400" title="หญิง"></i>` : ''}
-                                        ${member.gender === 'Male' ? `<i data-lucide="mars" class="w-3 h-3 text-blue-400" title="ชาย"></i>` : ''}
+                                        ${member.gender === 'Female' ? `<i data-lucide="female" class="w-3 h-3 text-pink-400" title="หญิง"></i>` : ''}
+                                        ${member.gender === 'Male' ? `<i data-lucide="male" class="w-3 h-3 text-blue-400" title="ชาย"></i>` : ''}
                                         ${member.gender === 'Third Gender' ? `<i data-lucide="user" class="w-3 h-3 text-purple-400" title="บุคคลที่สาม"></i>` : ''}
                                         <span>${member.country}</span>
                                     </div>
@@ -5367,27 +5367,18 @@ let timeSyncInterval = null;
             const msgId = state.chat.selectedMessageId;
             if (!msgId) return;
             showConfirmationModal('ลบข้อความ', 'คุณแน่ใจหรือไม่ที่จะลบข้อความนี้?', async () => {
-                
-                // --- Optimistic Delete (ซ่อนข้อความทันทีเพื่อความรวดเร็ว) ---
-                for (const chId in state.chat.messages) {
-                    const idx = state.chat.messages[chId].findIndex(m => m.id === msgId);
-                    if (idx !== -1) {
-                        state.chat.messages[chId].splice(idx, 1);
-                        if (state.currentPage === 'chat' && state.chat.currentChannelId == chId) {
-                            chat_renderMessages();
-                        }
-                        break;
-                    }
-                }
-
                 const { error } = await supabaseClient.from('chat_messages').delete().eq('id', msgId);
+                
                 if (error) {
-                    showAlert('Failed to delete message: ' + error.message, 'error');
-                    // รีโหลดข้อความใหม่หากลบไม่สำเร็จ
-                    if (state.chat.currentChannelId) {
-                        loadChatMessages(state.chat.currentChannelId);
-                    }
+                    console.error("Delete Error:", error);
+                    showAlert(
+                        'Failed to delete message: ' + error.message + 
+                        '\n\n(This is often caused by database Row Level Security (RLS) policies. Please ensure the user role has DELETE permissions on the \'chat_messages\' table.)', 
+                        'error', 
+                        'Database Permission Error'
+                    );
                 }
+                // On successful deletion, the realtime 'DELETE' event listener will automatically remove the message from the UI.
             }, 'trash-2', 'bg-red-600');
         }
         
@@ -5919,41 +5910,45 @@ let timeSyncInterval = null;
             }
 
             showConfirmationModal('Delete Server?', `Are you sure you want to delete this server? All channels and messages within it will be permanently lost.`, async () => {
-                // Manual Cascade Delete: Messages -> Channels -> Server
-                
                 try {
                     // 1. Get channels to cleanup
                     const { data: channels, error: fetchErr } = await supabaseClient.from('chat_channels').select('id').eq('server_id', serverId);
-                    if (fetchErr) throw new Error("Failed to fetch channels: " + fetchErr.message);
+                    if (fetchErr) {
+                        showAlert(`Failed to fetch channels for deletion: ${fetchErr.message}`, 'error', 'Database Error');
+                        return;
+                    }
 
                     if (channels && channels.length > 0) {
                         const channelIds = channels.map(c => c.id);
                         
-                        // 2. Delete messages (Check errors)
+                        // 2. Delete messages
                         const { error: msgError } = await supabaseClient.from('chat_messages').delete().in('channel_id', channelIds);
-                        if (msgError) throw new Error("Failed to delete messages: " + msgError.message);
+                        if (msgError) {
+                            showAlert(`Failed to delete messages in server: ${msgError.message}\n\n(Check RLS permissions on 'chat_messages' table.)`, 'error', 'Database Permission Error');
+                            return;
+                        }
 
-                        // 3. Delete channels (Check errors)
+                        // 3. Delete channels
                         const { error: chanError } = await supabaseClient.from('chat_channels').delete().eq('server_id', serverId);
-                        if (chanError) throw new Error("Failed to delete channels: " + chanError.message);
+                        if (chanError) {
+                            showAlert(`Failed to delete channels: ${chanError.message}\n\n(Check RLS permissions on 'chat_channels' table.)`, 'error', 'Database Permission Error');
+                            return;
+                        }
                     }
 
-                    // 4. Delete Server & Verify
-                    const { data: deletedData, error: serverError } = await supabaseClient.from('chat_servers').delete().eq('id', serverId).select();
-                    
-                    if (serverError) throw new Error("Failed to delete server: " + serverError.message);
-                    if (!deletedData || deletedData.length === 0) {
-                        throw new Error("Server was not deleted from database. Check permissions.");
+                    // 4. Delete Server
+                    const { error: serverError } = await supabaseClient.from('chat_servers').delete().eq('id', serverId);
+                    if (serverError) {
+                        showAlert(`Failed to delete server: ${serverError.message}\n\n(Check RLS permissions on 'chat_servers' table.)`, 'error', 'Database Permission Error');
+                        return;
                     }
 
-                    // 5. Update Local State (Only if DB delete confirmed)
+                    // 5. Update Local State (Only if all DB deletes succeeded)
                     state.chat.servers = state.chat.servers.filter(s => s.id !== serverId);
 
-                    // Reset selection if needed
                     if (state.chat.currentServerId === serverId) {
                         state.chat.currentServerId = null;
                         state.chat.currentChannelId = null;
-                        // Select first available server
                         if (state.chat.servers.length > 0) {
                             chat_selectServer(state.chat.servers[0].id);
                         }
@@ -5963,11 +5958,8 @@ let timeSyncInterval = null;
                     showAlert('Server deleted permanently.', 'success');
 
                 } catch (err) {
-                    console.error('Delete failed:', err);
-                    showAlert(`Delete Failed: ${err.message}`, 'error');
-                    // Reload data to sync with reality
-                    await loadChatData();
-                    chat_renderAll();
+                    console.error('An unexpected error occurred during server deletion:', err);
+                    showAlert(`An unexpected error occurred: ${err.message}`, 'error');
                 }
             });
         }
@@ -7809,8 +7801,19 @@ let timeSyncInterval = null;
                         <h3 class="text-white font-bold">${ticket.subject}</h3>
                         <p class="text-xs text-gray-400">By ${ticket.creatorName} • Category: ${ticket.category}</p>
                     </div>
-                    <div class="flex items-center">
-                        ${adminActionsHtml}
+                    <div class="flex items-center gap-4">
+                         <!-- Voice Call Controls for Admin (Hidden by default) -->
+                        <div id="ticket-voice-controls-admin" class="hidden items-center gap-2">
+                            <button id="ticket-mic-toggle-admin" onclick="toggleSupportMic()" class="p-2 rounded-full bg-slate-700 hover:bg-slate-600 text-white transition-colors">
+                                <i data-lucide="mic" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="endSupportVoiceCall()" class="p-2 rounded-full bg-red-600 hover:bg-red-500 text-white transition-colors">
+                                <i data-lucide="phone-off" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <div class="flex items-center">
+                            ${adminActionsHtml}
+                        </div>
                     </div>
                 </div>
                 ${callBannerHtml}
@@ -7828,6 +7831,23 @@ let timeSyncInterval = null;
             `;
             
             lucide.createIcons();
+            
+            // Show voice controls for admin if call is connected
+            if (ticket.isVoiceCall && ticket.callStatus === 'connected') {
+                setTimeout(() => {
+                    const controls = document.getElementById('ticket-voice-controls-admin');
+                    if (controls) {
+                        const micIcon = document.querySelector('#ticket-mic-toggle-admin i');
+                        controls.classList.remove('hidden');
+                        controls.classList.add('flex');
+                        if (micIcon) {
+                            micIcon.setAttribute('data-lucide', supportVoice.isMuted ? 'mic-off' : 'mic');
+                            lucide.createIcons({ nodes: [micIcon] });
+                        }
+                    }
+                }, 0);
+            }
+
             const chatBox = document.getElementById('admin-ticket-chat-box');
             if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
         }
@@ -9002,6 +9022,16 @@ let timeSyncInterval = null;
                                 <p class="text-[10px] text-gray-400">Status: ${ticket.status}</p>
                             </div>
                         </div>
+                        
+                        <!-- Voice Call Controls (Hidden by default) -->
+                        <div id="ticket-voice-controls-user" class="hidden items-center gap-2">
+                            <button id="ticket-mic-toggle-user" onclick="toggleSupportMic()" class="p-2 rounded-full bg-slate-700 hover:bg-slate-600 text-white transition-colors">
+                                <i data-lucide="mic" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="endSupportVoiceCall()" class="p-2 rounded-full bg-red-600 hover:bg-red-500 text-white transition-colors">
+                                <i data-lucide="phone-off" class="w-4 h-4"></i>
+                            </button>
+                        </div>
                     </div>
                     ${callBannerHtml}
                     <div class="flex-1 overflow-y-auto p-3 ticket-chat-messages bg-slate-950/80" id="widget-ticket-chat-box">
@@ -9021,6 +9051,22 @@ let timeSyncInterval = null;
                     </div>
                     ` : `<div class="p-2 bg-slate-900 border-t border-slate-800 text-center text-[10px] text-gray-500">ทิกเก็ตนี้ถูกปิดการสนทนาแล้ว</div>`}
                 `;
+
+                // Show voice controls if call is connected
+                if (ticket.isVoiceCall && ticket.callStatus === 'connected') {
+                    setTimeout(() => {
+                        const controls = document.getElementById('ticket-voice-controls-user');
+                        if (controls) {
+                            const micIcon = document.querySelector('#ticket-mic-toggle-user i');
+                            controls.classList.remove('hidden');
+                            controls.classList.add('flex');
+                            if (micIcon) {
+                                micIcon.setAttribute('data-lucide', supportVoice.isMuted ? 'mic-off' : 'mic');
+                                lucide.createIcons({ nodes: [micIcon] });
+                            }
+                        }
+                    }, 0);
+                }
                 
                 setTimeout(() => {
                     const box = document.getElementById('widget-ticket-chat-box');
@@ -9202,7 +9248,8 @@ let timeSyncInterval = null;
             channel: null,
             localStream: null,
             peerConnections: {},
-            audioElements: {}
+            audioElements: {},
+            isMuted: false
         };
 
         async function startTicketVoiceCall(ticketId, isUser) {
@@ -9384,6 +9431,28 @@ let timeSyncInterval = null;
                         }
                     }
                 }
+            }
+        }
+
+        async function toggleSupportMic() {
+            if (supportVoice.localStream && supportVoice.localStream.getAudioTracks().length > 0) {
+                supportVoice.isMuted = !supportVoice.isMuted;
+                supportVoice.localStream.getAudioTracks()[0].enabled = !supportVoice.isMuted;
+                
+                // Directly update icons instead of full re-render
+                const userIcon = document.querySelector('#ticket-mic-toggle-user i');
+                const adminIcon = document.querySelector('#ticket-mic-toggle-admin i');
+                const newIcon = supportVoice.isMuted ? 'mic-off' : 'mic';
+
+                if (userIcon) {
+                    userIcon.setAttribute('data-lucide', newIcon);
+                }
+                if (adminIcon) {
+                    adminIcon.setAttribute('data-lucide', newIcon);
+                }
+                
+                // Re-render all icons on the page. Safer and simpler.
+                lucide.createIcons();
             }
         }
 
